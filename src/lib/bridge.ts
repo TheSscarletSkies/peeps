@@ -11,7 +11,7 @@ import type {
   Note,
   Snapshot,
   Todo,
-  TodoKind,
+  TodoInput,
 } from "./types";
 
 export const inApp = (): boolean => "__TAURI_INTERNALS__" in window;
@@ -96,14 +96,8 @@ export async function pickFolder(): Promise<string | null> {
   return typeof chosen === "string" ? chosen : null;
 }
 
-export function addTodo(
-  title: string,
-  kind: TodoKind,
-  due: string | null,
-): Promise<Todo | null> {
-  return inApp()
-    ? invoke<Todo>("add_todo", { title, kind, due })
-    : Promise.resolve(null);
+export function addTodo(input: TodoInput): Promise<Todo | null> {
+  return inApp() ? invoke<Todo>("add_todo", { input }) : Promise.resolve(null);
 }
 
 export function setTodoDone(id: number, done: boolean): Promise<void> {
@@ -162,14 +156,9 @@ export function notch(): Promise<Notch> {
     : Promise.resolve({ width: 190, height: 34 });
 }
 
-export function editTodo(
-  id: number,
-  title: string,
-  kind: TodoKind,
-  due: string | null,
-): Promise<void> {
+export function editTodo(id: number, input: TodoInput): Promise<void> {
   return inApp()
-    ? invoke("edit_todo", { id, title, kind, due }).then(() => undefined)
+    ? invoke("edit_todo", { id, input }).then(() => undefined)
     : Promise.resolve();
 }
 

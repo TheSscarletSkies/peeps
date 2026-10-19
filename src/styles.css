@@ -516,19 +516,6 @@ body,
   padding: 10px;
 }
 
-.todos__edit form,
-.todos__add {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.todos__add .feed .feed__date,
-.todos__edit .feed .feed__date {
-  flex: 1;
-  min-width: 140px;
-}
-
 .segmented {
   display: flex;
   flex-shrink: 0;
@@ -558,13 +545,55 @@ body,
 }
 
 .todos__tag {
-  margin-right: 6px;
-  padding: 1px 8px;
+  margin-left: 6px;
+  padding: 1px 7px;
   border-radius: var(--r-tag);
-  background: #2b2540;
-  color: #d9ccf7;
+  background: hsl(var(--tag, 260) 40% 22%);
+  color: hsl(var(--tag, 260) 80% 86%);
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+.todos__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.todos__repeat {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9fd9b4;
+}
+
+.todo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-form .feed {
+  flex-wrap: nowrap;
+}
+
+.todo-form .feed > :is(input, select) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.todo-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .todos__due {
@@ -1018,7 +1047,7 @@ body,
   flex-wrap: wrap;
 }
 
-.notch__card .feed input:not([type="date"]) {
+.notch__card .feed input:not([type="date"], [type="time"]) {
   flex: 1 1 100%;
 }
 

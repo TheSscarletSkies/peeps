@@ -13,9 +13,19 @@ import type {
   Helper,
   OpenTodo,
   Pet,
+  Repeat,
   Tip,
-  TodoKind,
 } from "../lib/types";
+import {
+  draftFrom,
+  EMPTY,
+  hasTitle,
+  inputFrom,
+  REMINDERS,
+  REPEATS,
+  whenLabel,
+  type TodoDraft,
+} from "./todoForm";
 
 type Tab = "todo" | "write" | "tokens";
 
@@ -69,36 +79,125 @@ const DUE_LABEL: Record<DueState, string> = {
   undated: "",
 };
 
-const KINDS: { id: TodoKind; label: string }[] = [
-  { id: "task", label: "To-do" },
-  { id: "study", label: "Study" },
-];
-
-/** Study items are tagged and counted apart from everyday to-dos. */
-function KindSwitch({
-  kind,
+/** One form for adding and editing. Time and reminder appear once there is a date. */
+function TodoForm({
+  id,
+  draft,
   onChange,
+  onSubmit,
+  submitLabel,
+  onCancel,
 }: {
-  kind: TodoKind;
-  onChange: (kind: TodoKind) => void;
+  id: string;
+  draft: TodoDraft;
+  onChange: (draft: TodoDraft) => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  onCancel?: () => void;
 }) {
+  const set = (patch: Partial<TodoDraft>) => onChange({ ...draft, ...patch });
   return (
-    <div className="segmented" role="radiogroup" aria-label="Type">
-      {KINDS.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          role="radio"
-          aria-checked={kind === option.id}
-          className={kind === option.id ? "segmented__on" : undefined}
-          onClick={() => onChange(option.id)}
+    <form
+      className="todo-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && onCancel) onCancel();
+      }}
+    >
+      <label className="visually-hidden" htmlFor={`${id}-text`}>
+        To-do
+      </label>
+      <input
+        id={`${id}-text`}
+        value={draft.text}
+        autoFocus={Boolean(onCancel)}
+        placeholder="Add a to-do, #tags welcome"
+        onChange={(event) => set({ text: event.target.value })}
+      />
+      <div className="feed">
+        <label className="visually-hidden" htmlFor={`${id}-due`}>
+          Due date
+        </label>
+        <input
+          id={`${id}-due`}
+          className="feed__date"
+          type="date"
+          value={draft.due}
+          onChange={(event) => set({ due: event.target.value })}
+        />
+        <label className="visually-hidden" htmlFor={`${id}-repeat`}>
+          Repeat
+        </label>
+        <select
+          id={`${id}-repeat`}
+          value={draft.repeat}
+          onChange={(event) => set({ repeat: event.target.value as Repeat })}
         >
-          {option.label}
+          {REPEATS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {draft.due && (
+        <div className="feed">
+          <label className="visually-hidden" htmlFor={`${id}-time`}>
+            Time
+          </label>
+          <input
+            id={`${id}-time`}
+            className="feed__time"
+            type="time"
+            value={draft.time}
+            onChange={(event) => set({ time: event.target.value })}
+          />
+          <label className="visually-hidden" htmlFor={`${id}-remind`}>
+            Reminder
+          </label>
+          <select
+            id={`${id}-remind`}
+            value={draft.remind}
+            onChange={(event) => set({ remind: event.target.value })}
+          >
+            {REMINDERS.map((option) => (
+              <option key={option.label} value={option.minutes ?? ""}>
+                {option.minutes === 0 && !draft.time
+                  ? "Morning of"
+                  : option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className="todo-form__actions">
+        {onCancel && (
+          <button type="button" className="button" onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+        <button
+          className="button button--primary"
+          type="submit"
+          disabled={!hasTitle(draft.text)}
+        >
+          {submitLabel}
         </button>
-      ))}
-    </div>
+      </div>
+    </form>
   );
 }
+
+const REPEAT_LABEL: Record<Repeat, string> = {
+  never: "",
+  daily: "Daily",
+  weekdays: "Weekdays",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
 
 function TodoRow({
   todo,
@@ -107,93 +206,65 @@ function TodoRow({
   todo: OpenTodo;
   onTyping: (typing: boolean) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(todo.title);
-  const [kind, setKind] = useState<TodoKind>(todo.kind);
-  const [due, setDue] = useState(todo.due ?? "");
+  const [draft, setDraft] = useState<TodoDraft | null>(null);
 
-  const open = () => {
-    setTitle(todo.title);
-    setKind(todo.kind);
-    setDue(todo.due ?? "");
-    setEditing(true);
-    onTyping(true);
-  };
   const close = () => {
-    setEditing(false);
+    setDraft(null);
     onTyping(false);
   };
-  const save = async () => {
-    if (!title.trim()) return;
-    await editTodo(todo.id, title, kind, due || null);
-    close();
-  };
 
-  if (editing) {
+  if (draft) {
     return (
       <li className="todos__edit">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") close();
-          }}
-        >
-          <label className="visually-hidden" htmlFor={`todo-${todo.id}`}>
-            To-do
-          </label>
-          <input
-            id={`todo-${todo.id}`}
-            value={title}
-            autoFocus
-            onChange={(event) => setTitle(event.target.value)}
-          />
-          <div className="feed">
-            <KindSwitch kind={kind} onChange={setKind} />
-            <label className="visually-hidden" htmlFor={`due-${todo.id}`}>
-              Due date
-            </label>
-            <input
-              id={`due-${todo.id}`}
-              className="feed__date"
-              type="date"
-              value={due}
-              onChange={(event) => setDue(event.target.value)}
-            />
-            <button type="button" className="button" onClick={close}>
-              Cancel
-            </button>
-            <button
-              className="button button--primary"
-              type="submit"
-              disabled={!title.trim()}
-            >
-              Save
-            </button>
-          </div>
-        </form>
+        <TodoForm
+          id={`todo-${todo.id}`}
+          draft={draft}
+          onChange={setDraft}
+          submitLabel="Save"
+          onCancel={close}
+          onSubmit={() => void editTodo(todo.id, inputFrom(draft)).then(close)}
+        />
       </li>
     );
   }
+
+  const when = todo.due
+    ? whenLabel(todo, DUE_LABEL[todo.dueState] || todo.due)
+    : "";
 
   return (
     <li data-due={todo.dueState}>
       <input
         type="checkbox"
         aria-label={`Done: ${todo.title}`}
+        checked={false}
         onChange={() => void setTodoDone(todo.id, true)}
       />
-      <button className="todos__title" onClick={open} title="Edit">
-        {todo.kind === "study" && <span className="todos__tag">Study</span>}
+      <button
+        className="todos__title"
+        title="Edit"
+        onClick={() => {
+          setDraft(draftFrom(todo));
+          onTyping(true);
+        }}
+      >
         {todo.title}
+        {todo.tags.map((tag) => (
+          <span key={tag} className="todos__tag" style={tagStyle(tag)}>
+            #{tag}
+          </span>
+        ))}
       </button>
-      {todo.due && (
-        <span className="todos__due">
-          {DUE_LABEL[todo.dueState] || todo.due}
-        </span>
-      )}
+      <span className="todos__meta">
+        {todo.repeat !== "never" && (
+          <span className="todos__repeat">
+            {todo.liveStreak > 1
+              ? `${todo.liveStreak} in a row`
+              : REPEAT_LABEL[todo.repeat]}
+          </span>
+        )}
+        {when && <span className="todos__due">{when}</span>}
+      </span>
       <button
         className="todos__remove"
         aria-label={`Delete ${todo.title}`}
@@ -205,6 +276,13 @@ function TodoRow({
   );
 }
 
+/** Each tag gets its own soft colour, the same everywhere. */
+function tagStyle(tag: string) {
+  let hash = 0;
+  for (const char of tag) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return { ["--tag" as string]: `${hash % 360}` };
+}
+
 export function Todos({
   helper,
   onTyping,
@@ -212,17 +290,19 @@ export function Todos({
   helper: Helper;
   onTyping: (typing: boolean) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [due, setDue] = useState("");
-  const [kind, setKind] = useState<TodoKind>("task");
+  const [draft, setDraft] = useState<TodoDraft>(EMPTY);
+  const [tag, setTag] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const tags = [...new Set(helper.todos.flatMap((todo) => todo.tags))].sort();
+  const shown = tag
+    ? helper.todos.filter((todo) => todo.tags.includes(tag))
+    : helper.todos;
+
   const add = async () => {
-    if (!title.trim()) return;
     try {
-      await addTodo(title, kind, due || null);
-      setTitle("");
-      setDue("");
+      await addTodo(inputFrom(draft));
+      setDraft(EMPTY);
       setError(null);
     } catch (reason) {
       setError(String(reason));
@@ -230,57 +310,46 @@ export function Todos({
   };
 
   return (
-    <div className="helper-tab">
-      {helper.todos.length === 0 ? (
+    <div
+      className="helper-tab"
+      onFocus={() => onTyping(true)}
+      onBlur={() => onTyping(false)}
+    >
+      {tags.length > 0 && (
+        <div className="tag-filter" role="toolbar" aria-label="Filter by tag">
+          <button
+            className={tag === null ? "chip chip--on" : "chip"}
+            onClick={() => setTag(null)}
+          >
+            All
+          </button>
+          {tags.map((name) => (
+            <button
+              key={name}
+              className={tag === name ? "chip chip--on" : "chip"}
+              onClick={() => setTag(tag === name ? null : name)}
+            >
+              #{name}
+            </button>
+          ))}
+        </div>
+      )}
+      {shown.length === 0 ? (
         <p className="setup__hint">Nothing on the list.</p>
       ) : (
         <ul className="todos">
-          {helper.todos.map((todo) => (
+          {shown.map((todo) => (
             <TodoRow key={todo.id} todo={todo} onTyping={onTyping} />
           ))}
         </ul>
       )}
-      <form
-        className="todos__add"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void add();
-        }}
-      >
-        <label className="visually-hidden" htmlFor="todo-title">
-          New {kind === "study" ? "study item" : "to-do"}
-        </label>
-        <input
-          id="todo-title"
-          value={title}
-          placeholder={
-            kind === "study" ? "What are you studying?" : "Add a to-do"
-          }
-          onChange={(event) => setTitle(event.target.value)}
-          onFocus={() => onTyping(true)}
-          onBlur={() => onTyping(false)}
-        />
-        <div className="feed">
-          <KindSwitch kind={kind} onChange={setKind} />
-          <label className="visually-hidden" htmlFor="todo-due">
-            Due date
-          </label>
-          <input
-            id="todo-due"
-            className="feed__date"
-            type="date"
-            value={due}
-            onChange={(event) => setDue(event.target.value)}
-          />
-          <button
-            className="button button--primary"
-            type="submit"
-            disabled={!title.trim()}
-          >
-            Add
-          </button>
-        </div>
-      </form>
+      <TodoForm
+        id="new-todo"
+        draft={draft}
+        onChange={setDraft}
+        submitLabel="Add"
+        onSubmit={() => void add()}
+      />
       {error && <p className="tray__error">{error}</p>}
     </div>
   );

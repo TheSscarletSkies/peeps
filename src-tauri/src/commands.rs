@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use std::time::Duration;
 
-use chrono::{NaiveDate, Utc};
+use chrono::Utc;
 use peeps_core::config_edit::{self, NewProduct};
 use peeps_core::drafts::{self, Draft};
 use peeps_core::notes::{Delivery, Note};
 use peeps_core::protocol::Decision;
-use peeps_core::todos::{Todo, TodoKind};
+use peeps_core::todos::{self, Todo, TodoInput};
 use peeps_core::{hooks_install, paths};
 use serde::Serialize;
 use serde_json::Value;
@@ -75,53 +75,40 @@ pub fn remove_product(app: State<'_, Arc<App>>, product_id: String) -> Result<()
 }
 
 #[tauri::command]
-pub fn add_todo(
-    app: State<'_, Arc<App>>,
-    title: String,
-    kind: TodoKind,
-    due: Option<String>,
-) -> Result<Todo> {
-    if title.trim().is_empty() {
-        return Err("the to-do is empty".into());
-    }
-    let due = due_date(due)?;
-    let todo = app
-        .todos()
-        .add(&title, kind, due, Utc::now())
-        .map_err(message)?;
+pub fn add_todo(app: State<'_, Arc<App>>, input: TodoInput) -> Result<Todo> {
+    check_todo(&input)?;
+    let todo = app.todos().add(&input, Utc::now()).map_err(message)?;
     app.publish();
     Ok(todo)
 }
 
 #[tauri::command]
-pub fn edit_todo(
-    app: State<'_, Arc<App>>,
-    id: i64,
-    title: String,
-    kind: TodoKind,
-    due: Option<String>,
-) -> Result<()> {
-    if title.trim().is_empty() {
-        return Err("the to-do is empty".into());
-    }
-    let due = due_date(due)?;
-    app.todos().edit(id, &title, kind, due).map_err(message)?;
+pub fn edit_todo(app: State<'_, Arc<App>>, id: i64, input: TodoInput) -> Result<()> {
+    check_todo(&input)?;
+    app.todos().edit(id, &input).map_err(message)?;
     app.publish();
     Ok(())
 }
 
-fn due_date(due: Option<String>) -> Result<Option<NaiveDate>> {
-    due.filter(|day| !day.is_empty())
-        .map(|day| day.parse::<NaiveDate>())
-        .transpose()
-        .map_err(|_| "the due date should look like 2026-10-31".to_owned())
+fn check_todo(input: &TodoInput) -> Result<()> {
+    if todos::split_tags(&input.title).0.is_empty() {
+        return Err("the to-do needs a few words besides its tags".into());
+    }
+    Ok(())
 }
 
 #[tauri::command]
 pub fn set_todo_done(app: State<'_, Arc<App>>, id: i64, done: bool) -> Result<()> {
-    app.todos()
-        .set_done(id, done, Utc::now())
-        .map_err(message)?;
+    let now = Utc::now();
+    let store = app.todos();
+    if done {
+        store
+            .complete(id, now, chrono::Local::now().date_naive())
+            .map_err(message)?;
+    } else {
+        store.reopen(id).map_err(message)?;
+    }
+    drop(store);
     app.publish();
     Ok(())
 }

@@ -60,20 +60,35 @@ export interface NewProduct {
   color: string;
 }
 
-export type TodoKind = "task" | "study";
 export type DueState = "overdue" | "today" | "soon" | "later" | "undated";
+export type Repeat = "never" | "daily" | "weekdays" | "weekly" | "monthly";
+
+/** What someone typed. Tags ride along in the title as `#tag`. */
+export interface TodoInput {
+  title: string;
+  due: string | null;
+  time: string | null;
+  repeat: Repeat;
+  /** Minutes before the due time; null for no reminder. */
+  remindMinutes: number | null;
+}
 
 export interface Todo {
   id: number;
   title: string;
-  kind: TodoKind;
+  tags: string[];
   due: string | null;
+  time: string | null;
+  repeat: Repeat;
+  remindMinutes: number | null;
+  streak: number;
   createdAt: string;
   doneAt: string | null;
 }
 
 export interface OpenTodo extends Todo {
   dueState: DueState;
+  liveStreak: number;
 }
 
 export interface Draft {

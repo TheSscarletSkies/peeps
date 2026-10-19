@@ -35,6 +35,8 @@ pub struct TodoView {
     #[serde(flatten)]
     pub todo: Todo,
     pub due_state: Due,
+    /// The streak while it is unbroken, zero once a repeat is missed.
+    pub live_streak: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -81,6 +83,7 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         .into_iter()
         .map(|todo| TodoView {
             due_state: todo.due_state(inputs.today),
+            live_streak: todo.live_streak(inputs.today),
             todo,
         })
         .collect();
@@ -191,14 +194,18 @@ const WEEKDAYS: [&str; 7] = [
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::todos::TodoKind;
+    use crate::todos::Repeat;
 
     fn todo(due: Option<&str>) -> Todo {
         Todo {
             id: 1,
             title: "Post".into(),
-            kind: TodoKind::Task,
+            tags: Vec::new(),
             due: due.map(|d| d.parse().unwrap()),
+            time: None,
+            repeat: Repeat::Never,
+            remind_minutes: None,
+            streak: 0,
             created_at: Utc::now(),
             done_at: None,
         }
