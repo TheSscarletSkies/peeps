@@ -1,0 +1,55 @@
+# A founder running three products. Secrets are read from the OS keychain:
+#   peeps secret set funderly-supabase
+
+[settings]
+approvals = true
+sweat_after_minutes = 30
+
+# A SaaS with sign-ups in Supabase. Hungry when sign-ups wait a week for a reply.
+[[product]]
+id = "funderly"
+name = "Funderly"
+paths = ["~/code/funderly"]
+pet = { kind = "bao", color = "#F6E3B4" }
+expect_activity_every_hours = 48
+
+[[product.check]]
+id = "unanswered-signups"
+signal = "hungry"
+message = "{count} sign-ups have waited a week"
+every_minutes = 30
+kind = "http"
+url = "https://YOUR-PROJECT.supabase.co/rest/v1/signups?select=id&replied_at=is.null&created_at=lt.{days_ago:7}"
+headers = { apikey = "{secret:funderly-supabase}", Authorization = "Bearer {secret:funderly-supabase}" }
+
+# A story series posted to TikTok. Hungry when nothing went out for three days.
+[[product]]
+id = "enigma-archives"
+name = "Enigma Archives"
+paths = ["~/code/enigma-archives"]
+pet = { kind = "gyoza", color = "#C9B8F0" }
+
+[[product.check]]
+id = "posting-cadence"
+signal = "hungry"
+message = "No new episode in {count} days"
+every_minutes = 120
+kind = "script"
+command = "~/.peeps/checks/days-since-last-post.py"
+args = ["~/code/enigma-archives/posts.log", "3"]
+
+# A product before launch. The litter box fills up when launch tasks go overdue.
+[[product]]
+id = "kaiveni-hiya"
+name = "Kaiveni Hiya"
+paths = ["~/code/kaiveni-hiya"]
+pet = { kind = "bao", color = "#9EE6B8" }
+
+[[product.check]]
+id = "launch-checklist"
+signal = "litter_box"
+message = "{count} launch tasks overdue"
+every_minutes = 60
+kind = "script"
+command = "~/.peeps/checks/overdue-tasks.py"
+args = ["~/code/kaiveni-hiya/LAUNCH.md"]

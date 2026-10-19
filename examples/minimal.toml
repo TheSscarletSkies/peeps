@@ -1,0 +1,7 @@
+# The smallest useful setup: one product, one pet, agent moods only.
+# Copy to ~/.peeps/config.toml and change the path.
+
+[[product]]
+id = "my-app"
+name = "My app"
+paths = ["~/code/my-app"]

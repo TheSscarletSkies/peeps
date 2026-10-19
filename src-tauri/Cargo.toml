@@ -1,0 +1,28 @@
+[package]
+name = "peeps-desktop"
+description = "The peeps notch app."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "peeps_desktop"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+chrono.workspace = true
+dirs.workspace = true
+interprocess = { workspace = true, features = ["tokio"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+peeps-core = { path = "../crates/core" }
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "2", features = ["macos-private-api"] }
+tokio = { version = "1", features = ["io-util", "macros", "sync", "time"] }
+
+[lints]
+workspace = true

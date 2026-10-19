@@ -1,0 +1,19 @@
+[package]
+name = "peeps-hook"
+description = "Agent hook that forwards events to the peeps app."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "peeps-hook"
+path = "src/main.rs"
+
+[dependencies]
+interprocess.workspace = true
+peeps-core = { path = "../core" }
+serde_json.workspace = true
+
+[lints]
+workspace = true
