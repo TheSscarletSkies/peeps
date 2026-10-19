@@ -3,20 +3,25 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock};
 
-use chrono::Utc;
+use chrono::{Local, Utc};
 use peeps_core::advice::Tip;
 use peeps_core::config::Config;
+use peeps_core::drafts::DraftStore;
+use peeps_core::helper::{self, HelperView, ProductTokens};
 use peeps_core::notes::{self, Delivery, NoteStore};
 use peeps_core::paths;
 use peeps_core::protocol::{Decision, HookEvent, HookInput, Reply};
 use peeps_core::session::{describe_tool, Sessions};
 use peeps_core::snapshot::{self, CheckResults, PendingPermission, Snapshot};
+use peeps_core::todos::TodoStore;
 use peeps_core::usage::Transcript;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tokio::sync::oneshot;
 
 const RECENT_NOTES: usize = 20;
+const RECENT_DONE: usize = 10;
+const RECENT_DRAFTS: usize = 10;
 const STARTER_CONFIG: &str = "# peeps: add products from the app, or by hand.\n\
 # Every option is described in the README; examples/ has full setups.\n";
 pub const SNAPSHOT_EVENT: &str = "snapshot";
@@ -29,6 +34,7 @@ pub struct World {
     pub transcript_products: HashMap<PathBuf, String>,
     pub permissions: Vec<PendingPermission>,
     pub tips: Vec<Tip>,
+    pub week: Vec<ProductTokens>,
 }
 
 impl World {
@@ -47,6 +53,7 @@ impl World {
 pub struct AppSnapshot {
     #[serde(flatten)]
     pub snapshot: Snapshot,
+    pub helper: HelperView,
     pub config_error: Option<String>,
 }
 
@@ -75,6 +82,9 @@ pub struct App {
     rescan: AtomicBool,
     world: Mutex<World>,
     notes: Mutex<NoteStore>,
+    todos: Mutex<TodoStore>,
+    drafts: Mutex<DraftStore>,
+    drafting: AtomicBool,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
     handle: AppHandle,
@@ -92,6 +102,9 @@ impl App {
             rescan: AtomicBool::new(true),
             world: Mutex::default(),
             notes: Mutex::new(NoteStore::open(&paths::database_file())?),
+            todos: Mutex::new(TodoStore::open(&paths::database_file())?),
+            drafts: Mutex::new(DraftStore::open(&paths::database_file())?),
+            drafting: AtomicBool::new(false),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             handle,
@@ -140,6 +153,23 @@ impl App {
         self.notes.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    pub fn todos(&self) -> MutexGuard<'_, TodoStore> {
+        self.todos.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    pub fn drafts(&self) -> MutexGuard<'_, DraftStore> {
+        self.drafts.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Marks a draft as in progress. Returns false if one is already being written.
+    pub fn start_drafting(&self) -> bool {
+        !self.drafting.swap(true, Ordering::SeqCst)
+    }
+
+    pub fn finish_drafting(&self) {
+        self.drafting.store(false, Ordering::SeqCst);
+    }
+
     fn waiters(&self) -> MutexGuard<'_, HashMap<u64, oneshot::Sender<Decision>>> {
         self.waiters.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -147,8 +177,25 @@ impl App {
     pub fn snapshot(&self) -> AppSnapshot {
         let config = self.config();
         let notes = self.notes().recent(RECENT_NOTES).unwrap_or_default();
+        let (open, done) = {
+            let todos = self.todos();
+            (
+                todos.open_items().unwrap_or_default(),
+                todos.recently_done(RECENT_DONE).unwrap_or_default(),
+            )
+        };
+        let drafts = self.drafts().recent(RECENT_DRAFTS).unwrap_or_default();
         let world = self.world();
         AppSnapshot {
+            helper: helper::view(helper::HelperInputs {
+                config: &config.helper,
+                open,
+                done,
+                drafts,
+                drafting: self.drafting.load(Ordering::SeqCst),
+                week: world.week.clone(),
+                today: Local::now().date_naive(),
+            }),
             snapshot: snapshot::build(snapshot::Inputs {
                 config: &config,
                 sessions: &world.sessions,

@@ -2,7 +2,16 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 import { demoSnapshot } from "./demo";
-import type { Decision, Delivery, NewProduct, Note, Snapshot } from "./types";
+import type {
+  Decision,
+  Delivery,
+  Draft,
+  NewProduct,
+  Note,
+  Snapshot,
+  Todo,
+  TodoKind,
+} from "./types";
 
 export const inApp = (): boolean => "__TAURI_INTERNALS__" in window;
 
@@ -84,6 +93,41 @@ export async function pickFolder(): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const chosen = await open({ directory: true, multiple: false });
   return typeof chosen === "string" ? chosen : null;
+}
+
+export function addTodo(
+  title: string,
+  kind: TodoKind,
+  due: string | null,
+): Promise<Todo | null> {
+  return inApp()
+    ? invoke<Todo>("add_todo", { title, kind, due })
+    : Promise.resolve(null);
+}
+
+export function setTodoDone(id: number, done: boolean): Promise<void> {
+  return inApp()
+    ? invoke("set_todo_done", { id, done }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function deleteTodo(id: number): Promise<void> {
+  return inApp()
+    ? invoke("delete_todo", { id }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function writeDraft(kind: string, topic: string): Promise<Draft> {
+  if (inApp()) return invoke<Draft>("write_draft", { kind, topic });
+  return Promise.reject(
+    new Error("Drafts are written by your agent in the desktop app."),
+  );
+}
+
+export function deleteDraft(id: number): Promise<void> {
+  return inApp()
+    ? invoke("delete_draft", { id }).then(() => undefined)
+    : Promise.resolve();
 }
 
 export function setExpanded(expanded: boolean): Promise<void> {

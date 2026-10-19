@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { hooksStatus, setExpanded } from "../lib/bridge";
 import type { Mood, Snapshot } from "../lib/types";
+import { HelperPanel } from "../helper/HelperPanel";
 import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
 import { PetPanel } from "./PetPanel";
@@ -14,6 +15,7 @@ const URGENT: Mood[] = [
   "litterBox",
 ];
 const COLLAPSE_DELAY_MS = 600;
+const HELPER_ID = "__helper";
 
 export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const [open, setOpen] = useState(false);
@@ -23,9 +25,12 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const closeTimer = useRef<number | undefined>(undefined);
 
   const pets = snapshot.pets;
+  const helper = snapshot.helper;
   const urgent = pets.filter((pet) => URGENT.includes(pet.mood));
-  const selected =
-    pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0];
+  const helperSelected = selectedId === HELPER_ID;
+  const selected = helperSelected
+    ? undefined
+    : (pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0]);
 
   useEffect(() => {
     void setExpanded(open);
@@ -69,6 +74,15 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
               size={30}
             />
           ))}
+          {pets.length > 0 && (
+            <Dumpling
+              kind={helper.kind}
+              color={helper.color}
+              mood={helper.mood}
+              heat={0}
+              size={30}
+            />
+          )}
           {pets.length === 0 && (
             <span className="tray__count">Set up peeps</span>
           )}
@@ -114,16 +128,39 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
                     <span className="steamer__name">{pet.name}</span>
                   </button>
                 ))}
+                <span className="steamer__divider" aria-hidden="true" />
+                <button
+                  className={
+                    helperSelected
+                      ? "steamer__pet steamer__pet--selected"
+                      : "steamer__pet"
+                  }
+                  onClick={() => setSelectedId(HELPER_ID)}
+                  aria-label={`${helper.name}: ${helper.headline}`}
+                >
+                  <Dumpling
+                    kind={helper.kind}
+                    color={helper.color}
+                    mood={helper.mood}
+                    heat={0}
+                  />
+                  <span className="steamer__name">{helper.name}</span>
+                </button>
               </div>
+              {helperSelected && (
+                <HelperPanel
+                  helper={helper}
+                  pets={pets}
+                  tips={snapshot.tips}
+                  onTyping={setTyping}
+                />
+              )}
               {selected && (
                 <PetPanel
                   key={selected.id}
                   pet={selected}
                   onTyping={setTyping}
                 />
-              )}
-              {snapshot.tips[0] && (
-                <p className="tray__tip">{snapshot.tips[0].text}</p>
               )}
               <button className="tray__settings" onClick={() => setSetup(true)}>
                 Settings

@@ -7,6 +7,7 @@ use std::time::{Duration, SystemTime};
 use chrono::Utc;
 use peeps_core::advice::{self, Tip};
 use peeps_core::config::Product;
+use peeps_core::helper;
 use peeps_core::snapshot::CheckRun;
 use peeps_core::{paths, usage};
 
@@ -123,7 +124,18 @@ fn refresh_tips(app: &App) {
             tips.push(tip);
         }
     }
-    app.world().tips = tips;
+    let mut world = app.world();
+    let week = helper::weekly_tokens(
+        world.transcripts.iter().filter_map(|(path, transcript)| {
+            world
+                .transcript_products
+                .get(path)
+                .map(|product| (product.as_str(), transcript.entries()))
+        }),
+        Utc::now(),
+    );
+    world.tips = tips;
+    world.week = week;
 }
 
 fn instructions_tip(product: &Product) -> Option<Tip> {

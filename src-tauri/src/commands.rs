@@ -1,10 +1,14 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use chrono::Utc;
+use std::time::Duration;
+
+use chrono::{NaiveDate, Utc};
 use peeps_core::config_edit::{self, NewProduct};
+use peeps_core::drafts::{self, Draft};
 use peeps_core::notes::{Delivery, Note};
 use peeps_core::protocol::Decision;
+use peeps_core::todos::{Todo, TodoKind};
 use peeps_core::{hooks_install, paths};
 use serde::Serialize;
 use serde_json::Value;
@@ -68,6 +72,97 @@ pub fn remove_product(app: State<'_, Arc<App>>, product_id: String) -> Result<()
     write_atomic(&path, &updated)?;
     app.reload_config();
     Ok(())
+}
+
+#[tauri::command]
+pub fn add_todo(
+    app: State<'_, Arc<App>>,
+    title: String,
+    kind: TodoKind,
+    due: Option<String>,
+) -> Result<Todo> {
+    if title.trim().is_empty() {
+        return Err("the to-do is empty".into());
+    }
+    let due = due
+        .filter(|day| !day.is_empty())
+        .map(|day| day.parse::<NaiveDate>())
+        .transpose()
+        .map_err(|_| "the due date should look like 2026-10-31".to_owned())?;
+    let todo = app
+        .todos()
+        .add(&title, kind, due, Utc::now())
+        .map_err(message)?;
+    app.publish();
+    Ok(todo)
+}
+
+#[tauri::command]
+pub fn set_todo_done(app: State<'_, Arc<App>>, id: i64, done: bool) -> Result<()> {
+    app.todos()
+        .set_done(id, done, Utc::now())
+        .map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_todo(app: State<'_, Arc<App>>, id: i64) -> Result<()> {
+    app.todos().delete(id).map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_draft(app: State<'_, Arc<App>>, id: i64) -> Result<()> {
+    app.drafts().delete(id).map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+/// Asks the user's own agent for a draft. Only one draft runs at a time.
+#[tauri::command]
+pub async fn write_draft(app: State<'_, Arc<App>>, kind: String, topic: String) -> Result<Draft> {
+    if topic.trim().is_empty() {
+        return Err("tell the helper what to write about".into());
+    }
+    let app = app.inner().clone();
+    if !app.start_drafting() {
+        return Err("the helper is already writing a draft".into());
+    }
+    app.publish();
+
+    let config = app.config();
+    let helper = &config.helper;
+    let voice = helper
+        .voices
+        .get(&kind)
+        .filter(|path| !path.is_empty())
+        .map(|path| std::fs::read_to_string(paths::expand_home(path)))
+        .transpose()
+        .map_err(|error| format!("could not read the voice guide: {error}"));
+    let command = helper.command.clone();
+    let timeout = Duration::from_secs(helper.timeout_seconds);
+
+    let result = match voice {
+        Ok(voice) => {
+            let prompt = drafts::prompt(&kind, &topic, voice.as_deref());
+            tauri::async_runtime::spawn_blocking(move || drafts::run(&command, &prompt, timeout))
+                .await
+                .map_err(message)
+                .and_then(|outcome| outcome.map_err(message))
+        }
+        Err(error) => Err(error),
+    };
+
+    let saved = result.and_then(|text| {
+        app.drafts()
+            .add(&kind, &topic, &text, Utc::now())
+            .map_err(message)
+    });
+    app.finish_drafting();
+    app.publish();
+    saved
 }
 
 #[derive(Serialize)]

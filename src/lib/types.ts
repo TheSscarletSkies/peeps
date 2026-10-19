@@ -60,9 +60,53 @@ export interface NewProduct {
   color: string;
 }
 
+export type TodoKind = "task" | "study";
+export type DueState = "overdue" | "today" | "soon" | "later" | "undated";
+
+export interface Todo {
+  id: number;
+  title: string;
+  kind: TodoKind;
+  due: string | null;
+  createdAt: string;
+  doneAt: string | null;
+}
+
+export interface OpenTodo extends Todo {
+  dueState: DueState;
+}
+
+export interface Draft {
+  id: number;
+  kind: string;
+  topic: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface ProductTokens {
+  productId: string;
+  tokens: number;
+}
+
+export interface Helper {
+  name: string;
+  kind: PetKind;
+  color: string;
+  mood: Mood;
+  headline: string;
+  todos: OpenTodo[];
+  done: Todo[];
+  drafts: Draft[];
+  draftKinds: { id: string; label: string }[];
+  drafting: boolean;
+  week: ProductTokens[];
+}
+
 export interface Snapshot {
   pets: Pet[];
   notes: Note[];
   tips: Tip[];
+  helper: Helper;
   configError: string | null;
 }

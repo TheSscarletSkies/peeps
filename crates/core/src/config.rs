@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
@@ -28,6 +28,40 @@ pub struct Config {
     pub settings: Settings,
     #[serde(default, rename = "product")]
     pub products: Vec<Product>,
+    #[serde(default)]
+    pub helper: Helper,
+}
+
+/// The assistant pet: to-dos, drafts and the weekly token report.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Helper {
+    pub name: String,
+    pub pet: Pet,
+    /// The agent command that writes drafts. `{prompt}` is replaced with the request;
+    /// without it, the request is sent on stdin.
+    pub command: Vec<String>,
+    pub timeout_seconds: u64,
+    /// Draft kinds offered in the Write tab, each with an optional voice guide file.
+    pub voices: BTreeMap<String, String>,
+}
+
+impl Default for Helper {
+    fn default() -> Self {
+        Self {
+            name: "Helper".into(),
+            pet: Pet {
+                kind: PetKind::Bao,
+                color: "#DDF5E7".into(),
+            },
+            command: vec!["claude".into(), "-p".into(), "{prompt}".into()],
+            timeout_seconds: 240,
+            voices: BTreeMap::from([
+                ("linkedin".into(), String::new()),
+                ("x".into(), String::new()),
+            ]),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -224,6 +258,25 @@ mod tests {
             Config::parse(text),
             Err(ConfigError::DuplicateProduct(id)) if id == "a"
         ));
+    }
+
+    #[test]
+    fn helper_has_useful_defaults_and_can_be_overridden() {
+        let config = Config::parse("").unwrap();
+        assert_eq!(config.helper.command, ["claude", "-p", "{prompt}"]);
+        assert!(config.helper.voices.contains_key("linkedin"));
+
+        let custom = Config::parse(
+            r#"
+            [helper]
+            command = ["codex", "exec", "{prompt}"]
+            voices = { linkedin = "~/voice.md" }
+            "#,
+        )
+        .unwrap();
+        assert_eq!(custom.helper.command[0], "codex");
+        assert_eq!(custom.helper.voices["linkedin"], "~/voice.md");
+        assert_eq!(custom.helper.name, "Helper");
     }
 
     #[test]

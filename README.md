@@ -89,6 +89,18 @@ headers = { apikey = "{secret:shop-supabase}" }
 
 `examples/founder.toml` shows three products with HTTP and script checks.
 
+### The helper
+
+A fourth pet that looks after you rather than a product. It keeps a to-do list with due dates and study blocks, writes drafts on request, and shows each product's token use for the week. It gets restless when something is overdue and naps when the list is empty.
+
+```toml
+[helper]
+command = ["claude", "-p", "{prompt}"]   # or ["codex", "exec", "{prompt}"]
+voices = { linkedin = "~/.peeps/voice/linkedin.md", x = "" }
+```
+
+Drafts only run when you press **Draft it**. Each entry in `voices` becomes a draft type; point it at a Markdown file describing your voice, or leave it empty. Without `{prompt}` in the command, the request is sent on stdin.
+
 ### Checks
 
 - **`http`** fetches JSON. It counts the array it gets back, or the number at `count_pointer`, and fires at `threshold` (default 1).
@@ -123,13 +135,12 @@ npm test
 ## Roadmap
 
 - Codex and other agents through the same hook protocol
-- A helper pet: to-dos, drafts in your voice, weekly token report
 - Rive animations for the pets
 - iPhone companion with Lock Screen approvals
 
 ## Privacy
 
-No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are the checks you write.
+No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are the checks you write and the drafts you ask for, which go through your own agent.
 
 ## License
 
