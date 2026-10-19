@@ -28,11 +28,15 @@ function pick(seed: number, shift: number, min: number, max: number): number {
   return min + unit * (max - min);
 }
 
+/** A pet may be a little wider than tall, never so much that it looks squashed. */
+const MAX_SQUASH = 0.06;
+
 export function variantFor(seed: string): Variant {
   const value = hash(seed);
+  const width = pick(value, 0, 0.93, 1.1);
   return {
-    width: pick(value, 0, 0.9, 1.12),
-    height: pick(value, 8, 0.88, 1.08),
+    width,
+    height: Math.max(pick(value, 8, 0.95, 1.1), width - MAX_SQUASH),
     eyeSpread: pick(value, 16, -2.5, 3),
     blush: pick(value, 24, 0.85, 1.25),
   };

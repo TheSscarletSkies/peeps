@@ -17,10 +17,11 @@ describe("variantFor", () => {
   it("stays within a cute range", () => {
     for (let i = 0; i < 500; i += 1) {
       const v = variantFor(`product-${i}`);
-      expect(v.width).toBeGreaterThanOrEqual(0.9);
-      expect(v.width).toBeLessThanOrEqual(1.12);
-      expect(v.height).toBeGreaterThanOrEqual(0.88);
-      expect(v.height).toBeLessThanOrEqual(1.08);
+      expect(v.width).toBeGreaterThanOrEqual(0.93);
+      expect(v.width).toBeLessThanOrEqual(1.1);
+      expect(v.height).toBeGreaterThanOrEqual(0.95);
+      expect(v.height).toBeLessThanOrEqual(1.1);
+      expect(v.width - v.height).toBeLessThanOrEqual(0.06 + 1e-9);
       expect(Math.abs(v.eyeSpread)).toBeLessThanOrEqual(3);
       expect(v.blush).toBeGreaterThanOrEqual(0.85);
     }

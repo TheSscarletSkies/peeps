@@ -27,11 +27,11 @@
   </g>
   <g id="pet">
     <g id="body-group">
-      <path id="body" d="M14 74Q8.3 65.1 18.6 59.7Q18.5 49 31.3 48.2Q37 37.9 49.8 41.8Q60 34 70.2 41.8Q83 37.9 88.7 48.2Q101.5 49 101.4 59.7Q111.7 65.1 106 74C100 84 20 84 14 74Z" fill="#E8DDFB"/>
-      <path id="shade" d="M14 74Q8.3 65.1 18.6 59.7Q18.5 49 31.3 48.2Q37 37.9 49.8 41.8Q60 34 70.2 41.8Q83 37.9 88.7 48.2Q101.5 49 101.4 59.7Q111.7 65.1 106 74C100 84 20 84 14 74Z" fill="url(#shade-fill)"/>
-      <path id="glow" d="M14 74Q8.3 65.1 18.6 59.7Q18.5 49 31.3 48.2Q37 37.9 49.8 41.8Q60 34 70.2 41.8Q83 37.9 88.7 48.2Q101.5 49 101.4 59.7Q111.7 65.1 106 74C100 84 20 84 14 74Z" fill="url(#glow-fill)"/>
-      <ellipse id="highlight" cx="32" cy="57" rx="4.5" ry="2" fill="#FFFFFF" opacity="0.8" transform="rotate(-20 32 57)"/>
-      <path id="creases" d="M30 56q30 5 60 0" stroke="#B5785A" stroke-opacity="0.28" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <path id="body" d="M15 77Q9.7 66.6 19.5 59.6Q19.7 47.9 31.9 45.7Q37.6 35.0 50.0 38.0Q60.0 30.4 70.0 38.0Q82.4 35.0 88.1 45.7Q100.3 47.9 100.5 59.6Q110.3 66.6 105.0 77.0C100 86 20 86 15 77Z" fill="#E8DDFB"/>
+      <path id="shade" d="M15 77Q9.7 66.6 19.5 59.6Q19.7 47.9 31.9 45.7Q37.6 35.0 50.0 38.0Q60.0 30.4 70.0 38.0Q82.4 35.0 88.1 45.7Q100.3 47.9 100.5 59.6Q110.3 66.6 105.0 77.0C100 86 20 86 15 77Z" fill="url(#shade-fill)"/>
+      <path id="glow" d="M15 77Q9.7 66.6 19.5 59.6Q19.7 47.9 31.9 45.7Q37.6 35.0 50.0 38.0Q60.0 30.4 70.0 38.0Q82.4 35.0 88.1 45.7Q100.3 47.9 100.5 59.6Q110.3 66.6 105.0 77.0C100 86 20 86 15 77Z" fill="url(#glow-fill)"/>
+      <ellipse id="highlight" cx="33" cy="52" rx="4.5" ry="2" fill="#FFFFFF" opacity="0.8" transform="rotate(-25 33 52)"/>
+      <path id="creases" d="M30 52q30 5 60 0" stroke="#B5785A" stroke-opacity="0.28" stroke-width="1.6" stroke-linecap="round" fill="none"/>
     </g>
     <g id="blush">
       <ellipse id="blush-left" cx="38" cy="73" rx="9" ry="5.5" fill="url(#blush-fill)"/>
@@ -68,7 +68,7 @@
       <rect x="9" y="74" width="102" height="6" rx="3" fill="#F6DDBA"/>
     </g>
   </g>
-  <g id="fx" transform="translate(0 20)">
+  <g id="fx" transform="translate(0 12)">
     <g id="fx-bang" opacity="0"><circle cx="98" cy="24" r="8" fill="#FFE39A"/><path d="M98 19.5v5.5M98 28.2v.3" stroke="#3F2A20" stroke-width="2.4" stroke-linecap="round"/></g>
     <g id="fx-sweat" opacity="0">
       <path id="sweat-left" d="M24 46q-3 5 0 7q3-2 0-7z" fill="#BFE4FB"/>
