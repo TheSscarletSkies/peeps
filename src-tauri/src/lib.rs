@@ -1,5 +1,6 @@
 mod bridge;
 mod commands;
+mod remind;
 mod secrets;
 mod state;
 mod watch;
@@ -14,6 +15,7 @@ use state::App;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             commands::snapshot,
             commands::decide,
@@ -34,6 +36,9 @@ pub fn run() {
             commands::notch,
             commands::open_home,
             commands::save_image,
+            commands::add_calendar,
+            commands::remove_calendar,
+            commands::set_reminders,
         ])
         .setup(|tauri_app| {
             let app = Arc::new(App::load(tauri_app.handle().clone())?);
@@ -63,6 +68,7 @@ pub fn run() {
                     eprintln!("peeps: agent bridge stopped: {error}");
                 }
             });
+            tauri::async_runtime::spawn(remind::run(app.clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())
         })

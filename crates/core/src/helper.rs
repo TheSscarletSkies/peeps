@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, HashSet};
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, TimeDelta, Utc};
 use serde::Serialize;
 
+use crate::calendar::Event;
 use crate::config::{Helper, PetKind};
 use crate::drafts::{self, Draft};
 use crate::mood::Mood;
@@ -27,6 +28,8 @@ pub struct HelperView {
     pub week: Week,
     pub todos_done_this_week: usize,
     pub drafts_this_week: usize,
+    /// The next few calendar events, soonest first.
+    pub upcoming: Vec<Event>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -75,7 +78,12 @@ pub struct HelperInputs<'a> {
     pub todos_done_this_week: usize,
     pub drafts_this_week: usize,
     pub today: NaiveDate,
+    pub upcoming: Vec<Event>,
+    pub now: DateTime<Utc>,
 }
+
+/// Events starting this soon take over the helper's headline.
+const SOON_MINUTES: i64 = 60;
 
 pub fn view(inputs: HelperInputs<'_>) -> HelperView {
     let todos: Vec<TodoView> = inputs
@@ -90,7 +98,16 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
     let count = |state: Due| todos.iter().filter(|t| t.due_state == state).count();
     let (overdue, today) = (count(Due::Overdue), count(Due::Today));
 
-    let (mood, headline) = if inputs.drafting {
+    let next = inputs.upcoming.iter().find(|event| {
+        !event.all_day
+            && event.start > inputs.now
+            && (event.start - inputs.now).num_minutes() <= SOON_MINUTES
+    });
+
+    let (mood, headline) = if let Some(event) = next {
+        let minutes = (event.start - inputs.now).num_minutes().max(1);
+        (Mood::NeedsYou, format!("{} in {minutes} min", event.title))
+    } else if inputs.drafting {
         (Mood::Working, "Writing a draft…".to_owned())
     } else if overdue > 0 {
         (
@@ -133,6 +150,7 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         week: inputs.week,
         todos_done_this_week: inputs.todos_done_this_week,
         drafts_this_week: inputs.drafts_this_week,
+        upcoming: inputs.upcoming,
     }
 }
 
@@ -223,6 +241,8 @@ mod tests {
             todos_done_this_week: 0,
             drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
+            upcoming: Vec::new(),
+            now: Utc::now(),
         });
         (helper.mood, helper.headline)
     }
@@ -264,6 +284,8 @@ mod tests {
             todos_done_this_week: 0,
             drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
+            upcoming: Vec::new(),
+            now: Utc::now(),
         });
         let labels: Vec<_> = helper
             .draft_kinds
@@ -328,5 +350,35 @@ mod tests {
             FixedOffset::east_opt(2 * 3600).unwrap(),
         );
         assert_eq!(east.busiest_day.as_deref(), Some("Saturday"));
+    }
+
+    #[test]
+    fn an_event_within_the_hour_takes_the_headline() {
+        let now = Utc::now();
+        let config = Helper::default();
+        let class = Event {
+            key: "c".into(),
+            calendar: "College".into(),
+            title: "Marketing class".into(),
+            location: None,
+            start: now + TimeDelta::minutes(25),
+            end: now + TimeDelta::minutes(115),
+            all_day: false,
+        };
+        let helper = view(HelperInputs {
+            config: &config,
+            open: Vec::new(),
+            done: Vec::new(),
+            drafts: Vec::new(),
+            drafting: false,
+            week: Week::default(),
+            todos_done_this_week: 0,
+            drafts_this_week: 0,
+            today: now.date_naive(),
+            upcoming: vec![class],
+            now,
+        });
+        assert_eq!(helper.mood, Mood::NeedsYou);
+        assert_eq!(helper.headline, "Marketing class in 25 min");
     }
 }

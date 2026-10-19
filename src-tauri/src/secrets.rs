@@ -14,3 +14,10 @@ impl Secrets for Keychain {
 pub fn set(name: &str, value: &str) -> keyring::Result<()> {
     keyring::Entry::new(SERVICE, name)?.set_password(value)
 }
+
+pub fn remove(name: &str) -> keyring::Result<()> {
+    match keyring::Entry::new(SERVICE, name)?.delete_credential() {
+        Err(keyring::Error::NoEntry) => Ok(()),
+        other => other,
+    }
+}

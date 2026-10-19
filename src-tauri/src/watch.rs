@@ -9,7 +9,7 @@ use peeps_core::advice::{self, Tip};
 use peeps_core::config::Product;
 use peeps_core::helper;
 use peeps_core::snapshot::CheckRun;
-use peeps_core::{paths, usage};
+use peeps_core::{calendar, paths, usage};
 
 use crate::secrets::Keychain;
 use crate::state::App;
@@ -31,6 +31,7 @@ pub async fn run(app: Arc<App>) {
             }
             read_transcripts(&worker);
             run_due_checks(&worker);
+            refresh_calendars(&worker, rescan);
             if rescan {
                 refresh_tips(&worker);
             }
@@ -84,6 +85,36 @@ fn read_transcripts(app: &App) {
             continue;
         };
         world.sessions.record_activity(product, last.at);
+    }
+}
+
+/// Calendars are re-read every quarter of an hour, and straight away when the config changes.
+const CALENDAR_EVERY: chrono::TimeDelta = chrono::TimeDelta::minutes(15);
+
+fn refresh_calendars(app: &App, rescan: bool) {
+    let now = Utc::now();
+    let zone = *chrono::Local::now().offset();
+    for feed in &app.config().calendars {
+        let fetched = app
+            .world()
+            .feeds
+            .get(&feed.name)
+            .and_then(|loaded| loaded.fetched);
+        if !rescan && fetched.is_some_and(|at| now - at < CALENDAR_EVERY) {
+            continue;
+        }
+        let result = calendar::fetch(&feed.url, &Keychain, now);
+        let mut world = app.world();
+        let loaded = world.feeds.entry(feed.name.clone()).or_default();
+        loaded.fetched = Some(now);
+        match result {
+            Ok(text) => {
+                loaded.events = calendar::parse(&text, zone);
+                loaded.error = None;
+            }
+            // Keep the last good copy so a flaky connection doesn't empty the calendar.
+            Err(error) => loaded.error = Some(error),
+        }
     }
 }
 

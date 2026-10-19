@@ -19,7 +19,8 @@ Watching costs nothing. Moods come from agent hooks, transcripts on disk and che
 - **Notes for the next session.** Leave a note for a product and its agent reads it when its next session starts, or after its next step. Nothing running is interrupted.
 - **Checks on your own data.** Point an HTTP check at any JSON API, such as a Supabase table, or run a script in any language.
 - **Token tips.** Spots a large `CLAUDE.md` that loads every session, and the largest model doing consistently short work.
-- **A helper pet.** To-dos and study blocks, drafts in your voice written by your own agent, and a weekly token report.
+- **Calendars and reminders.** Paste the private iCal link from Google, Outlook or iCloud and peeps shows what is coming up and sends a Mac notification beforehand. Lead times are yours to set: per calendar, by words in the title ("class" → 30 minutes), or one default. Links live in your keychain.
+- **A helper pet.** To-dos with `#tags`, repeats and streaks for habits, times and reminders, drafts in your voice written by your own agent, and a weekly token report.
 - **Weekly recap.** Your week as one shareable card: agent hours, tokens, busiest day, to-dos done and drafts written.
 - **Pets with a life.** Poke one and it squishes, poke it three times and it gets dizzy. Pets cheer when an agent finishes, hop when fed a note, hatch from the steamer when you add a product, and wear a witch hat before Halloween and a scarf in winter.
 - **Light or dark, quiet or not.** Theme and an optional boop when a pet needs you live in the sidebar. Sound is off by default.

@@ -26,6 +26,7 @@ import {
   whenLabel,
   type TodoDraft,
 } from "./todoForm";
+import { Upcoming } from "./Upcoming";
 
 type Tab = "todo" | "write" | "tokens";
 
@@ -45,6 +46,7 @@ export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
         <span className="panel__name">{helper.name}</span>
         <span className="panel__headline">{helper.headline}</span>
       </header>
+      <Upcoming events={helper.upcoming} limit={3} />
       <div className="tabs" role="tablist" aria-label="Helper">
         {(
           [

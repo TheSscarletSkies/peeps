@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
+import { Upcoming } from "../helper/Upcoming";
 import { setTodoDone } from "../lib/bridge";
 import type { Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
@@ -10,6 +11,7 @@ import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
 import { greeting } from "./greeting";
 import {
+  BellIcon,
   HomeIcon,
   MoonIcon,
   ProductsIcon,
@@ -22,14 +24,17 @@ import {
 } from "./icons";
 import { ProductCard } from "./ProductCard";
 import { RecapPage } from "./RecapPage";
+import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
 import "./hub.css";
 
-type Page = "home" | "todo" | "write" | "tokens" | "recap" | "products";
+type Page =
+  "home" | "todo" | "reminders" | "write" | "tokens" | "recap" | "products";
 
 const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "home", label: "Home", icon: <HomeIcon /> },
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
+  { id: "reminders", label: "Reminders", icon: <BellIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
   { id: "recap", label: "Recap", icon: <RecapIcon /> },
@@ -129,6 +134,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             <div className="card">
               <Todos helper={helper} onTyping={noop} />
             </div>
+          </Section>
+        )}
+        {page === "reminders" && (
+          <Section
+            title="Reminders"
+            lead="Your calendars and when each kind of event should nudge you."
+          >
+            <RemindersPage snapshot={snapshot} />
           </Section>
         )}
         {page === "write" && (
@@ -256,6 +269,12 @@ function HomePage({ snapshot }: { snapshot: Snapshot }) {
         </section>
 
         <aside className="home__side">
+          {helper.upcoming.length > 0 && (
+            <div className="card">
+              <h2>Coming up</h2>
+              <Upcoming events={helper.upcoming} limit={4} />
+            </div>
+          )}
           <div className="card">
             <h2>Today</h2>
             {helper.todos.length === 0 ? (

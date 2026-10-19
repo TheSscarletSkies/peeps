@@ -1272,3 +1272,65 @@ body,
     rotate: 4deg;
   }
 }
+
+/* Coming up: the next few calendar events. */
+
+.upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upcoming li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+}
+
+.upcoming li[data-soon] {
+  background: color-mix(in srgb, var(--pet, #ffd66b) 14%, var(--surface));
+}
+
+.upcoming__time {
+  flex-shrink: 0;
+  width: 76px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.upcoming__what {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.upcoming__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.upcoming__where {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.upcoming__countdown {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}

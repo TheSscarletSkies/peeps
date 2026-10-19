@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::checks::CheckSpec;
 use crate::paths;
@@ -30,6 +30,56 @@ pub struct Config {
     pub products: Vec<Product>,
     #[serde(default)]
     pub helper: Helper,
+    #[serde(default, rename = "calendar")]
+    pub calendars: Vec<CalendarFeed>,
+    #[serde(default)]
+    pub reminders: Reminders,
+}
+
+/// A private iCal link, such as Google's "secret address in iCal format".
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all(serialize = "camelCase"))]
+pub struct CalendarFeed {
+    pub name: String,
+    /// Usually `{secret:…}`, since the link itself grants access.
+    pub url: String,
+    /// Overrides the default lead time for this calendar.
+    pub remind_minutes: Option<i64>,
+    #[serde(default = "yes")]
+    pub notify: bool,
+}
+
+fn yes() -> bool {
+    true
+}
+
+/// When reminders arrive. Rules match words in a title and win over calendar and default lead times.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields, rename_all(serialize = "camelCase"))]
+pub struct Reminders {
+    pub default_minutes: i64,
+    #[serde(rename = "rule")]
+    pub rules: Vec<ReminderRule>,
+}
+
+impl Default for Reminders {
+    fn default() -> Self {
+        Self {
+            default_minutes: 15,
+            rules: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReminderRule {
+    /// Matches titles containing this text, ignoring case.
+    pub contains: String,
+    pub minutes: i64,
+    /// Matching events never notify.
+    #[serde(default)]
+    pub mute: bool,
 }
 
 /// The assistant pet: to-dos, drafts and the weekly token report.

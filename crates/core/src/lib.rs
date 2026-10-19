@@ -1,4 +1,5 @@
 pub mod advice;
+pub mod calendar;
 pub mod checks;
 pub mod config;
 pub mod config_edit;
@@ -10,6 +11,7 @@ pub mod mood;
 pub mod notes;
 pub mod paths;
 pub mod protocol;
+pub mod reminders;
 pub mod session;
 pub mod snapshot;
 pub mod todos;

@@ -9,6 +9,7 @@ import type {
   NewProduct,
   Notch,
   Note,
+  Reminders,
   Snapshot,
   Todo,
   TodoInput,
@@ -174,4 +175,28 @@ export async function saveImage(name: string, blob: Blob): Promise<string> {
   link.click();
   URL.revokeObjectURL(link.href);
   return `${name}.png`;
+}
+
+export function addCalendar(
+  name: string,
+  link: string,
+  remindMinutes: number | null,
+): Promise<void> {
+  return inApp()
+    ? invoke("add_calendar", { name, link, remindMinutes }).then(
+        () => undefined,
+      )
+    : Promise.resolve();
+}
+
+export function removeCalendar(name: string): Promise<void> {
+  return inApp()
+    ? invoke("remove_calendar", { name }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function setReminders(reminders: Reminders): Promise<void> {
+  return inApp()
+    ? invoke("set_reminders", { ...reminders }).then(() => undefined)
+    : Promise.resolve();
 }

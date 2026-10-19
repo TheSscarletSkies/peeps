@@ -125,6 +125,38 @@ export interface Helper {
   week: Week;
   todosDoneThisWeek: number;
   draftsThisWeek: number;
+  /** The next few calendar events, soonest first. */
+  upcoming: CalendarEvent[];
+}
+
+export interface CalendarEvent {
+  key: string;
+  calendar: string;
+  title: string;
+  location: string | null;
+  start: string;
+  end: string;
+  allDay: boolean;
+}
+
+export interface CalendarStatus {
+  name: string;
+  remindMinutes: number | null;
+  notify: boolean;
+  loaded: boolean;
+  error: string | null;
+}
+
+export interface ReminderRule {
+  /** Matches titles containing this, ignoring case. */
+  contains: string;
+  minutes: number;
+  mute: boolean;
+}
+
+export interface Reminders {
+  defaultMinutes: number;
+  rules: ReminderRule[];
 }
 
 export interface Snapshot {
@@ -133,6 +165,8 @@ export interface Snapshot {
   tips: Tip[];
   helper: Helper;
   configError: string | null;
+  calendars: CalendarStatus[];
+  reminders: Reminders;
 }
 
 export interface Notch {

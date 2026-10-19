@@ -3,9 +3,10 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock};
 
-use chrono::{Local, Utc};
+use chrono::{DateTime, Local, TimeDelta, Utc};
 use peeps_core::advice::Tip;
-use peeps_core::config::Config;
+use peeps_core::calendar::{self, Event, FeedEvent};
+use peeps_core::config::{Config, Reminders};
 use peeps_core::drafts::DraftStore;
 use peeps_core::helper::{self, HelperView, Week};
 use peeps_core::notes::{self, Delivery, NoteStore};
@@ -35,6 +36,26 @@ pub struct World {
     pub permissions: Vec<PendingPermission>,
     pub tips: Vec<Tip>,
     pub week: Week,
+    /// Calendar feeds by name, as last downloaded.
+    pub feeds: HashMap<String, Feed>,
+}
+
+#[derive(Default)]
+pub struct Feed {
+    pub events: Vec<FeedEvent>,
+    pub error: Option<String>,
+    pub fetched: Option<DateTime<Utc>>,
+}
+
+/// How a calendar is doing, for the settings page.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarStatus {
+    pub name: String,
+    pub remind_minutes: Option<i64>,
+    pub notify: bool,
+    pub loaded: bool,
+    pub error: Option<String>,
 }
 
 impl World {
@@ -55,7 +76,13 @@ pub struct AppSnapshot {
     pub snapshot: Snapshot,
     pub helper: HelperView,
     pub config_error: Option<String>,
+    pub calendars: Vec<CalendarStatus>,
+    pub reminders: Reminders,
 }
+
+/// How far ahead the helper lists events.
+const UPCOMING_HOURS: i64 = 36;
+const UPCOMING_LIMIT: usize = 8;
 
 struct Loaded {
     config: Arc<Config>,
@@ -135,6 +162,7 @@ impl App {
             world.transcripts.clear();
             world.transcript_products.clear();
             world.checks.clear();
+            world.feeds.clear();
         }
         self.rescan.store(true, Ordering::Relaxed);
         self.publish();
@@ -174,8 +202,52 @@ impl App {
         self.waiters.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    /// Occurrences across every calendar that overlap `from..to`, soonest first.
+    pub fn events(&self, from: DateTime<Utc>, to: DateTime<Utc>) -> Vec<Event> {
+        let config = self.config();
+        let zone = *Local::now().offset();
+        let world = self.world();
+        let mut events: Vec<Event> = config
+            .calendars
+            .iter()
+            .filter_map(|feed| {
+                let loaded = world.feeds.get(&feed.name)?;
+                Some(calendar::occurrences(
+                    &feed.name,
+                    &loaded.events,
+                    from,
+                    to,
+                    zone,
+                ))
+            })
+            .flatten()
+            .collect();
+        events.sort_by_key(|event| event.start);
+        events
+    }
+
+    pub fn notify(&self, title: &str, body: &str) {
+        use tauri_plugin_notification::NotificationExt;
+        if let Err(error) = self
+            .handle
+            .notification()
+            .builder()
+            .title(title)
+            .body(body)
+            .show()
+        {
+            eprintln!("peeps: could not show a notification: {error}");
+        }
+    }
+
     pub fn snapshot(&self) -> AppSnapshot {
         let config = self.config();
+        let now = Utc::now();
+        let upcoming: Vec<Event> = self
+            .events(now, now + TimeDelta::hours(UPCOMING_HOURS))
+            .into_iter()
+            .take(UPCOMING_LIMIT)
+            .collect();
         let notes = self.notes().recent(RECENT_NOTES).unwrap_or_default();
         let (open, done) = {
             let todos = self.todos();
@@ -200,6 +272,8 @@ impl App {
                 todos_done_this_week,
                 drafts_this_week,
                 today: Local::now().date_naive(),
+                upcoming,
+                now,
             }),
             snapshot: snapshot::build(snapshot::Inputs {
                 config: &config,
@@ -212,6 +286,21 @@ impl App {
                 now: Utc::now(),
             }),
             config_error: self.config_error(),
+            calendars: config
+                .calendars
+                .iter()
+                .map(|feed| {
+                    let loaded = world.feeds.get(&feed.name);
+                    CalendarStatus {
+                        name: feed.name.clone(),
+                        remind_minutes: feed.remind_minutes,
+                        notify: feed.notify,
+                        loaded: loaded.is_some_and(|feed| feed.fetched.is_some()),
+                        error: loaded.and_then(|feed| feed.error.clone()),
+                    }
+                })
+                .collect(),
+            reminders: config.reminders.clone(),
         }
     }
 

@@ -3,7 +3,7 @@
 use serde::Deserialize;
 use toml_edit::{value, Array, ArrayOfTables, DocumentMut, InlineTable, Item, Table};
 
-use crate::config::{Config, ConfigError, Pet, PetKind};
+use crate::config::{Config, ConfigError, Pet, PetKind, Reminders};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,6 +26,12 @@ pub enum EditError {
     EmptyPath,
     #[error("no product with id `{0}`")]
     Unknown(String),
+    #[error("give the calendar a name")]
+    EmptyCalendar,
+    #[error("there is already a calendar called `{0}`")]
+    Duplicate(String),
+    #[error("no calendar called `{0}`")]
+    UnknownCalendar(String),
     #[error(transparent)]
     Invalid(#[from] ConfigError),
 }
@@ -124,6 +130,93 @@ fn color_or_default(color: &str) -> String {
     }
 }
 
+/// The keychain entry that holds a calendar's private link.
+pub fn calendar_secret(name: &str) -> String {
+    format!("calendar-{}", slug(name))
+}
+
+/// Adds a calendar whose link lives in the keychain under [`calendar_secret`].
+pub fn add_calendar(
+    text: &str,
+    name: &str,
+    remind_minutes: Option<i64>,
+) -> Result<String, EditError> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err(EditError::EmptyCalendar);
+    }
+    let existing = Config::parse(text)?;
+    if existing
+        .calendars
+        .iter()
+        .any(|feed| feed.name.eq_ignore_ascii_case(name))
+    {
+        return Err(EditError::Duplicate(name.to_owned()));
+    }
+
+    let mut table = Table::new();
+    table["name"] = value(name);
+    table["url"] = value(format!("{{secret:{}}}", calendar_secret(name)));
+    if let Some(minutes) = remind_minutes {
+        table["remind_minutes"] = value(minutes);
+    }
+
+    let mut doc: DocumentMut = text.parse()?;
+    doc.entry("calendar")
+        .or_insert(Item::ArrayOfTables(ArrayOfTables::new()))
+        .as_array_of_tables_mut()
+        .ok_or(EditError::Shape)?
+        .push(table);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
+pub fn remove_calendar(text: &str, name: &str) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let calendars = doc
+        .get_mut("calendar")
+        .and_then(Item::as_array_of_tables_mut)
+        .ok_or_else(|| EditError::UnknownCalendar(name.to_owned()))?;
+    let index = calendars
+        .iter()
+        .position(|table| table.get("name").and_then(Item::as_str) == Some(name))
+        .ok_or_else(|| EditError::UnknownCalendar(name.to_owned()))?;
+    calendars.remove(index);
+    if calendars.is_empty() {
+        doc.remove("calendar");
+    }
+    Ok(doc.to_string())
+}
+
+/// Replaces the default lead time and the keyword rules.
+pub fn set_reminders(text: &str, reminders: &Reminders) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let mut table = Table::new();
+    table["default_minutes"] = value(reminders.default_minutes);
+    let mut rules = ArrayOfTables::new();
+    for rule in reminders
+        .rules
+        .iter()
+        .filter(|rule| !rule.contains.trim().is_empty())
+    {
+        let mut entry = Table::new();
+        entry["contains"] = value(rule.contains.trim());
+        entry["minutes"] = value(rule.minutes);
+        if rule.mute {
+            entry["mute"] = value(true);
+        }
+        rules.push(entry);
+    }
+    if !rules.is_empty() {
+        table["rule"] = Item::ArrayOfTables(rules);
+    }
+    doc["reminders"] = Item::Table(table);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,5 +308,53 @@ mod tests {
         assert_eq!(slug("Enigma Archives"), "enigma-archives");
         assert_eq!(slug("  Kaiveni   Hiya!! "), "kaiveni-hiya");
         assert_eq!(slug("☕"), "product");
+    }
+
+    #[test]
+    fn calendars_keep_their_links_in_the_keychain() {
+        let text = add_calendar("", "College Gmail", Some(30)).unwrap();
+        let config = Config::parse(&text).unwrap();
+        assert_eq!(config.calendars[0].url, "{secret:calendar-college-gmail}");
+        assert_eq!(config.calendars[0].remind_minutes, Some(30));
+        assert!(matches!(
+            add_calendar(&text, "college gmail", None),
+            Err(EditError::Duplicate(_))
+        ));
+        let removed = remove_calendar(&text, "College Gmail").unwrap();
+        assert!(Config::parse(&removed).unwrap().calendars.is_empty());
+    }
+
+    #[test]
+    fn reminder_rules_round_trip() {
+        use crate::config::ReminderRule;
+        let reminders = Reminders {
+            default_minutes: 10,
+            rules: vec![
+                ReminderRule {
+                    contains: " class ".into(),
+                    minutes: 30,
+                    mute: false,
+                },
+                ReminderRule {
+                    contains: "".into(),
+                    minutes: 5,
+                    mute: false,
+                },
+                ReminderRule {
+                    contains: "focus".into(),
+                    minutes: 0,
+                    mute: true,
+                },
+            ],
+        };
+        let text = set_reminders("# mine\n[settings]\n", &reminders).unwrap();
+        assert!(text.starts_with("# mine"));
+        let parsed = Config::parse(&text).unwrap().reminders;
+        assert_eq!(parsed.default_minutes, 10);
+        assert_eq!(parsed.rules.len(), 2);
+        assert_eq!(parsed.rules[0].contains, "class");
+        assert!(parsed.rules[1].mute);
+        let again = set_reminders(&text, &Reminders::default()).unwrap();
+        assert!(Config::parse(&again).unwrap().reminders.rules.is_empty());
     }
 }

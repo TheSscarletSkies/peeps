@@ -657,3 +657,102 @@
   background: #ffe9e4;
   color: #b0443a;
 }
+
+/* Reminders */
+
+.reminders {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.reminders .card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reminders .card h2 {
+  margin: 0;
+}
+
+.calendars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendars li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--r-box);
+  background: var(--field);
+  font-size: 14px;
+}
+
+.calendars__name {
+  font-weight: 800;
+}
+
+.calendars__state {
+  flex: 1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendars__state[data-error] {
+  color: #ffb3a7;
+}
+
+.calendars__lead {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rule > span {
+  flex-shrink: 0;
+  width: 88px;
+  color: var(--muted);
+}
+
+.rule > input,
+.rule > select {
+  flex: 1;
+  min-width: 0;
+}
+
+.providers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.providers summary {
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.providers p {
+  margin: 6px 0 4px 16px;
+  line-height: 1.5;
+}
+
+.hub .upcoming li {
+  background: var(--field);
+}

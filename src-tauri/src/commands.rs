@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::Utc;
+use peeps_core::config::{ReminderRule, Reminders};
 use peeps_core::config_edit::{self, NewProduct};
 use peeps_core::drafts::{self, Draft};
 use peeps_core::notes::{Delivery, Note};
@@ -268,6 +269,67 @@ fn read_or_empty(path: &Path) -> Result<String> {
 }
 
 /// Writes through a temporary file so a crash never leaves a half-written file behind.
+/// Checks the link really is a calendar, keeps it in the keychain and adds the calendar to the config.
+#[tauri::command]
+pub async fn add_calendar(
+    app: State<'_, Arc<App>>,
+    name: String,
+    link: String,
+    remind_minutes: Option<i64>,
+) -> Result<()> {
+    let link = link.trim().to_owned();
+    if !["https://", "http://", "webcal://"]
+        .iter()
+        .any(|scheme| link.starts_with(scheme))
+    {
+        return Err(
+            "paste the calendar's private iCal link; it starts with https:// or webcal://".into(),
+        );
+    }
+    let probe = link.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        peeps_core::calendar::fetch(&probe, &secrets::Keychain, Utc::now())
+    })
+    .await
+    .map_err(message)??;
+
+    let path = paths::config_file();
+    let updated = config_edit::add_calendar(&read_or_empty(&path)?, &name, remind_minutes)
+        .map_err(message)?;
+    secrets::set(&config_edit::calendar_secret(&name), &link).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn remove_calendar(app: State<'_, Arc<App>>, name: String) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::remove_calendar(&read_or_empty(&path)?, &name).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    secrets::remove(&config_edit::calendar_secret(&name)).map_err(message)?;
+    app.reload_config();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_reminders(
+    app: State<'_, Arc<App>>,
+    default_minutes: i64,
+    rules: Vec<ReminderRule>,
+) -> Result<()> {
+    let path = paths::config_file();
+    let reminders = Reminders {
+        default_minutes,
+        rules,
+    };
+    let updated =
+        config_edit::set_reminders(&read_or_empty(&path)?, &reminders).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 /// Saves a PNG to Downloads and returns where it went.
 #[tauri::command]
 pub fn save_image(name: String, data: Vec<u8>) -> Result<String> {

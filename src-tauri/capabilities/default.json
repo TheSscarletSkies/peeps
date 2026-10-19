@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Lets the notch window talk to the app.",
   "windows": ["main", "home"],
-  "permissions": ["core:default", "dialog:allow-open"]
+  "permissions": ["core:default", "dialog:allow-open", "notification:default"]
 }
