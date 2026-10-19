@@ -207,7 +207,10 @@ body,
 }
 
 .fx-ping,
-.fx-orbit {
+.fx-orbit,
+.fx-steam,
+.fx-tear,
+.fx-drip {
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -221,11 +224,11 @@ body,
 }
 
 .fx-drip {
-  animation: drip 1.4s ease-in infinite;
+  animation: drip 1.8s ease-in infinite;
 }
 
 .fx-steam {
-  animation: rise 1.6s ease-out infinite;
+  animation: puff 1.8s ease-out infinite;
 }
 
 .fx-stink {
@@ -286,14 +289,37 @@ body,
 @keyframes drip {
   0% {
     opacity: 0;
-    transform: translateY(0);
+    transform: translateY(-2px);
   }
-  20% {
+  15%,
+  70% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(12px);
+  }
+}
+
+@keyframes puff {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.6);
+  }
+  8% {
+    opacity: 0.95;
+  }
+  60% {
+    opacity: 0.95;
+    transform: translateY(-6px) scale(1.15);
+  }
+  90% {
+    opacity: 0.9;
+    transform: translateY(-14px) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.3);
   }
 }
 
@@ -891,4 +917,187 @@ body,
 
 .focus .feed select {
   flex: 1;
+}
+
+/* Pet life: reactions, celebrations, hatching and idle moments. */
+
+.live-pet {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.dumpling--failing .dumpling__body {
+  transform: none;
+  animation: sob 1.4s ease-in-out infinite;
+}
+
+.dumpling--dizzy .dumpling__body {
+  animation: wobble 0.6s ease-in-out infinite;
+}
+
+.dumpling--celebrate .dumpling__body {
+  animation: hop 0.6s ease-in-out infinite;
+}
+
+.dumpling--love .dumpling__body {
+  animation: bounce-soft 0.8s ease-in-out infinite;
+}
+
+.fx-orbit--fast {
+  animation-duration: 0.8s;
+}
+
+.fx-tear {
+  animation: tear 1.6s ease-in infinite;
+}
+
+.fx-heart,
+.fx-sparkle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fx-heart {
+  animation: heart 1.6s ease-out infinite;
+}
+
+.fx-sparkle {
+  animation: twinkle 1s ease-in-out infinite;
+}
+
+.motion-squish .dumpling__body {
+  animation: squish 0.32s ease-out;
+}
+
+.motion-hatch {
+  animation: hatch 1.8s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* Idle moments use the separate translate and rotate properties, so they add to the mood motion. */
+
+:is(.dumpling--chill, .dumpling--working) .dumpling__eyes {
+  animation:
+    blink 4.2s infinite,
+    glance 9s ease-in-out var(--idle-delay, 0s) infinite;
+}
+
+.dumpling--chill {
+  animation: wiggle 11s ease-in-out var(--idle-delay, 0s) infinite;
+}
+
+@keyframes sob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(1.5%) scale(1.03, 0.97);
+  }
+}
+
+@keyframes wobble {
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes bounce-soft {
+  50% {
+    transform: translateY(-6%) scale(1.02, 0.98);
+  }
+}
+
+@keyframes squish {
+  40% {
+    transform: scale(1.14, 0.82);
+  }
+  75% {
+    transform: scale(0.96, 1.06);
+  }
+}
+
+@keyframes hatch {
+  0% {
+    opacity: 0;
+    translate: 0 45%;
+    scale: 0.6;
+  }
+  55% {
+    opacity: 1;
+    translate: 0 -8%;
+    scale: 1.05;
+  }
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes tear {
+  0% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  12%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.5);
+  }
+}
+
+@keyframes heart {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.6);
+  }
+  12%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.6);
+  }
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.7;
+    transform: scale(0.6) rotate(20deg);
+  }
+}
+
+@keyframes glance {
+  0%,
+  78%,
+  100% {
+    translate: 0 0;
+  }
+  82%,
+  90% {
+    translate: 2px 0;
+  }
+  94% {
+    translate: -2px 0;
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  90%,
+  100% {
+    rotate: 0deg;
+  }
+  93% {
+    rotate: -4deg;
+  }
+  96% {
+    rotate: 4deg;
+  }
 }

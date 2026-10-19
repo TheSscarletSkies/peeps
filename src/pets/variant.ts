@@ -8,9 +8,17 @@ export interface Variant {
   eyeSpread: number;
   /** Blush size relative to the base. */
   blush: number;
+  /** Offsets idle motions so pets never move in step. */
+  idleDelay: number;
 }
 
-export const BASE: Variant = { width: 1, height: 1, eyeSpread: 0, blush: 1 };
+export const BASE: Variant = {
+  width: 1,
+  height: 1,
+  eyeSpread: 0,
+  blush: 1,
+  idleDelay: 0,
+};
 
 // FNV-1a: tiny, fast and stable across runs, which is all a look needs.
 function hash(text: string): number {
@@ -39,5 +47,6 @@ export function variantFor(seed: string): Variant {
     height: Math.max(pick(value, 8, 0.95, 1.1), width - MAX_SQUASH),
     eyeSpread: pick(value, 16, -2.5, 3),
     blush: pick(value, 24, 0.85, 1.25),
+    idleDelay: (value % 7000) / 1000,
   };
 }

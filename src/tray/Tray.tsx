@@ -4,7 +4,8 @@ import { HelperPanel } from "../helper/HelperPanel";
 import { MOOD_LABEL } from "../hub/ProductCard";
 import { hooksStatus, openHome, setExpanded } from "../lib/bridge";
 import type { Mood, Snapshot } from "../lib/types";
-import { Dumpling } from "../pets/Dumpling";
+import { LivePet } from "../life/LivePet";
+import { usePetEvents } from "../life/usePetEvents";
 import { Setup } from "../setup/Setup";
 import { PetPanel } from "./PetPanel";
 
@@ -28,6 +29,7 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const closeTimer = useRef<number | undefined>(undefined);
 
   const { pets, helper } = snapshot;
+  const { celebrating, arriving } = usePetEvents(pets, true);
   const urgent = pets.filter((pet) => URGENT.includes(pet.mood));
   const selected =
     pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0];
@@ -83,9 +85,11 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
       {!open && (
         <div className="tray__peek">
           {pets.map((pet) => (
-            <Dumpling
+            <LivePet
               key={pet.id}
-              seed={pet.id}
+              id={pet.id}
+              celebrating={celebrating.has(pet.id)}
+              arriving={arriving.has(pet.id)}
               kind={pet.kind}
               color={pet.color}
               mood={pet.mood}
@@ -94,7 +98,7 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
             />
           ))}
           {pets.length > 0 && (
-            <Dumpling
+            <LivePet
               kind={helper.kind}
               color={helper.color}
               mood={helper.mood}
@@ -158,8 +162,10 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
                 style={{ ["--pet" as string]: selected.color }}
               >
                 <div className="focus__pet">
-                  <Dumpling
-                    seed={selected.id}
+                  <LivePet
+                    id={selected.id}
+                    celebrating={celebrating.has(selected.id)}
+                    arriving={arriving.has(selected.id)}
                     kind={selected.kind}
                     color={selected.color}
                     mood={selected.mood}
@@ -187,8 +193,10 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
                       onClick={() => setSelectedId(pet.id)}
                       aria-label={`${pet.name}: ${pet.headline}`}
                     >
-                      <Dumpling
-                        seed={pet.id}
+                      <LivePet
+                        id={pet.id}
+                        celebrating={celebrating.has(pet.id)}
+                        arriving={arriving.has(pet.id)}
                         kind={pet.kind}
                         color={pet.color}
                         mood={pet.mood}

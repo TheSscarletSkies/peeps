@@ -1,8 +1,8 @@
-//! The helper pet: its mood, headline and the weekly token report.
+//! The helper pet: its mood, headline and the weekly recap.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
-use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
+use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, TimeDelta, Utc};
 use serde::Serialize;
 
 use crate::config::{Helper, PetKind};
@@ -24,7 +24,9 @@ pub struct HelperView {
     pub drafts: Vec<Draft>,
     pub draft_kinds: Vec<DraftKind>,
     pub drafting: bool,
-    pub week: Vec<ProductTokens>,
+    pub week: Week,
+    pub todos_done_this_week: usize,
+    pub drafts_this_week: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -42,11 +44,23 @@ pub struct DraftKind {
     pub label: String,
 }
 
+/// The last seven days of agent work.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Week {
+    /// Busiest first.
+    pub products: Vec<ProductWeek>,
+    /// The weekday with the most tokens, in the user's time zone.
+    pub busiest_day: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProductTokens {
+pub struct ProductWeek {
     pub product_id: String,
     pub tokens: u64,
+    /// Minutes in which an agent produced at least one reply.
+    pub active_minutes: u64,
 }
 
 pub struct HelperInputs<'a> {
@@ -55,7 +69,9 @@ pub struct HelperInputs<'a> {
     pub done: Vec<Todo>,
     pub drafts: Vec<Draft>,
     pub drafting: bool,
-    pub week: Vec<ProductTokens>,
+    pub week: Week,
+    pub todos_done_this_week: usize,
+    pub drafts_this_week: usize,
     pub today: NaiveDate,
 }
 
@@ -112,6 +128,8 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
             .collect(),
         drafting: inputs.drafting,
         week: inputs.week,
+        todos_done_this_week: inputs.todos_done_this_week,
+        drafts_this_week: inputs.drafts_this_week,
     }
 }
 
@@ -119,32 +137,56 @@ fn plural(n: usize, one: &str, many: &str) -> String {
     format!("{n} {}", if n == 1 { one } else { many })
 }
 
-/// Tokens each product used over the last seven days, busiest first.
-pub fn weekly_tokens<'a>(
+/// Sums the last seven days of usage per product, in the user's time zone.
+pub fn weekly<'a>(
     usage: impl IntoIterator<Item = (&'a str, &'a [Usage])>,
     now: DateTime<Utc>,
-) -> Vec<ProductTokens> {
+    zone: FixedOffset,
+) -> Week {
     let since = now - TimeDelta::days(7);
-    let mut totals: BTreeMap<&str, u64> = BTreeMap::new();
+    let mut tokens: BTreeMap<&str, u64> = BTreeMap::new();
+    let mut minutes: BTreeMap<&str, HashSet<i64>> = BTreeMap::new();
+    let mut days = [0u64; 7];
     for (product, entries) in usage {
-        let sum: u64 = entries
-            .iter()
-            .filter(|entry| entry.at > since && entry.at <= now)
-            .map(Usage::total)
-            .sum();
-        *totals.entry(product).or_default() += sum;
+        for entry in entries.iter().filter(|e| e.at > since && e.at <= now) {
+            *tokens.entry(product).or_default() += entry.total();
+            minutes
+                .entry(product)
+                .or_default()
+                .insert(entry.at.timestamp() / 60);
+            let day = entry.at.with_timezone(&zone).weekday();
+            days[day.num_days_from_monday() as usize] += entry.total();
+        }
     }
-    let mut week: Vec<ProductTokens> = totals
+    let mut products: Vec<ProductWeek> = tokens
         .into_iter()
         .filter(|(_, tokens)| *tokens > 0)
-        .map(|(product, tokens)| ProductTokens {
+        .map(|(product, tokens)| ProductWeek {
             product_id: product.to_owned(),
             tokens,
+            active_minutes: minutes.get(product).map_or(0, |set| set.len() as u64),
         })
         .collect();
-    week.sort_by_key(|entry| std::cmp::Reverse(entry.tokens));
-    week
+    products.sort_by_key(|entry| std::cmp::Reverse(entry.tokens));
+    let busiest_day = (0..7)
+        .filter(|&i| days[i] > 0)
+        .max_by_key(|&i| days[i])
+        .map(|i| WEEKDAYS[i].to_owned());
+    Week {
+        products,
+        busiest_day,
+    }
 }
+
+const WEEKDAYS: [&str; 7] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+];
 
 #[cfg(test)]
 mod tests {
@@ -170,7 +212,9 @@ mod tests {
             done: Vec::new(),
             drafts: Vec::new(),
             drafting,
-            week: Vec::new(),
+            week: Week::default(),
+            todos_done_this_week: 0,
+            drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
         });
         (helper.mood, helper.headline)
@@ -209,7 +253,9 @@ mod tests {
             done: Vec::new(),
             drafts: Vec::new(),
             drafting: false,
-            week: Vec::new(),
+            week: Week::default(),
+            todos_done_this_week: 0,
+            drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
         });
         let labels: Vec<_> = helper
@@ -221,41 +267,59 @@ mod tests {
     }
 
     #[test]
-    fn weekly_tokens_sum_recent_usage_per_product() {
+    fn weekly_sums_recent_usage_per_product() {
         let now: DateTime<Utc> = "2026-10-19T12:00:00Z".parse().unwrap();
-        let usage = |days_ago: i64, input: u64| Usage {
-            at: now - TimeDelta::days(days_ago),
+        let at = |text: &str| text.parse::<DateTime<Utc>>().unwrap();
+        let usage = |when: &str, input: u64| Usage {
+            at: at(when),
             model: "m".into(),
             input,
             output: 0,
             cache_read: 0,
             cache_write: 0,
         };
-        let shop = [usage(1, 100), usage(10, 999)];
-        let blog = [usage(0, 300)];
-        let shop2 = [usage(2, 50)];
-        let idle = [usage(30, 5)];
-        let week = weekly_tokens(
+        // Two replies in the same minute count as one active minute.
+        let shop = [
+            usage("2026-10-18T09:00:10Z", 100),
+            usage("2026-10-18T09:00:50Z", 20),
+            usage("2026-10-01T09:00:00Z", 999),
+        ];
+        let blog = [usage("2026-10-16T23:30:00Z", 300)];
+        let shop_again = [usage("2026-10-17T10:00:00Z", 50)];
+        let idle = [usage("2026-09-01T10:00:00Z", 5)];
+        let week = weekly(
             [
                 ("shop", &shop[..]),
                 ("blog", &blog[..]),
-                ("shop", &shop2[..]),
+                ("shop", &shop_again[..]),
                 ("idle", &idle[..]),
             ],
             now,
+            FixedOffset::east_opt(0).unwrap(),
         );
         assert_eq!(
-            week,
+            week.products,
             [
-                ProductTokens {
+                ProductWeek {
                     product_id: "blog".into(),
-                    tokens: 300
+                    tokens: 300,
+                    active_minutes: 1
                 },
-                ProductTokens {
+                ProductWeek {
                     product_id: "shop".into(),
-                    tokens: 150
+                    tokens: 170,
+                    active_minutes: 2
                 },
             ]
         );
+        assert_eq!(week.busiest_day.as_deref(), Some("Friday"));
+
+        // The same late-night reply lands on Saturday two hours east.
+        let east = weekly(
+            [("blog", &blog[..])],
+            now,
+            FixedOffset::east_opt(2 * 3600).unwrap(),
+        );
+        assert_eq!(east.busiest_day.as_deref(), Some("Saturday"));
     }
 }

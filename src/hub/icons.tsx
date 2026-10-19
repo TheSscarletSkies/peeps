@@ -52,3 +52,34 @@ export const ProductsIcon = () => (
     <path d="M10 7.5q2-3 4 0" />
   </Icon>
 );
+
+export const RecapIcon = () => (
+  <Icon>
+    <rect x="5" y="3.5" width="14" height="17" rx="3" />
+    <path d="M9 15.5h6M9 8.5l2 2 4-3.5" />
+  </Icon>
+);
+
+export const MoonIcon = () => (
+  <Icon>
+    <path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z" />
+  </Icon>
+);
+
+export const SunIcon = () => (
+  <Icon>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" />
+  </Icon>
+);
+
+export const SoundIcon = ({ on }: { on: boolean }) => (
+  <Icon>
+    <path d="M4 10v4h3.5L12 18V6L7.5 10z" />
+    {on ? (
+      <path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10" />
+    ) : (
+      <path d="M16 10l4 4M20 10l-4 4" />
+    )}
+  </Icon>
+);

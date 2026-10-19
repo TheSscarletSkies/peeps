@@ -143,3 +143,17 @@ export function setExpanded(expanded: boolean): Promise<void> {
     ? invoke("set_expanded", { expanded }).then(() => undefined)
     : Promise.resolve();
 }
+
+/** Saves a PNG to Downloads in the app, or downloads it in the browser preview. */
+export async function saveImage(name: string, blob: Blob): Promise<string> {
+  if (inApp()) {
+    const data = Array.from(new Uint8Array(await blob.arrayBuffer()));
+    return invoke<string>("save_image", { name, data });
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${name}.png`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  return `${name}.png`;
+}

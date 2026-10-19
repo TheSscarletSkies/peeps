@@ -2,7 +2,8 @@ import { useState } from "react";
 
 import { addNote, decide } from "../lib/bridge";
 import type { Mood, Pet } from "../lib/types";
-import { Dumpling } from "../pets/Dumpling";
+import { announceFed } from "../life/events";
+import { LivePet } from "../life/LivePet";
 
 export const MOOD_LABEL: Record<Mood, string> = {
   needsYou: "Needs you",
@@ -16,7 +17,13 @@ export const MOOD_LABEL: Record<Mood, string> = {
   chill: "Chill",
 };
 
-export function ProductCard({ pet }: { pet: Pet }) {
+interface Props {
+  pet: Pet;
+  celebrating?: boolean;
+  arriving?: boolean;
+}
+
+export function ProductCard({ pet, celebrating, arriving }: Props) {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
   const permission = pet.permission;
@@ -24,6 +31,7 @@ export function ProductCard({ pet }: { pet: Pet }) {
   const feed = async () => {
     if (!note.trim()) return;
     await addNote(pet.id, note, "nextSession");
+    announceFed(pet.id);
     setNote("");
     setSent(true);
   };
@@ -31,12 +39,14 @@ export function ProductCard({ pet }: { pet: Pet }) {
   return (
     <article className="pet-card" style={{ ["--pet" as string]: pet.color }}>
       <div className="pet-card__stage">
-        <Dumpling
+        <LivePet
+          id={pet.id}
+          celebrating={celebrating}
+          arriving={arriving}
           kind={pet.kind}
           color={pet.color}
           mood={pet.mood}
           heat={pet.heat}
-          seed={pet.id}
           size={104}
         />
       </div>

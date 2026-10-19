@@ -256,6 +256,17 @@ fn read_or_empty(path: &Path) -> Result<String> {
 }
 
 /// Writes through a temporary file so a crash never leaves a half-written file behind.
+/// Saves a PNG to Downloads and returns where it went.
+#[tauri::command]
+pub fn save_image(name: String, data: Vec<u8>) -> Result<String> {
+    let dir = dirs::download_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("No Downloads folder")?;
+    let path = paths::unused_path(&dir, &paths::safe_file_name(&name, "png"));
+    std::fs::write(&path, data).map_err(message)?;
+    Ok(path.display().to_string())
+}
+
 fn write_atomic(path: &Path, body: &str) -> Result<()> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(message)?;

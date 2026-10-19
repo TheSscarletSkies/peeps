@@ -125,7 +125,7 @@ fn refresh_tips(app: &App) {
         }
     }
     let mut world = app.world();
-    let week = helper::weekly_tokens(
+    let week = helper::weekly(
         world.transcripts.iter().filter_map(|(path, transcript)| {
             world
                 .transcript_products
@@ -133,6 +133,7 @@ fn refresh_tips(app: &App) {
                 .map(|product| (product.as_str(), transcript.entries()))
         }),
         Utc::now(),
+        *chrono::Local::now().offset(),
     );
     world.tips = tips;
     world.week = week;

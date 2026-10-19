@@ -41,9 +41,57 @@ pub fn is_within(path: &Path, root: &Path) -> bool {
     path.starts_with(root)
 }
 
+/// A file name safe on every platform: letters, digits and single dashes, with the extension kept.
+pub fn safe_file_name(name: &str, extension: &str) -> String {
+    let mut stem = String::new();
+    for c in name.chars() {
+        if c.is_ascii_alphanumeric() {
+            stem.push(c.to_ascii_lowercase());
+        } else if !stem.is_empty() && !stem.ends_with('-') {
+            stem.push('-');
+        }
+    }
+    let stem = stem.trim_end_matches('-');
+    let stem = if stem.is_empty() { "peeps" } else { stem };
+    format!("{stem}.{extension}")
+}
+
+/// `dir/name`, or `dir/name-2`, `dir/name-3`… when the name is taken.
+pub fn unused_path(dir: &Path, file_name: &str) -> PathBuf {
+    let candidate = dir.join(file_name);
+    if !candidate.exists() {
+        return candidate;
+    }
+    let (stem, extension) = file_name.rsplit_once('.').unwrap_or((file_name, ""));
+    (2..)
+        .map(|n| dir.join(format!("{stem}-{n}.{extension}")))
+        .find(|path| !path.exists())
+        .expect("an unused name exists")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn file_names_are_tidy() {
+        assert_eq!(
+            safe_file_name("peeps week of Oct 19!", "png"),
+            "peeps-week-of-oct-19.png"
+        );
+        assert_eq!(safe_file_name("../../etc/passwd", "png"), "etc-passwd.png");
+        assert_eq!(safe_file_name("   ", "png"), "peeps.png");
+    }
+
+    #[test]
+    fn unused_path_never_overwrites() {
+        let dir = std::env::temp_dir().join(format!("peeps-unused-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        assert_eq!(unused_path(&dir, "recap.png"), dir.join("recap.png"));
+        std::fs::write(dir.join("recap.png"), b"").unwrap();
+        assert_eq!(unused_path(&dir, "recap.png"), dir.join("recap-2.png"));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[test]
     fn expands_tilde_prefix() {

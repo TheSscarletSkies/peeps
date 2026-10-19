@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { announceFed } from "../life/events";
 import { addNote, decide } from "../lib/bridge";
 import type { Delivery, Pet } from "../lib/types";
 
@@ -19,6 +20,7 @@ export function PetPanel({ pet, onTyping }: Props) {
     if (!text.trim()) return;
     try {
       await addNote(pet.id, text, delivery);
+      announceFed(pet.id);
       setText("");
       setStatus(
         delivery === "nextSession"

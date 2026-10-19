@@ -84,9 +84,16 @@ export interface Draft {
   createdAt: string;
 }
 
-export interface ProductTokens {
+export interface ProductWeek {
   productId: string;
   tokens: number;
+  activeMinutes: number;
+}
+
+export interface Week {
+  /** Busiest first. */
+  products: ProductWeek[];
+  busiestDay: string | null;
 }
 
 export interface Helper {
@@ -100,7 +107,9 @@ export interface Helper {
   drafts: Draft[];
   draftKinds: { id: string; label: string }[];
   drafting: boolean;
-  week: ProductTokens[];
+  week: Week;
+  todosDoneThisWeek: number;
+  draftsThisWeek: number;
 }
 
 export interface Snapshot {

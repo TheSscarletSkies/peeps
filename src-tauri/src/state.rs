@@ -7,7 +7,7 @@ use chrono::{Local, Utc};
 use peeps_core::advice::Tip;
 use peeps_core::config::Config;
 use peeps_core::drafts::DraftStore;
-use peeps_core::helper::{self, HelperView, ProductTokens};
+use peeps_core::helper::{self, HelperView, Week};
 use peeps_core::notes::{self, Delivery, NoteStore};
 use peeps_core::paths;
 use peeps_core::protocol::{Decision, HookEvent, HookInput, Reply};
@@ -34,7 +34,7 @@ pub struct World {
     pub transcript_products: HashMap<PathBuf, String>,
     pub permissions: Vec<PendingPermission>,
     pub tips: Vec<Tip>,
-    pub week: Vec<ProductTokens>,
+    pub week: Week,
 }
 
 impl World {
@@ -184,7 +184,10 @@ impl App {
                 todos.recently_done(RECENT_DONE).unwrap_or_default(),
             )
         };
+        let week_ago = Utc::now() - chrono::TimeDelta::days(7);
+        let todos_done_this_week = self.todos().done_since(week_ago).unwrap_or_default();
         let drafts = self.drafts().recent(RECENT_DRAFTS).unwrap_or_default();
+        let drafts_this_week = self.drafts().count_since(week_ago).unwrap_or_default();
         let world = self.world();
         AppSnapshot {
             helper: helper::view(helper::HelperInputs {
@@ -194,6 +197,8 @@ impl App {
                 drafts,
                 drafting: self.drafting.load(Ordering::SeqCst),
                 week: world.week.clone(),
+                todos_done_this_week,
+                drafts_this_week,
                 today: Local::now().date_naive(),
             }),
             snapshot: snapshot::build(snapshot::Inputs {

@@ -207,6 +207,14 @@ impl DraftStore {
         rows.collect()
     }
 
+    pub fn count_since(&self, since: DateTime<Utc>) -> rusqlite::Result<usize> {
+        self.db.query_row(
+            "SELECT COUNT(*) FROM drafts WHERE created_at >= ?1",
+            params![since],
+            |row| row.get::<_, i64>(0).map(|n| n as usize),
+        )
+    }
+
     pub fn delete(&self, id: i64) -> rusqlite::Result<bool> {
         Ok(self
             .db
@@ -297,6 +305,12 @@ mod tests {
         let second = store.add("x", "b", "second", now).unwrap();
         let recent = store.recent(5).unwrap();
         assert_eq!(recent[0].text, "second");
+        assert_eq!(
+            store
+                .count_since(now - chrono::TimeDelta::hours(1))
+                .unwrap(),
+            2
+        );
         assert!(store.delete(second.id).unwrap());
         assert_eq!(store.recent(5).unwrap().len(), 1);
     }

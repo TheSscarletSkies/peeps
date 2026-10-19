@@ -19,17 +19,21 @@ Watching costs nothing. Moods come from agent hooks, transcripts on disk and che
 - **Notes for the next session.** Leave a note for a product and its agent reads it when its next session starts, or after its next step. Nothing running is interrupted.
 - **Checks on your own data.** Point an HTTP check at any JSON API, such as a Supabase table, or run a script in any language.
 - **Token tips.** Spots a large `CLAUDE.md` that loads every session, and the largest model doing consistently short work.
+- **A helper pet.** To-dos and study blocks, drafts in your voice written by your own agent, and a weekly token report.
+- **Weekly recap.** Your week as one shareable card: agent hours, tokens, busiest day, to-dos done and drafts written.
+- **Pets with a life.** Poke one and it squishes, poke it three times and it gets dizzy. Pets cheer when an agent finishes, hop when fed a note, hatch from the steamer when you add a product, and wear a witch hat before Halloween and a scarf in winter.
+- **Light or dark, quiet or not.** Theme and an optional boop when a pet needs you live in the sidebar. Sound is off by default.
 
 ## Moods
 
 | Mood       | Shows as            | Comes from                                         |
 | ---------- | ------------------- | -------------------------------------------------- |
 | Needs you  | Hops, with a `!`    | A permission request waiting for you               |
-| Failing    | Tipped over, X eyes | A session that stopped with an error               |
-| Steaming   | Steam, jitters      | Context window past `steam_at_context`             |
+| Failing    | Cries, wobbles      | A session that stopped with an error               |
+| Steaming   | Steam puffs, jitter | Context window past `steam_at_context`             |
 | Hungry     | Drools, hops        | A check with `signal = "hungry"`                   |
 | Litter box | Stink lines         | A check with `signal = "litter_box"`               |
-| Sweating   | Sweat drops         | An agent working longer than `sweat_after_minutes` |
+| Sweating   | Sweat droplets      | An agent working longer than `sweat_after_minutes` |
 | Working    | Bobs                | An agent working                                   |
 | Stalled    | Dozes               | No activity for `expect_activity_every_hours`      |
 | Chill      | Breathes            | Nothing to report                                  |

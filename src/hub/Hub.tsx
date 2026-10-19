@@ -3,26 +3,36 @@ import { useState, type ReactNode } from "react";
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
 import { setTodoDone } from "../lib/bridge";
 import type { Snapshot } from "../lib/types";
+import { LivePet } from "../life/LivePet";
+import { boop, setSoundEnabled, soundEnabled } from "../life/sound";
+import { usePetEvents } from "../life/usePetEvents";
 import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
 import { greeting } from "./greeting";
 import {
   HomeIcon,
+  MoonIcon,
   ProductsIcon,
+  RecapIcon,
+  SoundIcon,
+  SunIcon,
   TodoIcon,
   TokensIcon,
   WriteIcon,
 } from "./icons";
 import { ProductCard } from "./ProductCard";
+import { RecapPage } from "./RecapPage";
+import { savedTheme, saveTheme, type Theme } from "./theme";
 import "./hub.css";
 
-type Page = "home" | "todo" | "write" | "tokens" | "products";
+type Page = "home" | "todo" | "write" | "tokens" | "recap" | "products";
 
 const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "home", label: "Home", icon: <HomeIcon /> },
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
+  { id: "recap", label: "Recap", icon: <RecapIcon /> },
   { id: "products", label: "Products", icon: <ProductsIcon /> },
 ];
 
@@ -39,10 +49,23 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
   const [page, setPage] = useState<Page>(
     snapshot.pets.length === 0 ? "products" : "home",
   );
+  const [theme, setTheme] = useState<Theme>(savedTheme);
+  const [sound, setSound] = useState(soundEnabled);
   const { helper } = snapshot;
 
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    saveTheme(next);
+    setTheme(next);
+  };
+  const toggleSound = () => {
+    setSoundEnabled(!sound);
+    setSound(!sound);
+    if (!sound) boop();
+  };
+
   return (
-    <div className="hub">
+    <div className="hub" data-theme={theme}>
       <aside className="hub__side">
         <div className="hub__brand">
           <Dumpling
@@ -70,6 +93,25 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             </button>
           ))}
         </nav>
+        <div className="hub__toggles">
+          <button
+            className="toggle-icon"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Use light theme" : "Use dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+          >
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+          <button
+            className="toggle-icon"
+            onClick={toggleSound}
+            aria-pressed={sound}
+            aria-label="Boop when a pet needs you"
+            title={sound ? "Sound on" : "Sound off"}
+          >
+            <SoundIcon on={sound} />
+          </button>
+        </div>
         <p className="hub__status">
           <span className="hub__dot" aria-hidden="true" />
           Watching {snapshot.pets.length}{" "}
@@ -110,6 +152,11 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             </div>
           </Section>
         )}
+        {page === "recap" && (
+          <Section title="Recap" lead="Your week in one card, ready to share.">
+            <RecapPage snapshot={snapshot} />
+          </Section>
+        )}
         {page === "products" && (
           <Section title="Products" lead="Each product gets a pet.">
             <Setup
@@ -146,6 +193,7 @@ function Section({
 
 function HomePage({ snapshot }: { snapshot: Snapshot }) {
   const { pets, helper } = snapshot;
+  const { celebrating, arriving } = usePetEvents(pets);
   const urgent = pets.filter((pet) => URGENT.has(pet.mood));
   const today = helper.todos.filter(
     (todo) => todo.dueState === "overdue" || todo.dueState === "today",
@@ -171,17 +219,19 @@ function HomePage({ snapshot }: { snapshot: Snapshot }) {
         <div className="hero__steamer" aria-hidden="true">
           <div className="hero__pets">
             {pets.slice(0, 4).map((pet) => (
-              <Dumpling
+              <LivePet
                 key={pet.id}
+                id={pet.id}
+                celebrating={celebrating.has(pet.id)}
+                arriving={arriving.has(pet.id)}
                 kind={pet.kind}
                 color={pet.color}
                 mood={pet.mood}
                 heat={pet.heat}
-                seed={pet.id}
                 size={84}
               />
             ))}
-            <Dumpling
+            <LivePet
               kind={helper.kind}
               color={helper.color}
               mood={helper.mood}
@@ -196,7 +246,12 @@ function HomePage({ snapshot }: { snapshot: Snapshot }) {
       <div className="home">
         <section className="home__pets" aria-label="Your products">
           {pets.map((pet) => (
-            <ProductCard key={pet.id} pet={pet} />
+            <ProductCard
+              key={pet.id}
+              pet={pet}
+              celebrating={celebrating.has(pet.id)}
+              arriving={arriving.has(pet.id)}
+            />
           ))}
         </section>
 

@@ -31,6 +31,7 @@ pub fn run() {
             commands::set_secret,
             commands::set_expanded,
             commands::open_home,
+            commands::save_image,
         ])
         .setup(|tauri_app| {
             let app = Arc::new(App::load(tauri_app.handle().clone())?);

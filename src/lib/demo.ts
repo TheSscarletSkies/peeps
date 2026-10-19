@@ -105,11 +105,16 @@ export const demoSnapshot: Snapshot = {
       { id: "x", label: "post for X" },
     ],
     drafting: false,
-    week: [
-      { productId: "funderly", tokens: 412000 },
-      { productId: "kaiveni-hiya", tokens: 268000 },
-      { productId: "enigma-archives", tokens: 54000 },
-    ],
+    week: {
+      products: [
+        { productId: "funderly", tokens: 412000, activeMinutes: 640 },
+        { productId: "kaiveni-hiya", tokens: 268000, activeMinutes: 395 },
+        { productId: "enigma-archives", tokens: 54000, activeMinutes: 85 },
+      ],
+      busiestDay: "Wednesday",
+    },
+    todosDoneThisWeek: 9,
+    draftsThisWeek: 3,
   },
   configError: null,
 };

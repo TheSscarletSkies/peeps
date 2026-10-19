@@ -83,11 +83,41 @@
   text-align: center;
 }
 
+.hub__toggles {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  padding: 0 4px;
+}
+
+.toggle-icon {
+  display: grid;
+  place-items: center;
+  width: var(--h-small);
+  height: var(--h-small);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toggle-icon:hover,
+.toggle-icon[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.toggle-icon:focus-visible {
+  outline: 2px solid var(--focus);
+}
+
 .hub__status {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: auto 0 0;
+  margin: 0;
   padding: 10px 12px;
   border-radius: var(--r-control);
   background: var(--surface);
@@ -403,4 +433,227 @@
 
 .hub .card .todos li[data-due="overdue"] {
   background: #2a1a17;
+}
+
+/* Recap: a 4:5 card that exports at 1080 by 1350. */
+
+.recap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.recap__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 200px;
+}
+
+.recap-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 540px;
+  height: 675px;
+  padding: 36px;
+  box-sizing: border-box;
+  border-radius: var(--r-card);
+  background:
+    radial-gradient(
+      90% 60% at 100% 0%,
+      rgba(255, 186, 140, 0.28) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      80% 50% at 0% 100%,
+      rgba(196, 220, 255, 0.16) 0%,
+      transparent 70%
+    ),
+    #171513;
+  color: #f6f1ea;
+  font-family: "Nunito", system-ui, sans-serif;
+}
+
+.recap-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recap-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.recap-card__range {
+  color: #a39a90;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.recap-card__hero strong {
+  display: block;
+  font-size: 92px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #ffc9a8;
+}
+
+.recap-card__hero span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #d8cfc4;
+}
+
+.recap-card__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.recap-card__stats div {
+  padding: 12px;
+  border-radius: var(--r-box);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.recap-card__stats dt {
+  color: #a39a90;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.recap-card__stats dd {
+  margin: 4px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.recap-card__pets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recap-card__pets li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px 4px 8px;
+  border-radius: var(--r-box);
+  background: color-mix(in srgb, var(--pet) 12%, transparent);
+}
+
+.recap-card__name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.recap-card__hours {
+  margin-left: auto;
+  color: var(--pet);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.recap-card__lineup {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.recap-card__lineup .dumpling {
+  animation: none;
+}
+
+.recap-card__foot {
+  margin-top: -8px;
+  color: #6f6760;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Light theme: cream paper, same pastel pets. */
+
+.hub[data-theme="light"] {
+  --ink: #f6f1ea;
+  --surface: #fffdf9;
+  --line: #ece4da;
+  --text: #2b2420;
+  --muted: #8a7f75;
+  --accent: #ffc9a8;
+  --accent-ink: #3a2418;
+  --field: #f4eee6;
+  --field-line: #e6ddd2;
+  --focus: rgba(43, 36, 32, 0.35);
+  --check: #6cc490;
+  --check-line: #cfc5ba;
+  --card-shadow: 0 1px 2px rgba(80, 50, 30, 0.06), inset 0 0 0 1px var(--line);
+}
+
+.hub[data-theme="light"] .hero {
+  background:
+    radial-gradient(
+      70% 120% at 78% 115%,
+      rgba(255, 186, 140, 0.4) 0%,
+      transparent 60%
+    ),
+    var(--surface);
+}
+
+.hub[data-theme="light"] .pet-card__ask {
+  background: #fff6dc;
+}
+
+.hub[data-theme="light"] .pet-card__ask code,
+.hub[data-theme="light"] .mood[data-mood="needsYou"] {
+  color: #8a6510;
+}
+
+.hub[data-theme="light"] .mood[data-mood="needsYou"] {
+  background: #fff1c7;
+}
+
+.hub[data-theme="light"] .mood[data-mood="failing"],
+.hub[data-theme="light"] .mood[data-mood="steaming"] {
+  background: #ffe4df;
+  color: #b0443a;
+}
+
+.hub[data-theme="light"] .mood[data-mood="hungry"],
+.hub[data-theme="light"] .mood[data-mood="litterBox"] {
+  background: #ffeadc;
+  color: #a35a2e;
+}
+
+.hub[data-theme="light"] .mood[data-mood="working"],
+.hub[data-theme="light"] .mood[data-mood="sweating"] {
+  background: #e3eeff;
+  color: #3d65a8;
+}
+
+.hub[data-theme="light"] .today li[data-due="overdue"] span {
+  color: #b0443a;
+}
+
+.hub[data-theme="light"] .card .todos li[data-due="overdue"],
+.hub[data-theme="light"] .hub__error {
+  background: #ffe9e4;
+  color: #b0443a;
 }

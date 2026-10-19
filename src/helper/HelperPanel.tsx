@@ -279,7 +279,10 @@ export function Tokens({
   pets: Pet[];
   tips: Tip[];
 }) {
-  const total = helper.week.reduce((sum, entry) => sum + entry.tokens, 0);
+  const total = helper.week.products.reduce(
+    (sum, entry) => sum + entry.tokens,
+    0,
+  );
   const name = (id: string) => pets.find((pet) => pet.id === id)?.name ?? id;
 
   if (total === 0) {
@@ -296,7 +299,7 @@ export function Tokens({
         {compact.format(total)} tokens in the last 7 days
       </p>
       <ul className="week">
-        {helper.week.map((entry) => (
+        {helper.week.products.map((entry) => (
           <li key={entry.productId}>
             <span className="week__name">{name(entry.productId)}</span>
             <span className="week__bar">

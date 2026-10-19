@@ -158,6 +158,14 @@ impl TodoStore {
         rows.collect()
     }
 
+    pub fn done_since(&self, since: DateTime<Utc>) -> rusqlite::Result<usize> {
+        self.db.query_row(
+            "SELECT COUNT(*) FROM todos WHERE done_at >= ?1",
+            params![since],
+            |row| row.get::<_, i64>(0).map(|n| n as usize),
+        )
+    }
+
     /// Recently finished to-dos, newest first.
     pub fn recently_done(&self, limit: usize) -> rusqlite::Result<Vec<Todo>> {
         let mut query = self.db.prepare(&format!(
@@ -206,6 +214,14 @@ mod tests {
 
         assert!(store.set_done(todo.id, true, now).unwrap());
         assert!(store.open_items().unwrap().is_empty());
+        assert_eq!(
+            store.done_since(now - chrono::TimeDelta::days(7)).unwrap(),
+            1
+        );
+        assert_eq!(
+            store.done_since(now + chrono::TimeDelta::days(1)).unwrap(),
+            0
+        );
         assert_eq!(store.recently_done(5).unwrap()[0].title, "Post");
 
         assert!(store.set_done(todo.id, false, now).unwrap());
