@@ -41,37 +41,6 @@ body,
   white-space: nowrap;
 }
 
-.tray {
-  box-sizing: border-box;
-  height: 48px;
-  background: var(--ink);
-  border-radius: 0 0 22px 22px;
-  padding: 6px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tray--open {
-  height: 100%;
-  border-radius: 0 0 34px 34px;
-  padding: 14px 18px 18px;
-}
-
-.tray__peek {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 100%;
-}
-
-.tray__count {
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--accent);
-}
-
 .tray__error,
 .tray__tip,
 .tray__error {
@@ -356,10 +325,6 @@ body,
   }
 }
 
-.tray--open {
-  overflow-y: auto;
-}
-
 .button--small {
   height: var(--h-small);
   padding: 0 12px;
@@ -532,6 +497,64 @@ body,
 .todos__title {
   flex: 1;
   min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: text;
+}
+
+.todos__title:hover {
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 3px;
+}
+
+.todos li.todos__edit {
+  display: block;
+  padding: 10px;
+}
+
+.todos__edit form,
+.todos__add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todos__add .feed .feed__date,
+.todos__edit .feed .feed__date {
+  flex: 1;
+  min-width: 140px;
+}
+
+.segmented {
+  display: flex;
+  flex-shrink: 0;
+  height: var(--h-control);
+  padding: 3px;
+  box-sizing: border-box;
+  border: 1px solid var(--field-line);
+  border-radius: var(--r-control);
+  background: var(--field);
+}
+
+.segmented button {
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.segmented .segmented__on {
+  background: var(--text);
+  color: var(--ink);
 }
 
 .todos__tag {
@@ -638,9 +661,9 @@ body,
 
 /* Form controls. Every text field, date, dropdown and text area shares one look. */
 
-:is(.tray, .hub) input:not([type="checkbox"]),
-:is(.tray, .hub) select,
-:is(.tray, .hub) textarea {
+:is(.notch, .hub) input:not([type="checkbox"]),
+:is(.notch, .hub) select,
+:is(.notch, .hub) textarea {
   box-sizing: border-box;
   height: var(--h-control);
   min-width: 0;
@@ -655,7 +678,7 @@ body,
   transition: border-color 0.15s;
 }
 
-:is(.tray, .hub) textarea {
+:is(.notch, .hub) textarea {
   height: auto;
   padding: 10px 16px;
   border-radius: var(--r-box);
@@ -663,7 +686,7 @@ body,
   resize: none;
 }
 
-:is(.tray, .hub) select {
+:is(.notch, .hub) select {
   padding-right: 34px;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted) 50%),
@@ -675,29 +698,29 @@ body,
   background-repeat: no-repeat;
 }
 
-:is(.tray, .hub) input[type="date"] {
+:is(.notch, .hub) input[type="date"] {
   flex: 0 0 auto;
   color-scheme: dark;
 }
 
-:is(.tray, .hub) input[type="date"]::-webkit-calendar-picker-indicator {
+:is(.notch, .hub) input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.55;
   cursor: pointer;
 }
 
-:is(.tray, .hub) ::placeholder {
+:is(.notch, .hub) ::placeholder {
   color: var(--muted);
   opacity: 1;
 }
 
-:is(.tray, .hub) input:not([type="checkbox"]):focus,
-:is(.tray, .hub) select:focus,
-:is(.tray, .hub) textarea:focus {
+:is(.notch, .hub) input:not([type="checkbox"]):focus,
+:is(.notch, .hub) select:focus,
+:is(.notch, .hub) textarea:focus {
   outline: none;
   border-color: var(--focus);
 }
 
-:is(.tray, .hub) input[type="checkbox"] {
+:is(.notch, .hub) input[type="checkbox"] {
   appearance: none;
   flex-shrink: 0;
   width: 20px;
@@ -712,14 +735,14 @@ body,
     border-color 0.15s;
 }
 
-:is(.tray, .hub) input[type="checkbox"]:checked {
+:is(.notch, .hub) input[type="checkbox"]:checked {
   border-color: var(--check);
   background: var(--check)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-4.9' fill='none' stroke='%230e2418' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
     center / 12px no-repeat;
 }
 
-:is(.tray, .hub) input[type="checkbox"]:hover {
+:is(.notch, .hub) input[type="checkbox"]:hover {
   border-color: var(--check);
 }
 
@@ -774,26 +797,13 @@ body,
   padding: 0 16px;
 }
 
-:is(.tray, .hub) :is(button, input, select, textarea):focus-visible {
+:is(.notch, .hub) :is(button, input, select, textarea):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
-:is(.tray, .hub) :is(input, select, textarea):focus-visible {
+:is(.notch, .hub) :is(input, select, textarea):focus-visible {
   outline: none;
-}
-
-/* Open tray: tabs on top, one focused card glowing in its pet's colour, the rest as pills. */
-
-.tray__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tray__tabs {
-  display: flex;
-  gap: 4px;
 }
 
 .tray__link {
@@ -810,113 +820,125 @@ body,
   color: var(--text);
 }
 
-.tray__pets {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 168px;
-  gap: 10px;
-  min-height: 0;
+/* The notch: pets wander the menu bar beside the camera; a card drops down when one is clicked. */
+
+.notch {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  border-radius: 0 0 14px 14px;
 }
 
-.focus {
+.notch--open {
+  border-radius: 0 0 26px 26px;
+}
+
+.notch__strip {
   position: relative;
-  padding: 16px;
-  border: 1px solid var(--field-line);
-  border-radius: var(--r-card);
-  background:
-    radial-gradient(
-      90% 120% at 12% 100%,
-      color-mix(in srgb, var(--pet) 26%, transparent) 0%,
-      transparent 65%
-    ),
-    var(--surface);
-  overflow-y: auto;
-}
-
-.focus--pet {
-  display: flex;
-  gap: 14px;
-}
-
-.focus__pet {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
   flex-shrink: 0;
+  height: var(--strip);
 }
 
-.focus__mood {
-  padding: 2px 10px;
-  border-radius: var(--r-tag);
-  background: color-mix(in srgb, var(--pet) 22%, var(--field));
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.focus .panel {
-  flex: 1;
-  min-width: 0;
-}
-
-.pills {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 4px;
-  border: 1px solid var(--field-line);
-  border-radius: var(--r-box);
-  background: var(--surface);
-  color: var(--text);
+.notch__setup {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
   font-family: inherit;
-  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
 }
 
-.pill:hover {
-  border-color: color-mix(in srgb, var(--pet) 50%, var(--field-line));
+.roamer {
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition-property: transform;
+  transition-timing-function: linear;
 }
 
-.pill[data-urgent] {
-  border-color: color-mix(in srgb, var(--pet) 70%, #ffd66b);
-  background: color-mix(in srgb, var(--pet) 12%, var(--surface));
+.roamer--walking .dumpling {
+  animation: waddle 0.36s ease-in-out infinite;
 }
 
-.pill__text {
+.roamer--selected::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 6px;
+  height: 2px;
+  margin-left: -3px;
+  border-radius: 2px;
+  background: var(--text);
+}
+
+.roamer:focus-visible {
+  outline: 2px solid var(--focus);
+  border-radius: var(--r-tag);
+}
+
+.notch__card {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 10px;
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 18px 16px;
+  animation: drop 0.22s ease-out;
 }
 
-.pill__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 800;
+.notch__head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -30px;
 }
 
-.pill__mood {
-  color: var(--muted);
-  font-size: 11px;
+.notch__card .tray__link {
+  align-self: center;
 }
 
-.focus .feed {
+.notch__card .feed {
   flex-wrap: wrap;
 }
 
-.focus .feed input:not([type="date"]) {
+.notch__card .feed input:not([type="date"]) {
   flex: 1 1 100%;
 }
 
-.focus .feed select {
+.notch__card .feed select {
   flex: 1;
+}
+
+@keyframes waddle {
+  25% {
+    rotate: -7deg;
+    translate: 0 -1px;
+  }
+  75% {
+    rotate: 7deg;
+    translate: 0 -1px;
+  }
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 /* Pet life: reactions, celebrations, hatching and idle moments. */

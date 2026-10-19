@@ -4,10 +4,18 @@ import {
   addTodo,
   deleteDraft,
   deleteTodo,
+  editTodo,
   setTodoDone,
   writeDraft,
 } from "../lib/bridge";
-import type { DueState, Helper, Pet, Tip, TodoKind } from "../lib/types";
+import type {
+  DueState,
+  Helper,
+  OpenTodo,
+  Pet,
+  Tip,
+  TodoKind,
+} from "../lib/types";
 
 type Tab = "todo" | "write" | "tokens";
 
@@ -61,6 +69,142 @@ const DUE_LABEL: Record<DueState, string> = {
   undated: "",
 };
 
+const KINDS: { id: TodoKind; label: string }[] = [
+  { id: "task", label: "To-do" },
+  { id: "study", label: "Study" },
+];
+
+/** Study items are tagged and counted apart from everyday to-dos. */
+function KindSwitch({
+  kind,
+  onChange,
+}: {
+  kind: TodoKind;
+  onChange: (kind: TodoKind) => void;
+}) {
+  return (
+    <div className="segmented" role="radiogroup" aria-label="Type">
+      {KINDS.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          role="radio"
+          aria-checked={kind === option.id}
+          className={kind === option.id ? "segmented__on" : undefined}
+          onClick={() => onChange(option.id)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TodoRow({
+  todo,
+  onTyping,
+}: {
+  todo: OpenTodo;
+  onTyping: (typing: boolean) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(todo.title);
+  const [kind, setKind] = useState<TodoKind>(todo.kind);
+  const [due, setDue] = useState(todo.due ?? "");
+
+  const open = () => {
+    setTitle(todo.title);
+    setKind(todo.kind);
+    setDue(todo.due ?? "");
+    setEditing(true);
+    onTyping(true);
+  };
+  const close = () => {
+    setEditing(false);
+    onTyping(false);
+  };
+  const save = async () => {
+    if (!title.trim()) return;
+    await editTodo(todo.id, title, kind, due || null);
+    close();
+  };
+
+  if (editing) {
+    return (
+      <li className="todos__edit">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") close();
+          }}
+        >
+          <label className="visually-hidden" htmlFor={`todo-${todo.id}`}>
+            To-do
+          </label>
+          <input
+            id={`todo-${todo.id}`}
+            value={title}
+            autoFocus
+            onChange={(event) => setTitle(event.target.value)}
+          />
+          <div className="feed">
+            <KindSwitch kind={kind} onChange={setKind} />
+            <label className="visually-hidden" htmlFor={`due-${todo.id}`}>
+              Due date
+            </label>
+            <input
+              id={`due-${todo.id}`}
+              className="feed__date"
+              type="date"
+              value={due}
+              onChange={(event) => setDue(event.target.value)}
+            />
+            <button type="button" className="button" onClick={close}>
+              Cancel
+            </button>
+            <button
+              className="button button--primary"
+              type="submit"
+              disabled={!title.trim()}
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </li>
+    );
+  }
+
+  return (
+    <li data-due={todo.dueState}>
+      <input
+        type="checkbox"
+        aria-label={`Done: ${todo.title}`}
+        onChange={() => void setTodoDone(todo.id, true)}
+      />
+      <button className="todos__title" onClick={open} title="Edit">
+        {todo.kind === "study" && <span className="todos__tag">Study</span>}
+        {todo.title}
+      </button>
+      {todo.due && (
+        <span className="todos__due">
+          {DUE_LABEL[todo.dueState] || todo.due}
+        </span>
+      )}
+      <button
+        className="todos__remove"
+        aria-label={`Delete ${todo.title}`}
+        onClick={() => void deleteTodo(todo.id)}
+      >
+        ×
+      </button>
+    </li>
+  );
+}
+
 export function Todos({
   helper,
   onTyping,
@@ -92,77 +236,50 @@ export function Todos({
       ) : (
         <ul className="todos">
           {helper.todos.map((todo) => (
-            <li key={todo.id} data-due={todo.dueState}>
-              <input
-                type="checkbox"
-                aria-label={`Done: ${todo.title}`}
-                onChange={() => void setTodoDone(todo.id, true)}
-              />
-              <span className="todos__title">
-                {todo.kind === "study" && (
-                  <span className="todos__tag">Study</span>
-                )}
-                {todo.title}
-              </span>
-              {todo.due && (
-                <span className="todos__due">
-                  {DUE_LABEL[todo.dueState] || todo.due}
-                </span>
-              )}
-              <button
-                className="todos__remove"
-                aria-label={`Delete ${todo.title}`}
-                onClick={() => void deleteTodo(todo.id)}
-              >
-                ×
-              </button>
-            </li>
+            <TodoRow key={todo.id} todo={todo} onTyping={onTyping} />
           ))}
         </ul>
       )}
       <form
-        className="feed"
+        className="todos__add"
         onSubmit={(event) => {
           event.preventDefault();
           void add();
         }}
       >
         <label className="visually-hidden" htmlFor="todo-title">
-          New to-do
+          New {kind === "study" ? "study item" : "to-do"}
         </label>
         <input
           id="todo-title"
           value={title}
-          placeholder="Add a to-do"
+          placeholder={
+            kind === "study" ? "What are you studying?" : "Add a to-do"
+          }
           onChange={(event) => setTitle(event.target.value)}
           onFocus={() => onTyping(true)}
           onBlur={() => onTyping(false)}
         />
-        <label className="visually-hidden" htmlFor="todo-due">
-          Due date
-        </label>
-        <input
-          id="todo-due"
-          className="feed__date"
-          type="date"
-          value={due}
-          onChange={(event) => setDue(event.target.value)}
-        />
-        <button
-          type="button"
-          className={kind === "study" ? "chip chip--on" : "chip"}
-          aria-pressed={kind === "study"}
-          onClick={() => setKind(kind === "study" ? "task" : "study")}
-        >
-          Study
-        </button>
-        <button
-          className="button button--primary"
-          type="submit"
-          disabled={!title.trim()}
-        >
-          Add
-        </button>
+        <div className="feed">
+          <KindSwitch kind={kind} onChange={setKind} />
+          <label className="visually-hidden" htmlFor="todo-due">
+            Due date
+          </label>
+          <input
+            id="todo-due"
+            className="feed__date"
+            type="date"
+            value={due}
+            onChange={(event) => setDue(event.target.value)}
+          />
+          <button
+            className="button button--primary"
+            type="submit"
+            disabled={!title.trim()}
+          >
+            Add
+          </button>
+        </div>
       </form>
       {error && <p className="tray__error">{error}</p>}
     </div>

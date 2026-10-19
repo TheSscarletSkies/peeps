@@ -141,6 +141,21 @@ impl TodoStore {
         Ok(changed > 0)
     }
 
+    /// Rewrites a to-do's title, kind and due date. Returns whether it exists.
+    pub fn edit(
+        &self,
+        id: i64,
+        title: &str,
+        kind: TodoKind,
+        due: Option<NaiveDate>,
+    ) -> rusqlite::Result<bool> {
+        let changed = self.db.execute(
+            "UPDATE todos SET title = ?1, kind = ?2, due = ?3 WHERE id = ?4",
+            params![title.trim(), kind.as_str(), due, id],
+        )?;
+        Ok(changed > 0)
+    }
+
     pub fn delete(&self, id: i64) -> rusqlite::Result<bool> {
         Ok(self
             .db
@@ -204,6 +219,27 @@ mod tests {
             .map(|t| t.title)
             .collect();
         assert_eq!(titles, ["Sooner", "Later", "Undated"]);
+    }
+
+    #[test]
+    fn edits_keep_the_item_in_place() {
+        let store = TodoStore::in_memory().unwrap();
+        let todo = store
+            .add("Read ch 4", TodoKind::Task, None, Utc::now())
+            .unwrap();
+        assert!(store
+            .edit(
+                todo.id,
+                " Read chapter 4 ",
+                TodoKind::Study,
+                Some(day("2026-10-24"))
+            )
+            .unwrap());
+        let open = store.open_items().unwrap();
+        assert_eq!(open[0].title, "Read chapter 4");
+        assert_eq!(open[0].kind, TodoKind::Study);
+        assert_eq!(open[0].due, Some(day("2026-10-24")));
+        assert!(!store.edit(999, "x", TodoKind::Task, None).unwrap());
     }
 
     #[test]

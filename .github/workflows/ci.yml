@@ -34,7 +34,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: mkdir -p dist
       - run: node scripts/build-hook.mjs
-      - run: cargo clippy -p peeps-desktop --all-targets -- -D warnings
+      - name: Clippy
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! cargo clippy -p peeps-desktop --all-targets -- -D warnings 2> clippy.log; then
+            echo "::error title=clippy::$(grep -A14 -m4 -E '^(error|warning)' clippy.log | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')"
+            exit 1
+          fi
 
   web:
     runs-on: ubuntu-latest

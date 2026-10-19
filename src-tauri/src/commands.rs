@@ -84,17 +84,37 @@ pub fn add_todo(
     if title.trim().is_empty() {
         return Err("the to-do is empty".into());
     }
-    let due = due
-        .filter(|day| !day.is_empty())
-        .map(|day| day.parse::<NaiveDate>())
-        .transpose()
-        .map_err(|_| "the due date should look like 2026-10-31".to_owned())?;
+    let due = due_date(due)?;
     let todo = app
         .todos()
         .add(&title, kind, due, Utc::now())
         .map_err(message)?;
     app.publish();
     Ok(todo)
+}
+
+#[tauri::command]
+pub fn edit_todo(
+    app: State<'_, Arc<App>>,
+    id: i64,
+    title: String,
+    kind: TodoKind,
+    due: Option<String>,
+) -> Result<()> {
+    if title.trim().is_empty() {
+        return Err("the to-do is empty".into());
+    }
+    let due = due_date(due)?;
+    app.todos().edit(id, &title, kind, due).map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+fn due_date(due: Option<String>) -> Result<Option<NaiveDate>> {
+    due.filter(|day| !day.is_empty())
+        .map(|day| day.parse::<NaiveDate>())
+        .transpose()
+        .map_err(|_| "the due date should look like 2026-10-31".to_owned())
 }
 
 #[tauri::command]

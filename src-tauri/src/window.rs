@@ -53,14 +53,50 @@ pub fn show_home(window: &WebviewWindow) -> tauri::Result<()> {
     window.set_focus()
 }
 
+// AppKit has no safe Rust binding for window levels or the notch, so this module talks to it directly.
 #[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
 mod mac {
+    use objc2::encode::{Encode, Encoding};
     use objc2::runtime::AnyObject;
     use objc2::{class, msg_send, sel};
-    use objc2_foundation::{NSPoint, NSRect, NSSize};
     use tauri::WebviewWindow;
 
     use super::Notch;
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct NSPoint {
+        x: f64,
+        y: f64,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct NSSize {
+        width: f64,
+        height: f64,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct NSRect {
+        origin: NSPoint,
+        size: NSSize,
+    }
+
+    unsafe impl Encode for NSPoint {
+        const ENCODING: Encoding = Encoding::Struct("CGPoint", &[f64::ENCODING, f64::ENCODING]);
+    }
+
+    unsafe impl Encode for NSSize {
+        const ENCODING: Encoding = Encoding::Struct("CGSize", &[f64::ENCODING, f64::ENCODING]);
+    }
+
+    unsafe impl Encode for NSRect {
+        const ENCODING: Encoding =
+            Encoding::Struct("CGRect", &[NSPoint::ENCODING, NSSize::ENCODING]);
+    }
 
     /// Above the menu bar, like the system's own notch apps, so the pets never cover a window.
     const LEVEL: isize = 27;
@@ -111,13 +147,13 @@ mod mac {
         unsafe {
             let ns = &*(handle as *mut AnyObject);
             let frame: NSRect = msg_send![screen, frame];
-            let rect = NSRect::new(
-                NSPoint::new(
-                    frame.origin.x + (frame.size.width - width) / 2.0,
-                    frame.origin.y + frame.size.height - height,
-                ),
-                NSSize::new(width, height),
-            );
+            let rect = NSRect {
+                origin: NSPoint {
+                    x: frame.origin.x + (frame.size.width - width) / 2.0,
+                    y: frame.origin.y + frame.size.height - height,
+                },
+                size: NSSize { width, height },
+            };
             let _: () = msg_send![ns, setLevel: LEVEL];
             let _: () = msg_send![ns, setCollectionBehavior: BEHAVIOUR];
             let _: () = msg_send![ns, setFrame: rect, display: true];

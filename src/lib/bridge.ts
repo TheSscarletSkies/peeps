@@ -7,6 +7,7 @@ import type {
   Delivery,
   Draft,
   NewProduct,
+  Notch,
   Note,
   Snapshot,
   Todo,
@@ -138,9 +139,37 @@ export function openHome(): Promise<void> {
   return invoke("open_home").then(() => undefined);
 }
 
-export function setExpanded(expanded: boolean): Promise<void> {
+export function setTraySize(width: number, height: number): Promise<void> {
+  if (inApp()) {
+    return invoke("set_tray_size", { width, height }).then(() => undefined);
+  }
+  // The browser preview sizes the page the way the app sizes its window.
+  const root = document.getElementById("root");
+  if (root) {
+    Object.assign(root.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      margin: "0 auto",
+    });
+  }
+  return Promise.resolve();
+}
+
+/** The browser preview pretends to be a MacBook with a notch. */
+export function notch(): Promise<Notch> {
   return inApp()
-    ? invoke("set_expanded", { expanded }).then(() => undefined)
+    ? invoke<Notch>("notch")
+    : Promise.resolve({ width: 190, height: 34 });
+}
+
+export function editTodo(
+  id: number,
+  title: string,
+  kind: TodoKind,
+  due: string | null,
+): Promise<void> {
+  return inApp()
+    ? invoke("edit_todo", { id, title, kind, due }).then(() => undefined)
     : Promise.resolve();
 }
 

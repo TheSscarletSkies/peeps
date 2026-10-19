@@ -1,12 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { HelperPanel } from "../helper/HelperPanel";
 import { MOOD_LABEL } from "../hub/ProductCard";
-import { hooksStatus, openHome, setExpanded } from "../lib/bridge";
-import type { Mood, Snapshot } from "../lib/types";
+import { notch as loadNotch, openHome, setTraySize } from "../lib/bridge";
+import type { Mood, Notch, Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
+import {
+  laneFor,
+  lanes,
+  PET_SIZE,
+  spot,
+  stripWidth,
+  walkMs,
+  type Lane,
+} from "../life/roam";
 import { usePetEvents } from "../life/usePetEvents";
-import { Setup } from "../setup/Setup";
 import { PetPanel } from "./PetPanel";
 
 const URGENT: Mood[] = [
@@ -16,207 +24,238 @@ const URGENT: Mood[] = [
   "hungry",
   "litterBox",
 ];
-const COLLAPSE_DELAY_MS = 600;
-
-type View = "pets" | "helper";
+const HELPER = "helper";
+const CARD_WIDTH = 400;
+/** Screens without a notch still get a small pill at the top. */
+const PILL_HEIGHT = 32;
 
 export function Tray({ snapshot }: { snapshot: Snapshot }) {
-  const [open, setOpen] = useState(false);
-  const [typing, setTyping] = useState(false);
-  const [view, setView] = useState<View>("pets");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [setup, setSetup] = useState(false);
-  const closeTimer = useRef<number | undefined>(undefined);
+  const [notch, setNotch] = useState<Notch | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [cardHeight, setCardHeight] = useState(0);
+  const card = useRef<HTMLDivElement>(null);
 
   const { pets, helper } = snapshot;
   const { celebrating, arriving } = usePetEvents(pets, true);
-  const urgent = pets.filter((pet) => URGENT.includes(pet.mood));
-  const selected =
-    pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0];
-  const others = pets.filter((pet) => pet.id !== selected?.id);
+  const height = notch?.height || PILL_HEIGHT;
+  const notchWidth = notch?.width ?? 0;
+  const width = stripWidth(pets.length + 1, notchWidth);
+  const open = openId === HELPER || pets.some((pet) => pet.id === openId);
+  const pet = pets.find((candidate) => candidate.id === openId);
+  const paths = lanes(width, notchWidth);
 
   useEffect(() => {
-    void setExpanded(open);
+    void loadNotch().then(setNotch);
+  }, []);
+
+  useEffect(() => {
+    const close = () => setOpenId(null);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("blur", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("blur", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    const element = card.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() =>
+      setCardHeight(Math.ceil(element.getBoundingClientRect().height)),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [open]);
 
   useEffect(() => {
-    hooksStatus().then((status) => {
-      if (!status.installed) setSetup(true);
-    });
-  }, []);
+    if (!notch) return;
+    if (open && cardHeight > 0) {
+      void setTraySize(Math.max(width, CARD_WIDTH), height + cardHeight);
+    } else if (!open) {
+      void setTraySize(width, height);
+    }
+  }, [notch, open, cardHeight, width, height]);
 
-  const showSetup = setup || pets.length === 0;
+  const toggle = (id: string) =>
+    setOpenId((current) => (current === id ? null : id));
 
-  const enter = () => {
-    window.clearTimeout(closeTimer.current);
-    setOpen(true);
-  };
-  const leave = () => {
-    if (typing) return;
-    closeTimer.current = window.setTimeout(
-      () => setOpen(false),
-      COLLAPSE_DELAY_MS,
-    );
-  };
+  const residents = [
+    ...pets.map((resident) => ({
+      id: resident.id,
+      label: `${resident.name}: ${MOOD_LABEL[resident.mood]}`,
+      still: URGENT.includes(resident.mood),
+      pet: (
+        <LivePet
+          id={resident.id}
+          celebrating={celebrating.has(resident.id)}
+          arriving={arriving.has(resident.id)}
+          kind={resident.kind}
+          color={resident.color}
+          mood={resident.mood}
+          heat={resident.heat}
+          size={PET_SIZE}
+        />
+      ),
+    })),
+    {
+      id: HELPER,
+      label: helper.name,
+      still: false,
+      pet: (
+        <LivePet
+          kind={helper.kind}
+          color={helper.color}
+          mood={helper.mood}
+          heat={0}
+          size={PET_SIZE}
+        />
+      ),
+    },
+  ];
 
-  const tab = (id: View, label: string) => {
-    const on = view === id && !showSetup;
-    return (
-      <button
-        role="tab"
-        aria-selected={on}
-        className={on ? "chip chip--on" : "chip"}
-        onClick={() => {
-          setView(id);
-          setSetup(false);
-        }}
-      >
-        {label}
-      </button>
-    );
-  };
+  // Pets take their spots once the notch is measured, so they never start squeezed.
+  if (!notch) return null;
 
   return (
     <div
-      className={open ? "tray tray--open" : "tray"}
-      onMouseEnter={enter}
-      onMouseLeave={leave}
+      className={open ? "notch notch--open" : "notch"}
+      style={{ ["--strip" as string]: `${height}px` }}
     >
-      {!open && (
-        <div className="tray__peek">
-          {pets.map((pet) => (
-            <LivePet
-              key={pet.id}
-              id={pet.id}
-              celebrating={celebrating.has(pet.id)}
-              arriving={arriving.has(pet.id)}
-              kind={pet.kind}
-              color={pet.color}
-              mood={pet.mood}
-              heat={pet.heat}
-              size={30}
-            />
-          ))}
-          {pets.length > 0 && (
-            <LivePet
-              kind={helper.kind}
-              color={helper.color}
-              mood={helper.mood}
-              heat={0}
-              size={30}
-            />
-          )}
-          {pets.length === 0 && (
-            <span className="tray__count">Set up peeps</span>
-          )}
-          {urgent.length > 0 && (
-            <span className="tray__count">{urgent.length} need you</span>
-          )}
-        </div>
-      )}
+      <div className="notch__strip" style={{ width }}>
+        {pets.length === 0 ? (
+          <button className="notch__setup" onClick={() => void openHome()}>
+            Set up peeps
+          </button>
+        ) : (
+          residents.map((resident, index) => (
+            <Roamer
+              key={resident.id}
+              lane={paths[laneFor(index, paths.length)] ?? paths[0]}
+              start={spread(index, residents.length, paths.length)}
+              still={resident.still}
+              label={resident.label}
+              selected={openId === resident.id}
+              onSelect={() => toggle(resident.id)}
+            >
+              {resident.pet}
+            </Roamer>
+          ))
+        )}
+      </div>
 
       {open && (
-        <>
-          <div className="tray__bar">
-            <div className="tray__tabs" role="tablist" aria-label="Notch">
-              {tab("pets", "Pets")}
-              {tab("helper", helper.name)}
-            </div>
-            <button className="tray__link" onClick={() => void openHome()}>
-              Open peeps
-            </button>
-          </div>
-
+        <div
+          ref={card}
+          className="notch__card"
+          style={{
+            ["--pet" as string]: pet?.color ?? helper.color,
+          }}
+        >
+          {pet ? (
+            <>
+              <div className="notch__head">
+                <span className="mood" data-mood={pet.mood}>
+                  {MOOD_LABEL[pet.mood]}
+                </span>
+              </div>
+              <PetPanel key={pet.id} pet={pet} onTyping={noop} />
+            </>
+          ) : (
+            <HelperPanel
+              helper={helper}
+              pets={pets}
+              tips={snapshot.tips}
+              onTyping={noop}
+            />
+          )}
+          <button className="tray__link" onClick={() => void openHome()}>
+            Open peeps
+          </button>
           {snapshot.configError && (
             <p className="tray__error">
               Config problem: {snapshot.configError}
             </p>
           )}
-
-          {showSetup && (
-            <Setup
-              snapshot={snapshot}
-              onDone={() => setSetup(false)}
-              onTyping={setTyping}
-            />
-          )}
-
-          {!showSetup && view === "helper" && (
-            <div
-              className="focus"
-              style={{ ["--pet" as string]: helper.color }}
-            >
-              <HelperPanel
-                helper={helper}
-                pets={pets}
-                tips={snapshot.tips}
-                onTyping={setTyping}
-              />
-            </div>
-          )}
-
-          {!showSetup && view === "pets" && selected && (
-            <div className="tray__pets">
-              <div
-                className="focus focus--pet"
-                style={{ ["--pet" as string]: selected.color }}
-              >
-                <div className="focus__pet">
-                  <LivePet
-                    id={selected.id}
-                    celebrating={celebrating.has(selected.id)}
-                    arriving={arriving.has(selected.id)}
-                    kind={selected.kind}
-                    color={selected.color}
-                    mood={selected.mood}
-                    heat={selected.heat}
-                    size={88}
-                  />
-                  <span className="focus__mood">
-                    {MOOD_LABEL[selected.mood]}
-                  </span>
-                </div>
-                <PetPanel
-                  key={selected.id}
-                  pet={selected}
-                  onTyping={setTyping}
-                />
-              </div>
-              {others.length > 0 && (
-                <div className="pills">
-                  {others.map((pet) => (
-                    <button
-                      key={pet.id}
-                      className="pill"
-                      data-urgent={URGENT.includes(pet.mood) || undefined}
-                      style={{ ["--pet" as string]: pet.color }}
-                      onClick={() => setSelectedId(pet.id)}
-                      aria-label={`${pet.name}: ${pet.headline}`}
-                    >
-                      <LivePet
-                        id={pet.id}
-                        celebrating={celebrating.has(pet.id)}
-                        arriving={arriving.has(pet.id)}
-                        kind={pet.kind}
-                        color={pet.color}
-                        mood={pet.mood}
-                        heat={pet.heat}
-                        size={34}
-                      />
-                      <span className="pill__text">
-                        <span className="pill__name">{pet.name}</span>
-                        <span className="pill__mood">
-                          {MOOD_LABEL[pet.mood]}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </>
+        </div>
       )}
     </div>
+  );
+}
+
+const noop = () => undefined;
+
+/** Starting spots evenly spaced along each wing, so pets never begin stacked. */
+function spread(index: number, total: number, laneCount: number): number {
+  const rank = Math.floor(index / laneCount);
+  const inLane = Math.ceil((total - (index % laneCount)) / laneCount);
+  return inLane > 1 ? rank / (inLane - 1) : 0.5;
+}
+
+interface RoamerProps {
+  lane: Lane;
+  start: number;
+  still: boolean;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+  children: ReactNode;
+}
+
+/** Wanders its lane: a pause, a waddle to a new spot, another pause. Pets that need you stay put. */
+function Roamer({
+  lane,
+  start,
+  still,
+  label,
+  selected,
+  onSelect,
+  children,
+}: RoamerProps) {
+  const { start: from, end: to } = lane;
+  const [move, setMove] = useState(() => ({
+    x: spot(lane, start),
+    ms: 0,
+    walking: false,
+  }));
+
+  useEffect(() => {
+    if (still) return;
+    const wait = move.walking ? move.ms : 2500 + Math.random() * 6000;
+    const timer = window.setTimeout(() => {
+      if (move.walking) {
+        setMove({ ...move, walking: false });
+        return;
+      }
+      const x = spot({ start: from, end: to }, Math.random());
+      setMove({ x, ms: walkMs(move.x, x), walking: true });
+    }, wait);
+    return () => window.clearTimeout(timer);
+  }, [move, still, from, to]);
+
+  const x = Math.min(Math.max(move.x, from), Math.max(from, to));
+
+  return (
+    <button
+      className={[
+        "roamer",
+        move.walking && "roamer--walking",
+        selected && "roamer--selected",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={{
+        transform: `translateX(${x}px)`,
+        transitionDuration: `${move.ms}ms`,
+      }}
+      aria-label={label}
+      aria-pressed={selected}
+      onClick={onSelect}
+    >
+      {children}
+    </button>
   );
 }

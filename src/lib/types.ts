@@ -119,3 +119,9 @@ export interface Snapshot {
   helper: Helper;
   configError: string | null;
 }
+
+export interface Notch {
+  /** Zero when the screen has no camera notch. */
+  width: number;
+  height: number;
+}

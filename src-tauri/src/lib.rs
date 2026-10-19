@@ -22,6 +22,7 @@ pub fn run() {
             commands::remove_product,
             commands::add_todo,
             commands::set_todo_done,
+            commands::edit_todo,
             commands::delete_todo,
             commands::write_draft,
             commands::delete_draft,
