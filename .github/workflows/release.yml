@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -42,8 +43,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: peeps ${{ github.ref_name }}
+          tagName: v__VERSION__
+          releaseName: peeps v__VERSION__
           releaseBody: Unsigned early build. See the README for how to open it on macOS and Windows.
           releaseDraft: true
           prerelease: true
