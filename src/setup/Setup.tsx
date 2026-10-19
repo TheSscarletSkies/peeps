@@ -13,12 +13,12 @@ import type { NewProduct, PetKind, Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 
 const COLORS = [
-  "#F6E3B4",
-  "#FFD66B",
-  "#FF9C9C",
-  "#C9B8F0",
-  "#9CC9FF",
-  "#9EE6B8",
+  "#FFF3E3",
+  "#FFE6D5",
+  "#FFDDE4",
+  "#E8DDFB",
+  "#DCEBFF",
+  "#DDF5E7",
 ];
 
 interface Props {
@@ -132,7 +132,7 @@ function AddProduct({ onAdd, onTyping }: AddProductProps) {
   const [name, setName] = useState("");
   const [path, setPath] = useState<string | null>(null);
   const [kind, setKind] = useState<PetKind>("bao");
-  const [color, setColor] = useState(COLORS[0] ?? "#F6E3B4");
+  const [color, setColor] = useState(COLORS[0] ?? "#FFF3E3");
 
   const ready = name.trim() !== "" && path !== null;
 
@@ -177,7 +177,7 @@ function AddProduct({ onAdd, onTyping }: AddProductProps) {
         </button>
         <div className="setup__choices">
           <div role="radiogroup" aria-label="Dumpling" className="setup__kinds">
-            {(["bao", "gyoza"] as const).map((option) => (
+            {(["bao", "gyoza", "wonton"] as const).map((option) => (
               <button
                 key={option}
                 type="button"

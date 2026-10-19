@@ -81,7 +81,7 @@ impl Default for Pet {
     fn default() -> Self {
         Self {
             kind: PetKind::Bao,
-            color: "#F4E4C8".into(),
+            color: "#FFF3E3".into(),
         }
     }
 }
@@ -91,6 +91,7 @@ impl Default for Pet {
 pub enum PetKind {
     Bao,
     Gyoza,
+    Wonton,
 }
 
 impl PetKind {
@@ -98,6 +99,7 @@ impl PetKind {
         match self {
             Self::Bao => "bao",
             Self::Gyoza => "gyoza",
+            Self::Wonton => "wonton",
         }
     }
 }

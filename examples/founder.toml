@@ -10,7 +10,7 @@ sweat_after_minutes = 30
 id = "funderly"
 name = "Funderly"
 paths = ["~/code/funderly"]
-pet = { kind = "bao", color = "#F6E3B4" }
+pet = { kind = "bao", color = "#FFF3E3" }
 expect_activity_every_hours = 48
 
 [[product.check]]
@@ -27,7 +27,7 @@ headers = { apikey = "{secret:funderly-supabase}", Authorization = "Bearer {secr
 id = "enigma-archives"
 name = "Enigma Archives"
 paths = ["~/code/enigma-archives"]
-pet = { kind = "gyoza", color = "#C9B8F0" }
+pet = { kind = "gyoza", color = "#E8DDFB" }
 
 [[product.check]]
 id = "posting-cadence"
@@ -43,7 +43,7 @@ args = ["~/code/enigma-archives/posts.log", "3"]
 id = "kaiveni-hiya"
 name = "Kaiveni Hiya"
 paths = ["~/code/kaiveni-hiya"]
-pet = { kind = "bao", color = "#9EE6B8" }
+pet = { kind = "wonton", color = "#FFE6D5" }
 
 [[product.check]]
 id = "launch-checklist"

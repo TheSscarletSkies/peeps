@@ -74,7 +74,7 @@ full_heat_tokens_per_minute = 60000
 id = "shop"
 name = "Shop"
 paths = ["~/code/shop"]
-pet = { kind = "bao", color = "#F6E3B4" }   # or kind = "gyoza"
+pet = { kind = "bao", color = "#FFF3E3" }   # or "gyoza", "wonton"
 expect_activity_every_hours = 48
 
 [[product.check]]

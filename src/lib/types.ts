@@ -9,7 +9,7 @@ export type Mood =
   | "stalled"
   | "chill";
 
-export type PetKind = "bao" | "gyoza";
+export type PetKind = "bao" | "gyoza" | "wonton";
 export type Signal = "hungry" | "litter_box";
 export type Delivery = "nextSession" | "nextStep";
 export type Decision = "allow" | "deny";

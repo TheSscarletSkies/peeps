@@ -4,34 +4,41 @@ Everything needed to animate the pets in [Rive](https://rive.app). The app swaps
 
 ![Mood reference](moods.png)
 
+## Style
+
+Soft and plush, no outlines: a pastel body, a warm shade towards the edges, a white glow top left, and a few faint creases. Faces are small and low: solid dot eyes, a tiny mouth, big soft blush.
+
 ## Files
 
-| File        | What it is                                                                  |
-| ----------- | --------------------------------------------------------------------------- |
-| `bao.svg`   | The bao, every part on its own named layer. Alternative faces start hidden. |
-| `gyoza.svg` | The gyoza, same layers and names.                                           |
-| `moods.png` | Which layers make up each mood.                                             |
+| File          | What it is                                                                    |
+| ------------- | ----------------------------------------------------------------------------- |
+| `bao.svg`     | The bao, every part on its own named layer. Alternative faces start hidden.   |
+| `gyoza.svg`   | The gyoza with its crimped edge, same layers and names.                       |
+| `wonton.svg`  | The wonton purse with folded corners, same layers and names.                  |
+| `moods.png`   | Which layers make up each mood.                                               |
+| `generate.py` | Rebuilds the SVGs from `src/pets/shapes.json`, the shapes the app also draws. |
 
 Import each SVG into its own Rive file. Rive keeps the group names as layer names.
 
 ## Layers
 
-| Layer                                                                                                               | Use                                           |
-| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `shadow`                                                                                                            | Squashes and fades with jumps                 |
-| `pet` › `body-group` › `body`, `pleats`                                                                             | The dumpling; `body` takes the product colour |
-| `blush` › `blush-left`, `blush-right`                                                                               | Grows and deepens with heat                   |
-| `eyes` › `eyes-open` (`eye-left`, `eye-right`, `shine-left`, `shine-right`), `eyes-closed`, `eyes-x`, `eyes-squint` | One visible at a time                         |
-| `brows`                                                                                                             | Effort and frustration                        |
-| `mouth` › `mouth-smile`, `mouth-o`, `mouth-flat`, `mouth-wavy`, `mouth-frown`, `mouth-open-smile`, `drool`          | One mouth visible at a time; `drool` adds on  |
-| `fx` › `fx-bang`, `fx-sweat`, `fx-steam`, `fx-zzz`, `fx-stink`, `fx-stars`, `fx-confetti`                           | Effects around the pet                        |
-| `props` › `bowl`, `litter-box`                                                                                      | Objects beside the pet                        |
+| Layer                                                                                                      | Use                                           |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `shadow`                                                                                                   | Squashes and fades with jumps                 |
+| `props-back` › `bowl`, `litter-box`                                                                        | Objects beside the pet                        |
+| `pet` › `body-group` › `body`, `shade`, `glow`, `highlight`, `creases`                                     | The dumpling; `body` takes the product colour |
+| `blush` › `blush-left`, `blush-right`                                                                      | Grows with heat                               |
+| `eyes` › `eyes-open` (`eye-left`, `eye-right`), `eyes-closed`, `eyes-happy`, `eyes-x`, `eyes-squint`       | One visible at a time                         |
+| `brows`                                                                                                    | Effort and frustration                        |
+| `mouth` › `mouth-smile`, `mouth-o`, `mouth-flat`, `mouth-wavy`, `mouth-frown`, `mouth-open-smile`, `drool` | One mouth visible at a time; `drool` adds on  |
+| `props-front` › `steamer`                                                                                  | The bamboo steamer the pet naps in            |
+| `fx` › `fx-bang`, `fx-sweat`, `fx-steam`, `fx-zzz`, `fx-stink`, `fx-stars`, `fx-hearts`                    | Effects around the pet                        |
 
 Redraw anything you like. Keep the layer names so the states below still make sense.
 
 ## Artboard
 
-- One artboard per file, named **`Bao`** or **`Gyoza`**, 240 × 200.
+- One artboard per file, named **`Bao`**, **`Gyoza`** or **`Wonton`**, 240 × 200.
 - The pet sits on the bottom edge, centred. Effects may use the space above it.
 - Leave the background transparent.
 
@@ -58,23 +65,23 @@ Each `mood` value is one looping state. Blend between states over about 200 ms s
 | 2 `sweating`  | `eyes-open`, `brows`, `mouth-flat`, `fx-sweat`         | Faster bob; drops slide down and fade, one at a time                        |
 | 3 `steaming`  | `eyes-open`, `brows`, `mouth-wavy`, `fx-steam`         | Small jitter; puffs rise, grow and fade in turn                             |
 | 4 `needsYou`  | `eyes-open`, `mouth-o`, `fx-bang`                      | Hops with squash on landing; `!` pulses. The most attention-grabbing state. |
-| 5 `hungry`    | `eyes-open`, `mouth-open-smile`, `drool`, `bowl`       | Leans towards the bowl and back; drool stretches                            |
+| 5 `hungry`    | `eyes-open`, `mouth-open-smile`, `drool`, `bowl`       | Leans towards the bowl with its chopsticks and back; drool stretches        |
 | 6 `litterBox` | `eyes-squint`, `mouth-frown`, `fx-stink`, `litter-box` | Shuffles away from the box; stink lines wave upwards                        |
 | 7 `failing`   | `eyes-x`, `mouth-wavy`, `fx-stars`                     | Tipped over about 14°, gentle wobble; stars orbit the head                  |
-| 8 `stalled`   | `eyes-closed`, `mouth-flat`, `fx-zzz`                  | Very slow breathing; z floats up and fades                                  |
+| 8 `stalled`   | `eyes-closed`, `steamer`, `fx-zzz`                     | Naps in the steamer: very slow breathing, z floats up and fades             |
 
 ### Heat (any state)
 
 `heat` runs in its own layer of the state machine so it combines with every mood. Use a 1D blend from 0 to 100:
 
-- `blush` grows to about 1.6× and reaches full opacity at 100.
-- `body` warms towards red by about a third at 100. If you use data binding for the colour (below), animate a tint overlay instead of the fill.
+- `blush` grows to about 1.7× at 100, spreading across the cheeks. This carries most of the flush.
+- `body` warms slightly towards coral, about 15% at 100. Pastels turn muddy if pushed further.
 
 ### One-shot triggers
 
 Each plays once on top of the current state, then returns to it:
 
-- `celebrate`: a jump with `eyes-closed`, `mouth-open-smile` and `fx-confetti`, about 1 s.
+- `celebrate`: a jump with `eyes-happy`, `mouth-open-smile` and `fx-hearts`, about 1 s.
 - `poke`: squash and a quick surprised `mouth-o`. Three pokes in two seconds: dizzy with `fx-stars` for 2 s.
 - `fed`: mouth opens, chomps twice, a happy wiggle.
 
@@ -84,4 +91,4 @@ Each product picks its own colour, so `body` must take it at runtime. Add a **Vi
 
 ## Handing over
 
-Export `bao.riv` and `gyoza.riv` into `src/pets/rive/`. Keep the source `.rev` files too, so changes stay possible later. The app falls back to the SVG pets whenever a `.riv` file is missing.
+Export `bao.riv`, `gyoza.riv` and `wonton.riv` into `src/pets/rive/`. Keep the source `.rev` files too, so changes stay possible later. The app falls back to the SVG pets whenever a `.riv` file is missing.

@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Writes one layered SVG per pet shape for importing into Rive.
+
+Usage: python3 design/rive/generate.py
+Shapes come from src/pets/shapes.json, the same source the app draws from.
+"""
+
+import json
+from pathlib import Path
+
+HERE = Path(__file__).parent
+SHAPES = json.loads((HERE / "../../src/pets/shapes.json").read_text())
+SAMPLE_COLORS = {"bao": "#FFF3E3", "gyoza": "#E8DDFB", "wonton": "#FFE6D5"}
+
+EYE = "#3F2A20"
+STROKE = f'stroke="{EYE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"'
+
+
+def hidden(visible):
+    return "" if visible else ' opacity="0"'
+
+
+def svg(kind, shape):
+    body = shape["body"]
+    hx, hy, hr = shape["highlight"]
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="400" viewBox="0 0 120 100">
+  <defs>
+    <radialGradient id="shade-fill" cx="0.42" cy="0.32" r="0.8">
+      <stop offset="0.5" stop-color="#B5785A" stop-opacity="0"/>
+      <stop offset="1" stop-color="#B5785A" stop-opacity="0.32"/>
+    </radialGradient>
+    <radialGradient id="glow-fill" cx="0.34" cy="0.28" r="0.42">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blush-fill">
+      <stop offset="0" stop-color="#FFA98F" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#FFA98F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shadow-fill">
+      <stop offset="0" stop-color="#000" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse id="shadow" cx="60" cy="88" rx="40" ry="6" fill="url(#shadow-fill)"/>
+  <g id="props-back">
+    <g id="bowl"{hidden(False)}>
+      <path d="M92 74l14-16M97 76l13-13" stroke="#C98A5E" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M86 80h28c0 7-6 11-14 11s-14-4-14-11z" fill="#F6DCC8"/>
+    </g>
+    <g id="litter-box"{hidden(False)}><rect x="86" y="80" width="28" height="11" rx="5" fill="#E9E0D6"/></g>
+  </g>
+  <g id="pet">
+    <g id="body-group">
+      <path id="body" d="{body}" fill="{SAMPLE_COLORS[kind]}"/>
+      <path id="shade" d="{body}" fill="url(#shade-fill)"/>
+      <path id="glow" d="{body}" fill="url(#glow-fill)"/>
+      <ellipse id="highlight" cx="{hx}" cy="{hy}" rx="4.5" ry="2" fill="#FFFFFF" opacity="0.8" transform="rotate({hr} {hx} {hy})"/>
+      <path id="creases" d="{shape["creases"]}" stroke="#B5785A" stroke-opacity="0.28" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    </g>
+    <g id="blush">
+      <ellipse id="blush-left" cx="38" cy="73" rx="9" ry="5.5" fill="url(#blush-fill)"/>
+      <ellipse id="blush-right" cx="82" cy="73" rx="9" ry="5.5" fill="url(#blush-fill)"/>
+    </g>
+    <g id="eyes">
+      <g id="eyes-open">
+        <circle id="eye-left" cx="45" cy="68" r="2.7" fill="{EYE}"/>
+        <circle id="eye-right" cx="75" cy="68" r="2.7" fill="{EYE}"/>
+      </g>
+      <g id="eyes-closed"{hidden(False)}><path d="M42 68q3 2.6 6 0M72 68q3 2.6 6 0" {STROKE}/></g>
+      <g id="eyes-happy"{hidden(False)}><path d="M42 69q3-3.4 6 0M72 69q3-3.4 6 0" {STROKE}/></g>
+      <g id="eyes-x"{hidden(False)}><path d="M42.5 65.5l4.5 4.5M47 65.5l-4.5 4.5M73 65.5l4.5 4.5M77.5 65.5l-4.5 4.5" {STROKE}/></g>
+      <g id="eyes-squint"{hidden(False)}><path d="M42.5 65.8l4.5 2.2-4.5 2.2M77.5 65.8l-4.5 2.2 4.5 2.2" {STROKE}/></g>
+    </g>
+    <g id="brows"{hidden(False)}><path d="M41.5 62l5 1.6M78.5 62l-5 1.6" {STROKE}/></g>
+    <g id="mouth">
+      <path id="mouth-smile" d="M57.5 70.5q2.5 2.6 5 0" {STROKE}/>
+      <ellipse id="mouth-o" cx="60" cy="71.5" rx="1.6" ry="2" fill="{EYE}"{hidden(False)}/>
+      <path id="mouth-flat" d="M57.5 71.5h5" {STROKE}{hidden(False)}/>
+      <path id="mouth-wavy" d="M55.5 72q1.1-1.4 2.2 0t2.2 0t2.2 0t2.2 0" {STROKE}{hidden(False)}/>
+      <path id="mouth-frown" d="M57 72.5q3-2.4 6 0" {STROKE}{hidden(False)}/>
+      <g id="mouth-open-smile"{hidden(False)}>
+        <path d="M57 70h6q-.5 4.2-3 4.2t-3-4.2z" fill="{EYE}"/>
+        <path d="M58.3 73q1.7-1.2 3.4 0q-.8 1.2-1.7 1.2t-1.7-1.2z" fill="#FF9AAA"/>
+      </g>
+      <path id="drool" d="M62.5 73.5v4" stroke="#A8DAF7" stroke-width="2" stroke-linecap="round"{hidden(False)}/>
+    </g>
+  </g>
+  <g id="props-front">
+    <g id="steamer"{hidden(False)}>
+      <path d="M12 74h96v12c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F"/>
+      <path d="M12 82h96" stroke="#DDB283" stroke-width="2"/>
+      <rect x="9" y="70" width="102" height="6" rx="3" fill="#F6DDBA"/>
+    </g>
+  </g>
+  <g id="fx" transform="translate(0 {shape["fxOffset"]})">
+    <g id="fx-bang"{hidden(False)}><circle cx="98" cy="24" r="8" fill="#FFE39A"/><path d="M98 19.5v5.5M98 28.2v.3" stroke="{EYE}" stroke-width="2.4" stroke-linecap="round"/></g>
+    <g id="fx-sweat"{hidden(False)}>
+      <path id="sweat-left" d="M24 46q-3 5 0 7q3-2 0-7z" fill="#BFE4FB"/>
+      <path id="sweat-right" d="M96 42q-3 5 0 7q3-2 0-7z" fill="#BFE4FB"/>
+    </g>
+    <g id="fx-steam"{hidden(False)}>
+      <circle id="steam-1" cx="48" cy="20" r="5" fill="#FBF8F4"/>
+      <circle id="steam-2" cx="60" cy="16" r="6" fill="#FBF8F4"/>
+      <circle id="steam-3" cx="72" cy="20" r="4" fill="#FBF8F4"/>
+    </g>
+    <g id="fx-zzz"{hidden(False)}><text x="90" y="40" fill="#DCCFF8" font-size="12" font-weight="800" font-family="sans-serif">z</text></g>
+    <g id="fx-stink"{hidden(False)}><path d="M30 32q-4-4 0-8t0-8M90 32q-4-4 0-8t0-8" stroke="#CDE3A8" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+    <g id="fx-stars"{hidden(False)}><path d="M44 21l1.2 2.6 2.6 1.2-2.6 1.2L44 28.6l-1.2-2.6-2.6-1.2 2.6-1.2z" fill="#FFE39A"/><path d="M76 22l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#FFFFFF"/></g>
+    <g id="fx-hearts"{hidden(False)}><path d="M32 22c-2-3-6-1-4 2l4 4 4-4c2-3-2-5-4-2z" fill="#FFC2CC"/><path d="M88 16c-1.6-2.4-4.8-.8-3.2 1.6l3.2 3.2 3.2-3.2c1.6-2.4-1.6-4-3.2-1.6z" fill="#FFE39A"/></g>
+  </g>
+</svg>
+'''
+
+
+for kind, shape in SHAPES.items():
+    (HERE / f"{kind}.svg").write_text(svg(kind, shape))

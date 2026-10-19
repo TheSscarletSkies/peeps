@@ -546,3 +546,20 @@ body,
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }
+
+.dumpling__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 4.2s infinite;
+}
+
+@keyframes blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}

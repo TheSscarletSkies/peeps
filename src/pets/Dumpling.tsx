@@ -1,4 +1,7 @@
+import { useId } from "react";
+
 import type { Mood, PetKind } from "../lib/types";
+import shapes from "./shapes.json";
 import { flushed } from "./tint";
 
 interface Props {
@@ -9,109 +12,103 @@ interface Props {
   size?: number;
 }
 
-const INK = "#3B2616";
+interface Shape {
+  body: string;
+  creases: string;
+  highlight: number[];
+  fxOffset: number;
+}
 
-const BODY: Record<PetKind, string> = {
-  bao: "M60 22c-4 0-7 3-8 6-3-2-7-1-9 1.5-2.5-1-5.5 0-6.5 3C22 37 12 47 12 60c0 17 20 27 48 27s48-10 48-27c0-13-10-23-24.5-27.5-1-3-4-4-6.5-3-2-2.5-6-3.5-9-1.5-1-3-4-6-8-6z",
-  gyoza: "M12 72C16 40 104 40 108 72c-8 12-88 12-96 0z",
+// The same shapes feed design/rive/generate.py, so Rive pets can replace these one for one.
+const SHAPES: Record<PetKind, Shape> = shapes;
+const EYE = "#3F2A20";
+
+const stroke = {
+  stroke: EYE,
+  strokeWidth: 2,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  fill: "none",
 };
 
-const PLEATS: Record<PetKind, string> = {
-  bao: "M55 31q2 4 1.5 9M60 28v12M65 31q-2 4-1.5 9",
-  gyoza: "M34 50q2-6 7-6M48 45q2-6 7-5M62 44q3-5 7-4M76 46q3-4 7-2",
-};
-
-function Face({ mood }: { mood: Mood }) {
-  const stroke = {
-    stroke: INK,
-    strokeWidth: 2.4,
-    strokeLinecap: "round" as const,
-    fill: "none",
-  };
+function Eyes({ mood }: { mood: Mood }) {
   switch (mood) {
+    case "stalled":
+      return <path d="M42 68q3 2.6 6 0M72 68q3 2.6 6 0" {...stroke} />;
     case "failing":
       return (
-        <>
-          <path d="M45 62l6 6M51 62l-6 6M69 62l6 6M75 62l-6 6" {...stroke} />
-          <path d="M52 76q2-2 4 0t4 0t4 0t4 0" {...stroke} />
-        </>
-      );
-    case "stalled":
-      return (
-        <>
-          <path d="M44 66q4 3 8 0M68 66q4 3 8 0" {...stroke} />
-          <circle cx="60" cy="74" r="1.8" fill={INK} />
-        </>
+        <path
+          d="M42.5 65.5l4.5 4.5M47 65.5l-4.5 4.5M73 65.5l4.5 4.5M77.5 65.5l-4.5 4.5"
+          {...stroke}
+        />
       );
     case "litterBox":
       return (
-        <>
-          <path d="M44 63l6 3-6 3M76 63l-6 3 6 3" {...stroke} />
-          <path d="M53 76q7-4 14 0" {...stroke} />
-        </>
+        <path
+          d="M42.5 65.8l4.5 2.2-4.5 2.2M77.5 65.8l-4.5 2.2 4.5 2.2"
+          {...stroke}
+        />
       );
-    case "steaming":
-    case "sweating":
+    default:
       return (
-        <>
-          <path d="M43 59l8 3M77 59l-8 3" {...stroke} />
-          <circle cx="48" cy="67" r="3" fill={INK} />
-          <circle cx="72" cy="67" r="3" fill={INK} />
-          <path d="M55 75h10" {...stroke} />
-        </>
-      );
-    case "needsYou":
-    case "hungry":
-      return (
-        <>
-          <circle cx="48" cy="65" r="4" fill={INK} />
-          <circle cx="72" cy="65" r="4" fill={INK} />
-          <circle cx="49.4" cy="63.6" r="1.4" fill="#fff" />
-          <circle cx="73.4" cy="63.6" r="1.4" fill="#fff" />
-          {mood === "needsYou" ? (
-            <ellipse cx="60" cy="75" rx="2.6" ry="3.2" fill={INK} />
-          ) : (
-            <>
-              <path d="M54 72q6 6 12 0" {...stroke} />
-              <path
-                d="M64 75v5"
-                stroke="#7CC6F2"
-                strokeWidth={2.6}
-                strokeLinecap="round"
-              />
-            </>
-          )}
-        </>
-      );
-    case "working":
-      return (
-        <>
-          <circle cx="51" cy="66" r="3.2" fill={INK} />
-          <circle cx="75" cy="66" r="3.2" fill={INK} />
-          <path d="M58 74q4 2 8 0" {...stroke} />
-        </>
-      );
-    case "chill":
-      return (
-        <>
-          <circle cx="48" cy="66" r="3.2" fill={INK} />
-          <circle cx="72" cy="66" r="3.2" fill={INK} />
-          <path d="M56 72q4 3.5 8 0" {...stroke} />
-        </>
+        <g className="dumpling__eyes">
+          <circle cx="45" cy="68" r="2.7" fill={EYE} />
+          <circle cx="75" cy="68" r="2.7" fill={EYE} />
+        </g>
       );
   }
 }
 
-function Extras({ mood }: { mood: Mood }) {
+function Mouth({ mood }: { mood: Mood }) {
+  switch (mood) {
+    case "needsYou":
+      return <ellipse cx="60" cy="71.5" rx="1.6" ry="2" fill={EYE} />;
+    case "sweating":
+      return <path d="M57.5 71.5h5" {...stroke} />;
+    case "steaming":
+    case "failing":
+      return <path d="M55.5 72q1.1-1.4 2.2 0t2.2 0t2.2 0t2.2 0" {...stroke} />;
+    case "litterBox":
+      return <path d="M57 72.5q3-2.4 6 0" {...stroke} />;
+    case "stalled":
+      return null;
+    case "hungry":
+      return (
+        <>
+          <path d="M57 70h6q-.5 4.2-3 4.2t-3-4.2z" fill={EYE} />
+          <path
+            d="M58.3 73q1.7-1.2 3.4 0q-.8 1.2-1.7 1.2t-1.7-1.2z"
+            fill="#FF9AAA"
+          />
+          <path
+            d="M62.5 73.5v4"
+            stroke="#A8DAF7"
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+        </>
+      );
+    default:
+      return <path d="M57.5 70.5q2.5 2.6 5 0" {...stroke} />;
+  }
+}
+
+function Brows({ mood }: { mood: Mood }) {
+  return mood === "sweating" || mood === "steaming" ? (
+    <path d="M41.5 62l5 1.6M78.5 62l-5 1.6" {...stroke} />
+  ) : null;
+}
+
+function Effects({ mood }: { mood: Mood }) {
   switch (mood) {
     case "needsYou":
       return (
         <g className="fx-ping">
-          <circle cx="98" cy="20" r="10" fill="#FFD66B" />
+          <circle cx="98" cy="24" r="8" fill="#FFE39A" />
           <path
-            d="M98 14v7M98 25v.5"
-            stroke="#1A1406"
-            strokeWidth={3}
+            d="M98 19.5v5.5M98 28.2v.3"
+            stroke={EYE}
+            strokeWidth={2.4}
             strokeLinecap="round"
           />
         </g>
@@ -121,33 +118,33 @@ function Extras({ mood }: { mood: Mood }) {
         <>
           <path
             className="fx-drip"
-            d="M22 44q-3 5 0 7q3-2 0-7z"
-            fill="#8FD3FF"
+            d="M24 46q-3 5 0 7q3-2 0-7z"
+            fill="#BFE4FB"
           />
           <path
             className="fx-drip fx-late"
-            d="M98 40q-3 5 0 7q3-2 0-7z"
-            fill="#8FD3FF"
+            d="M96 42q-3 5 0 7q3-2 0-7z"
+            fill="#BFE4FB"
           />
         </>
       );
     case "steaming":
       return (
         <>
-          <circle className="fx-steam" cx="46" cy="18" r="6" fill="#E9E6E0" />
+          <circle className="fx-steam" cx="48" cy="20" r="5" fill="#FBF8F4" />
           <circle
             className="fx-steam fx-late"
             cx="60"
-            cy="14"
-            r="7"
-            fill="#E9E6E0"
+            cy="16"
+            r="6"
+            fill="#FBF8F4"
           />
           <circle
             className="fx-steam fx-later"
-            cx="74"
-            cy="18"
-            r="5"
-            fill="#E9E6E0"
+            cx="72"
+            cy="20"
+            r="4"
+            fill="#FBF8F4"
           />
         </>
       );
@@ -155,10 +152,10 @@ function Extras({ mood }: { mood: Mood }) {
       return (
         <text
           className="fx-doze"
-          x="92"
-          y="30"
-          fill="#C9B8F0"
-          fontSize="14"
+          x="90"
+          y="40"
+          fill="#DCCFF8"
+          fontSize="12"
           fontWeight="800"
         >
           z
@@ -166,28 +163,23 @@ function Extras({ mood }: { mood: Mood }) {
       );
     case "litterBox":
       return (
-        <>
-          <path
-            className="fx-stink"
-            d="M30 30q-4-4 0-8t0-8"
-            stroke="#A3C26B"
-            strokeWidth={2.4}
-            fill="none"
-          />
-          <path
-            className="fx-stink fx-late"
-            d="M90 30q-4-4 0-8t0-8"
-            stroke="#A3C26B"
-            strokeWidth={2.4}
-            fill="none"
-          />
-        </>
+        <path
+          className="fx-stink"
+          d="M30 32q-4-4 0-8t0-8M90 32q-4-4 0-8t0-8"
+          stroke="#CDE3A8"
+          strokeWidth={2}
+          strokeLinecap="round"
+          fill="none"
+        />
       );
     case "failing":
       return (
         <g className="fx-orbit">
-          <circle cx="44" cy="22" r="3" fill="#FFD66B" />
-          <circle cx="76" cy="22" r="2.5" fill="#F4F2EE" />
+          <path
+            d="M44 21l1.2 2.6 2.6 1.2-2.6 1.2L44 28.6l-1.2-2.6-2.6-1.2 2.6-1.2z"
+            fill="#FFE39A"
+          />
+          <path d="M76 22l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#FFFFFF" />
         </g>
       );
     default:
@@ -195,8 +187,46 @@ function Extras({ mood }: { mood: Mood }) {
   }
 }
 
-/** A product's pet. Its face and effects follow the mood; its colour warms with token burn. */
+function PropBehind({ mood }: { mood: Mood }) {
+  if (mood === "hungry") {
+    return (
+      <>
+        <path
+          d="M92 74l14-16M97 76l13-13"
+          stroke="#C98A5E"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+        />
+        <path d="M86 80h28c0 7-6 11-14 11s-14-4-14-11z" fill="#F6DCC8" />
+      </>
+    );
+  }
+  if (mood === "litterBox") {
+    return <rect x="86" y="80" width="28" height="11" rx="5" fill="#E9E0D6" />;
+  }
+  return null;
+}
+
+/** A stalled pet naps in its bamboo steamer. */
+function PropInFront({ mood }: { mood: Mood }) {
+  if (mood !== "stalled") return null;
+  return (
+    <>
+      <path d="M12 74h96v12c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F" />
+      <path d="M12 82h96" stroke="#DDB283" strokeWidth={2} />
+      <rect x="9" y="70" width="102" height="6" rx="3" fill="#F6DDBA" />
+    </>
+  );
+}
+
+/** A product's pet. Its face, pose and effects follow the mood; it flushes and blushes with token burn. */
 export function Dumpling({ kind, color, mood, heat, size = 64 }: Props) {
+  // useId contains colons, which break url(#…) references.
+  const id = useId().replace(/:/g, "");
+  const shape = SHAPES[kind];
+  const [hx = 36, hy = 50, hr = -30] = shape.highlight;
+  const blush = 1 + heat * 0.7;
+
   return (
     <svg
       className={`dumpling dumpling--${mood}`}
@@ -205,39 +235,68 @@ export function Dumpling({ kind, color, mood, heat, size = 64 }: Props) {
       viewBox="0 0 120 100"
       aria-hidden="true"
     >
-      <Extras mood={mood} />
+      <defs>
+        <radialGradient id={`${id}shade`} cx="0.42" cy="0.32" r="0.8">
+          <stop offset="0.5" stopColor="#B5785A" stopOpacity={0} />
+          <stop offset="1" stopColor="#B5785A" stopOpacity={0.32} />
+        </radialGradient>
+        <radialGradient id={`${id}glow`} cx="0.34" cy="0.28" r="0.42">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity={0.7} />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+        </radialGradient>
+        <radialGradient id={`${id}blush`}>
+          <stop offset="0" stopColor="#FFA98F" stopOpacity={0.8} />
+          <stop offset="1" stopColor="#FFA98F" stopOpacity={0} />
+        </radialGradient>
+        <radialGradient id={`${id}shadow`}>
+          <stop offset="0" stopColor="#000" stopOpacity={0.22} />
+          <stop offset="1" stopColor="#000" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
+      <PropBehind mood={mood} />
       <g className="dumpling__body">
-        <path
-          d={BODY[kind]}
-          fill={flushed(color, heat)}
-          stroke={INK}
-          strokeWidth={2.6}
-          strokeLinejoin="round"
+        <path d={shape.body} fill={flushed(color, heat)} />
+        <path d={shape.body} fill={`url(#${id}shade)`} />
+        <path d={shape.body} fill={`url(#${id}glow)`} />
+        <ellipse
+          cx={hx}
+          cy={hy}
+          rx="4.5"
+          ry="2"
+          fill="#FFFFFF"
+          opacity={0.8}
+          transform={`rotate(${hr} ${hx} ${hy})`}
         />
         <path
-          d={PLEATS[kind]}
-          stroke={INK}
-          strokeWidth={2}
+          d={shape.creases}
+          stroke="#B5785A"
+          strokeOpacity={0.28}
+          strokeWidth={1.6}
           strokeLinecap="round"
           fill="none"
         />
         <ellipse
           cx="38"
-          cy="74"
-          rx={6 + heat * 4}
-          ry={3 + heat * 2}
-          fill="#F27886"
-          opacity={0.35 + heat * 0.5}
+          cy="73"
+          rx={9 * blush}
+          ry={5.5 * blush}
+          fill={`url(#${id}blush)`}
         />
         <ellipse
           cx="82"
-          cy="74"
-          rx={6 + heat * 4}
-          ry={3 + heat * 2}
-          fill="#F27886"
-          opacity={0.35 + heat * 0.5}
+          cy="73"
+          rx={9 * blush}
+          ry={5.5 * blush}
+          fill={`url(#${id}blush)`}
         />
-        <Face mood={mood} />
+        <Eyes mood={mood} />
+        <Brows mood={mood} />
+        <Mouth mood={mood} />
+      </g>
+      <PropInFront mood={mood} />
+      <g transform={`translate(0 ${shape.fxOffset})`}>
+        <Effects mood={mood} />
       </g>
     </svg>
   );

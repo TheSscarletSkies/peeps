@@ -1,4 +1,4 @@
-const HOT = "#FF6F61";
+const HOT = "#FF9A8B";
 
 function channels(hex: string): [number, number, number] {
   const value = hex.replace("#", "");
@@ -23,7 +23,7 @@ export function mix(from: string, to: string, amount: number): string {
   );
 }
 
-/** A pet's body colour, flushed towards red as it burns tokens faster. */
+/** A pet's body colour, warmed slightly as it burns tokens faster. Most of the flush is in the blush. */
 export function flushed(color: string, heat: number): string {
-  return mix(color, HOT, heat * 0.3);
+  return mix(color, HOT, heat * 0.15);
 }
