@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="400" viewBox="0 0 120 100">
+  <ellipse id="shadow" cx="60" cy="92" rx="38" ry="4" fill="#000" opacity="0.18"/>
+  <g id="props">
+    <g id="bowl" opacity="0"><path d="M88 84h24c0 6-5 10-12 10s-12-4-12-10z" fill="#6B6760"/></g>
+    <g id="litter-box" opacity="0"><rect x="86" y="80" width="28" height="12" rx="3" fill="#6B6760"/></g>
+  </g>
+  <g id="pet">
+    <g id="body-group">
+      <path id="body" d="M12 72C16 40 104 40 108 72c-8 12-88 12-96 0z" fill="#C9B8F0" stroke="#3B2616" stroke-width="2.6" stroke-linejoin="round"/>
+      <path id="pleats" d="M34 50q2-6 7-6M48 45q2-6 7-5M62 44q3-5 7-4M76 46q3-4 7-2" stroke="#3B2616" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </g>
+    <g id="blush">
+      <ellipse id="blush-left" cx="38" cy="74" rx="6" ry="3" fill="#F27886" opacity="0.4"/>
+      <ellipse id="blush-right" cx="82" cy="74" rx="6" ry="3" fill="#F27886" opacity="0.4"/>
+    </g>
+    <g id="eyes">
+      <g id="eyes-open">
+        <circle id="eye-left" cx="48" cy="66" r="3.4" fill="#3B2616"/>
+        <circle id="eye-right" cx="72" cy="66" r="3.4" fill="#3B2616"/>
+        <circle id="shine-left" cx="49.3" cy="64.8" r="1.2" fill="#fff"/>
+        <circle id="shine-right" cx="73.3" cy="64.8" r="1.2" fill="#fff"/>
+      </g>
+      <g id="eyes-closed" opacity="0"><path d="M44 66q4 3 8 0M68 66q4 3 8 0" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+      <g id="eyes-x" opacity="0"><path d="M45 62l6 6M51 62l-6 6M69 62l6 6M75 62l-6 6" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+      <g id="eyes-squint" opacity="0"><path d="M44 63l6 3-6 3M76 63l-6 3 6 3" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+    </g>
+    <g id="brows" opacity="0"><path d="M43 59l8 3M77 59l-8 3" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+    <g id="mouth">
+      <path id="mouth-smile" d="M56 72q4 3.5 8 0" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <ellipse id="mouth-o" cx="60" cy="75" rx="2.6" ry="3.2" fill="#3B2616" opacity="0"/>
+      <path id="mouth-flat" d="M55 75h10" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/>
+      <path id="mouth-wavy" d="M52 76q2-2 4 0t4 0t4 0t4 0" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/>
+      <path id="mouth-frown" d="M53 76q7-4 14 0" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/>
+      <path id="mouth-open-smile" d="M54 72q6 6 12 0" stroke="#3B2616" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/>
+      <path id="drool" d="M64 75v5" stroke="#7CC6F2" stroke-width="2.6" stroke-linecap="round" opacity="0"/>
+    </g>
+  </g>
+  <g id="fx" transform="translate(0 22)">
+    <g id="fx-bang" opacity="0"><circle cx="98" cy="20" r="10" fill="#FFD66B"/><path d="M98 14v7M98 25v.5" stroke="#1A1406" stroke-width="3" stroke-linecap="round"/></g>
+    <g id="fx-sweat" opacity="0">
+      <path id="sweat-left" d="M22 44q-3 5 0 7q3-2 0-7z" fill="#8FD3FF"/>
+      <path id="sweat-right" d="M98 40q-3 5 0 7q3-2 0-7z" fill="#8FD3FF"/>
+    </g>
+    <g id="fx-steam" opacity="0">
+      <circle id="steam-1" cx="46" cy="18" r="6" fill="#E9E6E0"/>
+      <circle id="steam-2" cx="60" cy="14" r="7" fill="#E9E6E0"/>
+      <circle id="steam-3" cx="74" cy="18" r="5" fill="#E9E6E0"/>
+    </g>
+    <g id="fx-zzz" opacity="0"><text x="92" y="30" fill="#C9B8F0" font-size="14" font-weight="800" font-family="sans-serif">z</text></g>
+    <g id="fx-stink" opacity="0"><path d="M30 30q-4-4 0-8t0-8M90 30q-4-4 0-8t0-8" stroke="#A3C26B" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+    <g id="fx-stars" opacity="0"><circle cx="44" cy="22" r="3" fill="#FFD66B"/><circle cx="76" cy="22" r="2.5" fill="#F4F2EE"/></g>
+    <g id="fx-confetti" opacity="0">
+      <rect x="30" y="16" width="4" height="7" rx="1" fill="#FFD66B" transform="rotate(-20 32 19)"/>
+      <rect x="86" y="12" width="4" height="7" rx="1" fill="#9CC9FF" transform="rotate(25 88 15)"/>
+      <rect x="58" y="6" width="4" height="7" rx="1" fill="#FF9C9C"/>
+    </g>
+  </g>
+</svg>
