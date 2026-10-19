@@ -858,6 +858,7 @@ body,
 
 .roamer {
   position: absolute;
+  touch-action: none;
   left: 0;
   bottom: 2px;
   display: flex;
@@ -883,6 +884,108 @@ body,
   margin-left: -3px;
   border-radius: 2px;
   background: var(--text);
+}
+
+.roamer--held {
+  z-index: 2;
+  cursor: grabbing;
+}
+
+.roamer--held .dumpling {
+  translate: 0 -3px;
+  scale: 1.12;
+}
+
+.notch__all {
+  position: absolute;
+  bottom: 5px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #6f6c68;
+  fill: currentColor;
+  cursor: pointer;
+}
+
+.notch__all:hover,
+.notch__all[aria-pressed="true"] {
+  background: #1d1d20;
+  color: var(--text);
+}
+
+/* A gentle nudge every few seconds while any pet needs you. */
+.notch__all[data-nudge] {
+  color: var(--accent);
+  animation: nudge 3.2s ease-in-out infinite;
+}
+
+.notch__all[data-nudge]::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff8c78;
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roster li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+}
+
+.roster li[data-urgent] {
+  background: color-mix(in srgb, #ffd66b 9%, var(--surface));
+}
+
+.roster__pet {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.roster__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.roster__size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
 }
 
 .roamer:focus-visible {
@@ -931,6 +1034,23 @@ body,
   75% {
     rotate: 7deg;
     translate: 0 -1px;
+  }
+}
+
+@keyframes nudge {
+  0%,
+  80%,
+  100% {
+    rotate: 0deg;
+  }
+  85% {
+    rotate: -14deg;
+  }
+  90% {
+    rotate: 12deg;
+  }
+  95% {
+    rotate: -6deg;
   }
 }
 
