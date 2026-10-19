@@ -17,6 +17,8 @@ interface Shape {
   creases: string;
   highlight: number[];
   fxOffset: number;
+  /** How far the pet rises in the steamer so its face peeks over the rim. */
+  napLift: number;
 }
 
 // The same shapes feed design/rive/generate.py, so Rive pets can replace these one for one.
@@ -212,9 +214,9 @@ function PropInFront({ mood }: { mood: Mood }) {
   if (mood !== "stalled") return null;
   return (
     <>
-      <path d="M12 74h96v12c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F" />
-      <path d="M12 82h96" stroke="#DDB283" strokeWidth={2} />
-      <rect x="9" y="70" width="102" height="6" rx="3" fill="#F6DDBA" />
+      <path d="M12 78h96v10c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F" />
+      <path d="M12 85h96" stroke="#DDB283" strokeWidth={2} />
+      <rect x="9" y="74" width="102" height="6" rx="3" fill="#F6DDBA" />
     </>
   );
 }
@@ -255,44 +257,50 @@ export function Dumpling({ kind, color, mood, heat, size = 64 }: Props) {
       </defs>
       <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
       <PropBehind mood={mood} />
-      <g className="dumpling__body">
-        <path d={shape.body} fill={flushed(color, heat)} />
-        <path d={shape.body} fill={`url(#${id}shade)`} />
-        <path d={shape.body} fill={`url(#${id}glow)`} />
-        <ellipse
-          cx={hx}
-          cy={hy}
-          rx="4.5"
-          ry="2"
-          fill="#FFFFFF"
-          opacity={0.8}
-          transform={`rotate(${hr} ${hx} ${hy})`}
-        />
-        <path
-          d={shape.creases}
-          stroke="#B5785A"
-          strokeOpacity={0.28}
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          fill="none"
-        />
-        <ellipse
-          cx="38"
-          cy="73"
-          rx={9 * blush}
-          ry={5.5 * blush}
-          fill={`url(#${id}blush)`}
-        />
-        <ellipse
-          cx="82"
-          cy="73"
-          rx={9 * blush}
-          ry={5.5 * blush}
-          fill={`url(#${id}blush)`}
-        />
-        <Eyes mood={mood} />
-        <Brows mood={mood} />
-        <Mouth mood={mood} />
+      <g
+        transform={
+          mood === "stalled" ? `translate(0 ${-shape.napLift})` : undefined
+        }
+      >
+        <g className="dumpling__body">
+          <path d={shape.body} fill={flushed(color, heat)} />
+          <path d={shape.body} fill={`url(#${id}shade)`} />
+          <path d={shape.body} fill={`url(#${id}glow)`} />
+          <ellipse
+            cx={hx}
+            cy={hy}
+            rx="4.5"
+            ry="2"
+            fill="#FFFFFF"
+            opacity={0.8}
+            transform={`rotate(${hr} ${hx} ${hy})`}
+          />
+          <path
+            d={shape.creases}
+            stroke="#B5785A"
+            strokeOpacity={0.28}
+            strokeWidth={1.6}
+            strokeLinecap="round"
+            fill="none"
+          />
+          <ellipse
+            cx="38"
+            cy="73"
+            rx={9 * blush}
+            ry={5.5 * blush}
+            fill={`url(#${id}blush)`}
+          />
+          <ellipse
+            cx="82"
+            cy="73"
+            rx={9 * blush}
+            ry={5.5 * blush}
+            fill={`url(#${id}blush)`}
+          />
+          <Eyes mood={mood} />
+          <Brows mood={mood} />
+          <Mouth mood={mood} />
+        </g>
       </g>
       <PropInFront mood={mood} />
       <g transform={`translate(0 ${shape.fxOffset})`}>

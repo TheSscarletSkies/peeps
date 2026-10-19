@@ -58,17 +58,17 @@ Redraw anything you like. Keep the layer names so the states below still make se
 
 Each `mood` value is one looping state. Blend between states over about 200 ms so mood changes never snap.
 
-| `mood`        | Layers                                                 | Motion                                                                      |
-| ------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| 0 `chill`     | `eyes-open`, `mouth-smile`                             | Slow breathing squash, a blink every 3 to 5 s                               |
-| 1 `working`   | `eyes-open`, `mouth-smile`                             | Quick bob; eyes glance left and right as if reading                         |
-| 2 `sweating`  | `eyes-open`, `brows`, `mouth-flat`, `fx-sweat`         | Faster bob; drops slide down and fade, one at a time                        |
-| 3 `steaming`  | `eyes-open`, `brows`, `mouth-wavy`, `fx-steam`         | Small jitter; puffs rise, grow and fade in turn                             |
-| 4 `needsYou`  | `eyes-open`, `mouth-o`, `fx-bang`                      | Hops with squash on landing; `!` pulses. The most attention-grabbing state. |
-| 5 `hungry`    | `eyes-open`, `mouth-open-smile`, `drool`, `bowl`       | Leans towards the bowl with its chopsticks and back; drool stretches        |
-| 6 `litterBox` | `eyes-squint`, `mouth-frown`, `fx-stink`, `litter-box` | Shuffles away from the box; stink lines wave upwards                        |
-| 7 `failing`   | `eyes-x`, `mouth-wavy`, `fx-stars`                     | Tipped over about 14°, gentle wobble; stars orbit the head                  |
-| 8 `stalled`   | `eyes-closed`, `steamer`, `fx-zzz`                     | Naps in the steamer: very slow breathing, z floats up and fades             |
+| `mood`        | Layers                                                 | Motion                                                                                                                                 |
+| ------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 `chill`     | `eyes-open`, `mouth-smile`                             | Slow breathing squash, a blink every 3 to 5 s                                                                                          |
+| 1 `working`   | `eyes-open`, `mouth-smile`                             | Quick bob; eyes glance left and right as if reading                                                                                    |
+| 2 `sweating`  | `eyes-open`, `brows`, `mouth-flat`, `fx-sweat`         | Faster bob; drops slide down and fade, one at a time                                                                                   |
+| 3 `steaming`  | `eyes-open`, `brows`, `mouth-wavy`, `fx-steam`         | Small jitter; puffs rise, grow and fade in turn                                                                                        |
+| 4 `needsYou`  | `eyes-open`, `mouth-o`, `fx-bang`                      | Hops with squash on landing; `!` pulses. The most attention-grabbing state.                                                            |
+| 5 `hungry`    | `eyes-open`, `mouth-open-smile`, `drool`, `bowl`       | Leans towards the bowl with its chopsticks and back; drool stretches                                                                   |
+| 6 `litterBox` | `eyes-squint`, `mouth-frown`, `fx-stink`, `litter-box` | Shuffles away from the box; stink lines wave upwards                                                                                   |
+| 7 `failing`   | `eyes-x`, `mouth-wavy`, `fx-stars`                     | Tipped over about 14°, gentle wobble; stars orbit the head                                                                             |
+| 8 `stalled`   | `eyes-closed`, `steamer`, `fx-zzz`                     | Naps in the steamer, raised by `napLift` from `shapes.json` so the face peeks over the rim; very slow breathing, z floats up and fades |
 
 ### Heat (any state)
 

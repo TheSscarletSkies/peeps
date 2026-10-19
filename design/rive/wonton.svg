@@ -63,9 +63,9 @@
   </g>
   <g id="props-front">
     <g id="steamer" opacity="0">
-      <path d="M12 74h96v12c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F"/>
-      <path d="M12 82h96" stroke="#DDB283" stroke-width="2"/>
-      <rect x="9" y="70" width="102" height="6" rx="3" fill="#F6DDBA"/>
+      <path d="M12 78h96v10c0 4-3.5 7-8 7H20c-4.5 0-8-3-8-7z" fill="#EFCB9F"/>
+      <path d="M12 85h96" stroke="#DDB283" stroke-width="2"/>
+      <rect x="9" y="74" width="102" height="6" rx="3" fill="#F6DDBA"/>
     </g>
   </g>
   <g id="fx" transform="translate(0 8)">
