@@ -1,20 +1,19 @@
-/* The peeps window: warm, light and soft, so it reads as a home for the pets rather than a dashboard. */
+/* The peeps window: deep and warm so the pastel pets pop, matching the notch tray. */
 
 .hub {
-  --ink: #fbf6f0;
-  --surface: #fffdfa;
-  --line: #f1e7dc;
-  --text: #3b2a21;
-  --muted: #9b8577;
+  --ink: #0f0e0d;
+  --surface: #191715;
+  --line: #2a2724;
+  --text: #f6f1ea;
+  --muted: #a39a90;
   --accent: #ffc9a8;
-  --accent-ink: #4a2c1c;
-  --field: #f8f1e9;
-  --field-line: #eee2d5;
-  --focus: rgba(59, 42, 33, 0.35);
+  --accent-ink: #3a2418;
+  --field: #23201d;
+  --field-line: #34302c;
+  --focus: rgba(246, 241, 234, 0.45);
   --check: #9fd9b4;
-  --check-line: #d6c7b9;
-  --card-shadow:
-    0 1px 2px rgba(95, 62, 40, 0.06), 0 8px 24px rgba(95, 62, 40, 0.06);
+  --check-line: #5a544e;
+  --card-shadow: inset 0 0 0 1px var(--line);
 
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -50,10 +49,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 40px;
+  height: var(--h-control);
   padding: 0 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--muted);
   font-family: inherit;
@@ -77,7 +76,7 @@
   margin-left: auto;
   min-width: 20px;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--accent);
   color: var(--accent-ink);
   font-size: 11px;
@@ -90,7 +89,7 @@
   gap: 8px;
   margin: auto 0 0;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
   font-size: 12px;
@@ -112,9 +111,9 @@
 .hub__error {
   margin: 0 0 16px;
   padding: 10px 14px;
-  border-radius: 12px;
-  background: #fde7e3;
-  color: #8a3b2c;
+  border-radius: var(--r-box);
+  background: #2a1a17;
+  color: #ffb3a7;
   font-size: 13px;
 }
 
@@ -129,10 +128,20 @@
   margin-bottom: 24px;
   padding: 32px 36px 0;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: var(--r-card);
   background:
-    radial-gradient(120% 140% at 85% 110%, #ffe1cf 0%, transparent 60%),
-    radial-gradient(90% 120% at 10% 0%, #fff7ee 0%, transparent 70%), #fdeee2;
+    radial-gradient(
+      70% 120% at 78% 115%,
+      rgba(255, 186, 140, 0.32) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      60% 90% at 0% 0%,
+      rgba(255, 230, 205, 0.06) 0%,
+      transparent 70%
+    ),
+    var(--surface);
+  box-shadow: var(--card-shadow);
 }
 
 .hero__text {
@@ -149,7 +158,7 @@
 
 .hero p {
   margin: 0;
-  color: #7b6354;
+  color: var(--muted);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -210,7 +219,7 @@
 
 .card {
   padding: 18px 20px;
-  border-radius: 22px;
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--card-shadow);
 }
@@ -225,7 +234,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--card-shadow);
 }
@@ -236,8 +245,8 @@
   padding: 18px 0 6px;
   background: radial-gradient(
     80% 120% at 50% 100%,
-    color-mix(in srgb, var(--pet) 70%, #fff) 0%,
-    color-mix(in srgb, var(--pet) 30%, var(--surface)) 70%
+    color-mix(in srgb, var(--pet) 22%, var(--surface)) 0%,
+    var(--surface) 75%
   );
 }
 
@@ -272,15 +281,15 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 14px;
-  background: #fff4dc;
+  border-radius: var(--r-box);
+  background: rgba(255, 214, 107, 0.1);
 }
 
 .pet-card__ask code {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #7a5310;
+  color: #ffe39a;
   font-size: 12px;
 }
 
@@ -292,13 +301,13 @@
 .pet-card__needs {
   margin: 0;
   padding-left: 18px;
-  color: #7b6354;
+  color: var(--muted);
   font-size: 13px;
 }
 
 .mood {
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--field);
   color: var(--muted);
   font-size: 11px;
@@ -307,26 +316,26 @@
 }
 
 .mood[data-mood="needsYou"] {
-  background: #fff1c7;
-  color: #7a5310;
+  background: rgba(255, 214, 107, 0.16);
+  color: #ffe39a;
 }
 
 .mood[data-mood="failing"],
 .mood[data-mood="steaming"] {
-  background: #fde3de;
-  color: #8a3b2c;
+  background: rgba(255, 140, 120, 0.16);
+  color: #ffb3a7;
 }
 
 .mood[data-mood="hungry"],
 .mood[data-mood="litterBox"] {
-  background: #ffe8d8;
-  color: #84462a;
+  background: rgba(255, 190, 150, 0.14);
+  color: #ffd2b8;
 }
 
 .mood[data-mood="working"],
 .mood[data-mood="sweating"] {
-  background: #e3effd;
-  color: #2f5680;
+  background: rgba(140, 190, 255, 0.14);
+  color: #c4dcff;
 }
 
 .today {
@@ -346,7 +355,7 @@
 }
 
 .today li[data-due="overdue"] span {
-  color: #a2442f;
+  color: #ffb3a7;
 }
 
 /* Section pages */
@@ -370,16 +379,6 @@
 
 /* Shared pieces from the tray, adjusted for the light window. */
 
-.hub .button {
-  background: var(--field);
-  color: var(--text);
-}
-
-.hub .button--primary {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
 .hub .setup__step,
 .hub .todos li,
 .hub .drafts li {
@@ -393,32 +392,15 @@
   box-shadow: none;
 }
 
-.hub .todos li[data-due="overdue"] {
-  background: #fdebe6;
-}
-
-.hub .todos li[data-due="overdue"] .todos__due {
-  color: #a2442f;
-}
-
-.hub .todos li[data-due="today"] .todos__due {
-  color: #9a6a0c;
-}
-
-.hub .todos__tag {
-  background: #ece5fb;
-  color: #5b4a8c;
-}
-
 .hub .week__bar {
   background: var(--field);
-}
-
-.hub .setup__ok {
-  color: #2f7a4f;
 }
 
 .hub .tray__tip,
 .hub .setup__hint {
   color: var(--muted);
+}
+
+.hub .card .todos li[data-due="overdue"] {
+  background: #2a1a17;
 }
