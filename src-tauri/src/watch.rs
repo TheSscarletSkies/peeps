@@ -23,7 +23,7 @@ pub async fn run(app: Arc<App>) {
     loop {
         interval.tick().await;
         let worker = app.clone();
-        let rescan = tick % RESCAN_EVERY_TICKS == 0;
+        let rescan = app.take_rescan() || tick % RESCAN_EVERY_TICKS == 0;
         let result = tokio::task::spawn_blocking(move || {
             if rescan {
                 discover_transcripts(&worker);
@@ -88,7 +88,7 @@ fn read_transcripts(app: &App) {
 
 fn run_due_checks(app: &App) {
     let now = Utc::now();
-    for product in &app.config.products {
+    for product in &app.config().products {
         for check in &product.checks {
             let key = (product.id.clone(), check.id.clone());
             let last_run = app.world().checks.get(&key).map(|run| run.at);
@@ -108,7 +108,7 @@ fn run_due_checks(app: &App) {
 
 fn refresh_tips(app: &App) {
     let mut tips: Vec<Tip> = Vec::new();
-    for product in &app.config.products {
+    for product in &app.config().products {
         if let Some(tip) = instructions_tip(product) {
             tips.push(tip);
         }

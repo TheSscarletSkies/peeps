@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { setExpanded } from "../lib/bridge";
+import { hooksStatus, setExpanded } from "../lib/bridge";
 import type { Mood, Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
+import { Setup } from "../setup/Setup";
 import { PetPanel } from "./PetPanel";
 
 const URGENT: Mood[] = [
@@ -18,6 +19,7 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const [open, setOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [setup, setSetup] = useState(false);
   const closeTimer = useRef<number | undefined>(undefined);
 
   const pets = snapshot.pets;
@@ -28,6 +30,14 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
   useEffect(() => {
     void setExpanded(open);
   }, [open]);
+
+  useEffect(() => {
+    hooksStatus().then((status) => {
+      if (!status.installed) setSetup(true);
+    });
+  }, []);
+
+  const showSetup = setup || pets.length === 0;
 
   const enter = () => {
     window.clearTimeout(closeTimer.current);
@@ -59,6 +69,9 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
               size={30}
             />
           ))}
+          {pets.length === 0 && (
+            <span className="tray__count">Set up peeps</span>
+          )}
           {urgent.length > 0 && (
             <span className="tray__count">{urgent.length} need you</span>
           )}
@@ -72,37 +85,50 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
               Config problem: {snapshot.configError}
             </p>
           )}
-          <div className="steamer">
-            {pets.map((pet) => (
-              <button
-                key={pet.id}
-                className={
-                  pet.id === selected?.id
-                    ? "steamer__pet steamer__pet--selected"
-                    : "steamer__pet"
-                }
-                onClick={() => setSelectedId(pet.id)}
-                aria-label={`${pet.name}: ${pet.headline}`}
-              >
-                <Dumpling
-                  kind={pet.kind}
-                  color={pet.color}
-                  mood={pet.mood}
-                  heat={pet.heat}
-                />
-                <span className="steamer__name">{pet.name}</span>
-              </button>
-            ))}
-          </div>
-          {selected ? (
-            <PetPanel key={selected.id} pet={selected} onTyping={setTyping} />
+          {showSetup ? (
+            <Setup
+              snapshot={snapshot}
+              onDone={() => setSetup(false)}
+              onTyping={setTyping}
+            />
           ) : (
-            <p className="tray__empty">
-              Add a product to ~/.peeps/config.toml to meet its pet.
-            </p>
-          )}
-          {snapshot.tips[0] && (
-            <p className="tray__tip">{snapshot.tips[0].text}</p>
+            <>
+              <div className="steamer">
+                {pets.map((pet) => (
+                  <button
+                    key={pet.id}
+                    className={
+                      pet.id === selected?.id
+                        ? "steamer__pet steamer__pet--selected"
+                        : "steamer__pet"
+                    }
+                    onClick={() => setSelectedId(pet.id)}
+                    aria-label={`${pet.name}: ${pet.headline}`}
+                  >
+                    <Dumpling
+                      kind={pet.kind}
+                      color={pet.color}
+                      mood={pet.mood}
+                      heat={pet.heat}
+                    />
+                    <span className="steamer__name">{pet.name}</span>
+                  </button>
+                ))}
+              </div>
+              {selected && (
+                <PetPanel
+                  key={selected.id}
+                  pet={selected}
+                  onTyping={setTyping}
+                />
+              )}
+              {snapshot.tips[0] && (
+                <p className="tray__tip">{snapshot.tips[0].text}</p>
+              )}
+              <button className="tray__settings" onClick={() => setSetup(true)}>
+                Settings
+              </button>
+            </>
           )}
         </>
       )}

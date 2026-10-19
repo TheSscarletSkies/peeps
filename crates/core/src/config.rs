@@ -93,6 +93,15 @@ pub enum PetKind {
     Gyoza,
 }
 
+impl PetKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Bao => "bao",
+            Self::Gyoza => "gyoza",
+        }
+    }
+}
+
 impl Config {
     pub fn parse(text: &str) -> Result<Self, ConfigError> {
         let config: Self = toml::from_str(text)?;

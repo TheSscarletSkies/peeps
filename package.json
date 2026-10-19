@@ -13,10 +13,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:hook": "node scripts/build-hook.mjs"
   },
   "dependencies": {
+    "@fontsource/nunito": "^5.3.0",
     "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-dialog": "^2.8.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

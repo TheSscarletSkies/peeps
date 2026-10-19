@@ -1,7 +1,8 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use chrono::Utc;
+use peeps_core::config_edit::{self, NewProduct};
 use peeps_core::notes::{Delivery, Note};
 use peeps_core::protocol::Decision;
 use peeps_core::{hooks_install, paths};
@@ -35,7 +36,7 @@ pub fn add_note(
     text: String,
     delivery: Delivery,
 ) -> Result<Note> {
-    if app.config.product(&product_id).is_none() {
+    if app.config().product(&product_id).is_none() {
         return Err(format!("unknown product `{product_id}`"));
     }
     if text.trim().is_empty() {
@@ -47,6 +48,26 @@ pub fn add_note(
         .map_err(message)?;
     app.publish();
     Ok(note)
+}
+
+#[tauri::command]
+pub fn add_product(app: State<'_, Arc<App>>, product: NewProduct) -> Result<String> {
+    let path = paths::config_file();
+    let (updated, id) =
+        config_edit::add_product(&read_or_empty(&path)?, &product).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(id)
+}
+
+#[tauri::command]
+pub fn remove_product(app: State<'_, Arc<App>>, product_id: String) -> Result<()> {
+    let path = paths::config_file();
+    let updated =
+        config_edit::remove_product(&read_or_empty(&path)?, &product_id).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
 }
 
 #[derive(Serialize)]
@@ -110,23 +131,34 @@ fn hook_command() -> Result<String> {
 }
 
 fn read_settings() -> Result<Value> {
-    match std::fs::read_to_string(paths::claude_settings_file()) {
-        Ok(text) => serde_json::from_str(&text).map_err(message),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            Ok(Value::Object(Default::default()))
-        }
+    let text = read_or_empty(&paths::claude_settings_file())?;
+    if text.trim().is_empty() {
+        return Ok(Value::Object(Default::default()));
+    }
+    serde_json::from_str(&text).map_err(message)
+}
+
+fn write_settings(settings: &Value) -> Result<()> {
+    let mut body = serde_json::to_string_pretty(settings).map_err(message)?;
+    body.push('\n');
+    write_atomic(&paths::claude_settings_file(), &body)
+}
+
+fn read_or_empty(path: &Path) -> Result<String> {
+    match std::fs::read_to_string(path) {
+        Ok(text) => Ok(text),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
         Err(error) => Err(error.to_string()),
     }
 }
 
-fn write_settings(settings: &Value) -> Result<()> {
-    let path = paths::claude_settings_file();
+/// Writes through a temporary file so a crash never leaves a half-written file behind.
+fn write_atomic(path: &Path, body: &str) -> Result<()> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(message)?;
     }
-    let mut body = serde_json::to_string_pretty(settings).map_err(message)?;
-    body.push('\n');
-    let staging = path.with_extension("json.peeps-tmp");
+    let mut staging = path.as_os_str().to_owned();
+    staging.push(".peeps-tmp");
     std::fs::write(&staging, body).map_err(message)?;
-    std::fs::rename(&staging, &path).map_err(message)
+    std::fs::rename(&staging, path).map_err(message)
 }

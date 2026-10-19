@@ -38,21 +38,28 @@ Heat is separate from mood: the pet's colour and blush warm up with the token bu
 
 ## Install
 
-peeps is early. Build it from source for now:
+Download the latest build from [Releases](../../releases): `.dmg` for macOS (Apple silicon or Intel), `.msi` or `.exe` for Windows, `.AppImage` or `.deb` for Linux.
 
-```sh
-git clone <this repo> && cd peeps
-npm install
-npm run tauri build
-```
+Builds are not code-signed yet, so the first launch needs one extra step:
+
+- **macOS:** right-click peeps in Applications, choose **Open**, then **Open** again.
+- **Windows:** on the SmartScreen prompt, click **More info**, then **Run anyway**.
+
+On first launch, hover the notch and follow the setup:
+
+1. **Connect Claude Code.** Adds peeps' hook to `~/.claude/settings.json` and leaves everything else in the file as it is. Disconnect removes exactly what was added.
+2. **Add your products.** Pick a name, the product's folder, a dumpling and a colour.
+
+Checks and finer settings live in `~/.peeps/config.toml`. Secrets used by checks go in the OS keychain under the service `peeps`.
+
+### Build from source
 
 Requirements: Rust 1.82+, Node 20+, and on Linux the [Tauri system packages](https://tauri.app/start/prerequisites/).
 
-Then:
-
-1. Copy `examples/minimal.toml` to `~/.peeps/config.toml` and set your product folders.
-2. Install the Claude Code hooks from the app, or add `peeps-hook` to `~/.claude/settings.json` yourself. Installing only adds peeps' own entries and keeps the rest of the file as it is.
-3. Store secrets used by checks in the OS keychain under the service `peeps`.
+```sh
+npm install
+npm run tauri build
+```
 
 ## Configuration
 

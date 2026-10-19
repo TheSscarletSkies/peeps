@@ -3,7 +3,7 @@ use tauri::{LogicalSize, PhysicalPosition, WebviewWindow};
 pub const LABEL: &str = "main";
 
 const COLLAPSED: LogicalSize<f64> = LogicalSize::new(360.0, 48.0);
-const EXPANDED: LogicalSize<f64> = LogicalSize::new(560.0, 420.0);
+const EXPANDED: LogicalSize<f64> = LogicalSize::new(560.0, 460.0);
 
 /// Sizes the window and pins it to the top centre of its screen, under the notch.
 pub fn dock(window: &WebviewWindow, expanded: bool) -> tauri::Result<()> {

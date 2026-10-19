@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock};
 
 use chrono::Utc;
 use peeps_core::advice::Tip;
@@ -17,6 +17,8 @@ use tauri::{AppHandle, Emitter};
 use tokio::sync::oneshot;
 
 const RECENT_NOTES: usize = 20;
+const STARTER_CONFIG: &str = "# peeps: add products from the app, or by hand.\n\
+# Every option is described in the README; examples/ has full setups.\n";
 pub const SNAPSHOT_EVENT: &str = "snapshot";
 
 #[derive(Default)]
@@ -48,9 +50,29 @@ pub struct AppSnapshot {
     pub config_error: Option<String>,
 }
 
+struct Loaded {
+    config: Arc<Config>,
+    error: Option<String>,
+}
+
+impl Loaded {
+    fn read() -> Self {
+        match Config::load(&paths::config_file()) {
+            Ok(config) => Self {
+                config: Arc::new(config),
+                error: None,
+            },
+            Err(error) => Self {
+                config: Arc::default(),
+                error: Some(error.to_string()),
+            },
+        }
+    }
+}
+
 pub struct App {
-    pub config: Config,
-    pub config_error: Option<String>,
+    loaded: RwLock<Loaded>,
+    rescan: AtomicBool,
     world: Mutex<World>,
     notes: Mutex<NoteStore>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
@@ -63,21 +85,51 @@ impl App {
         std::fs::create_dir_all(paths::data_dir())?;
         let config_path = paths::config_file();
         if !config_path.exists() {
-            std::fs::write(&config_path, include_str!("../../examples/minimal.toml"))?;
+            std::fs::write(&config_path, STARTER_CONFIG)?;
         }
-        let (config, config_error) = match Config::load(&config_path) {
-            Ok(config) => (config, None),
-            Err(error) => (Config::default(), Some(error.to_string())),
-        };
         Ok(Self {
-            config,
-            config_error,
+            loaded: RwLock::new(Loaded::read()),
+            rescan: AtomicBool::new(true),
             world: Mutex::default(),
             notes: Mutex::new(NoteStore::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             handle,
         })
+    }
+
+    pub fn config(&self) -> Arc<Config> {
+        self.loaded
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .config
+            .clone()
+    }
+
+    fn config_error(&self) -> Option<String> {
+        self.loaded
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .error
+            .clone()
+    }
+
+    /// Re-reads the config file and asks the watcher to re-match transcripts to products.
+    pub fn reload_config(&self) {
+        *self.loaded.write().unwrap_or_else(PoisonError::into_inner) = Loaded::read();
+        {
+            let mut world = self.world();
+            world.transcripts.clear();
+            world.transcript_products.clear();
+            world.checks.clear();
+        }
+        self.rescan.store(true, Ordering::Relaxed);
+        self.publish();
+    }
+
+    /// True once after the config changed or the app started.
+    pub fn take_rescan(&self) -> bool {
+        self.rescan.swap(false, Ordering::Relaxed)
     }
 
     pub fn world(&self) -> MutexGuard<'_, World> {
@@ -93,11 +145,12 @@ impl App {
     }
 
     pub fn snapshot(&self) -> AppSnapshot {
+        let config = self.config();
         let notes = self.notes().recent(RECENT_NOTES).unwrap_or_default();
         let world = self.world();
         AppSnapshot {
             snapshot: snapshot::build(snapshot::Inputs {
-                config: &self.config,
+                config: &config,
                 sessions: &world.sessions,
                 checks: &world.checks,
                 transcripts: &world.transcripts,
@@ -106,7 +159,7 @@ impl App {
                 tips: world.tips.clone(),
                 now: Utc::now(),
             }),
-            config_error: self.config_error.clone(),
+            config_error: self.config_error(),
         }
     }
 
@@ -117,7 +170,8 @@ impl App {
     }
 
     pub fn product_for(&self, cwd: Option<&str>) -> Option<String> {
-        cwd.and_then(|dir| self.config.product_for_dir(Path::new(dir)))
+        let config = self.config();
+        cwd.and_then(|dir| config.product_for_dir(Path::new(dir)))
             .map(|product| product.id.clone())
     }
 
@@ -135,7 +189,7 @@ impl App {
 
         let event = input.event();
         let reply = match (event, product) {
-            (HookEvent::PermissionRequest, Some(product)) if self.config.settings.approvals => {
+            (HookEvent::PermissionRequest, Some(product)) if self.config().settings.approvals => {
                 Some(self.ask(&input, product).await)
             }
             (HookEvent::SessionStart, Some(product)) => {

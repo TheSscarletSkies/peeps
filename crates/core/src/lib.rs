@@ -1,6 +1,7 @@
 pub mod advice;
 pub mod checks;
 pub mod config;
+pub mod config_edit;
 pub mod hooks_install;
 pub mod ipc;
 pub mod mood;

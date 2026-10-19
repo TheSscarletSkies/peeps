@@ -13,10 +13,13 @@ use state::App;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::snapshot,
             commands::decide,
             commands::add_note,
+            commands::add_product,
+            commands::remove_product,
             commands::hooks_status,
             commands::install_hooks,
             commands::uninstall_hooks,

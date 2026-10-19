@@ -53,6 +53,13 @@ export interface Tip {
   text: string;
 }
 
+export interface NewProduct {
+  name: string;
+  path: string;
+  kind: PetKind;
+  color: string;
+}
+
 export interface Snapshot {
   pets: Pet[];
   notes: Note[];
