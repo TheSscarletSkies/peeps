@@ -216,8 +216,13 @@ pub fn open_home(app: tauri::AppHandle) -> Result<()> {
 }
 
 #[tauri::command]
-pub fn set_expanded(window: WebviewWindow, expanded: bool) -> Result<()> {
-    window::dock(&window, expanded).map_err(message)
+pub fn set_tray_size(window: WebviewWindow, width: f64, height: f64) -> Result<()> {
+    window::dock(&window, width, height).map_err(message)
+}
+
+#[tauri::command]
+pub fn notch() -> window::Notch {
+    window::notch()
 }
 
 /// `peeps-hook` ships next to the app binary.

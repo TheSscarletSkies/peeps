@@ -29,7 +29,8 @@ pub fn run() {
             commands::install_hooks,
             commands::uninstall_hooks,
             commands::set_secret,
-            commands::set_expanded,
+            commands::set_tray_size,
+            commands::notch,
             commands::open_home,
             commands::save_image,
         ])
@@ -38,7 +39,8 @@ pub fn run() {
             tauri_app.manage(app.clone());
 
             if let Some(window) = tauri_app.get_webview_window(window::LABEL) {
-                window::dock(&window, false)?;
+                let notch = window::notch();
+                window::dock(&window, notch.width.max(240.0), notch.height)?;
             }
             if let Some(home) = tauri_app.get_webview_window(window::HOME) {
                 // Closing the peeps window only hides it; the pets keep living in the notch.

@@ -24,6 +24,18 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
 
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: mkdir -p dist
+      - run: node scripts/build-hook.mjs
+      - run: cargo clippy -p peeps-desktop --all-targets -- -D warnings
+
   web:
     runs-on: ubuntu-latest
     steps:
