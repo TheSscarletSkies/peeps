@@ -5,6 +5,10 @@
   --text: #f4f2ee;
   --muted: #a8a6a1;
   --accent: #ffd66b;
+  --field: #202024;
+  --field-line: #2e2e33;
+  --focus: rgba(244, 242, 238, 0.55);
+  --check: #9ee6b8;
   --accent-ink: #1a1406;
   font-family: "Nunito", ui-rounded, system-ui, sans-serif;
   font-weight: 500;
@@ -168,36 +172,6 @@ body,
 .feed {
   display: flex;
   gap: 6px;
-}
-
-.feed input,
-.feed select {
-  height: 40px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 0 14px;
-  appearance: none;
-}
-
-.feed select {
-  padding-right: 32px;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-    linear-gradient(-45deg, transparent 50%, var(--muted) 50%);
-  background-position:
-    right 18px center,
-    right 13px center;
-  background-size: 5px 5px;
-  background-repeat: no-repeat;
-}
-
-.feed input {
-  flex: 1;
-  min-width: 0;
 }
 
 .button {
@@ -477,17 +451,6 @@ body,
   gap: 6px;
 }
 
-.setup__fields input {
-  height: 36px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 0 14px;
-}
-
 .setup__folder {
   height: 36px;
   justify-content: flex-start;
@@ -607,12 +570,6 @@ body,
   background: #2a1a17;
 }
 
-.todos input {
-  width: 18px;
-  height: 18px;
-  accent-color: #9ee6b8;
-}
-
 .todos__title {
   flex: 1;
   min-width: 0;
@@ -650,11 +607,6 @@ body,
   cursor: pointer;
 }
 
-.feed__date {
-  flex: 0 0 auto;
-  color-scheme: dark;
-}
-
 .write {
   display: flex;
   flex-direction: column;
@@ -664,28 +616,6 @@ body,
 .write__row {
   display: flex;
   gap: 8px;
-}
-
-.write select,
-.write textarea {
-  border: 0;
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 10px 14px;
-}
-
-.write select {
-  flex: 1;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-}
-
-.write textarea {
-  resize: none;
 }
 
 .drafts li {
@@ -747,8 +677,143 @@ body,
   color: var(--muted);
 }
 
-.todos__remove:focus-visible,
-.todos input:focus-visible {
-  outline: 2px solid var(--text);
+/* Form controls. Every text field, date, dropdown and text area shares one look. */
+
+.tray input:not([type="checkbox"]),
+.tray select,
+.tray textarea {
+  box-sizing: border-box;
+  height: 40px;
+  min-width: 0;
+  padding: 0 16px;
+  border: 1px solid var(--field-line);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  appearance: none;
+  transition: border-color 0.15s;
+}
+
+.tray textarea {
+  height: auto;
+  padding: 10px 16px;
+  border-radius: 16px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.tray select {
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(-45deg, transparent 50%, var(--muted) 50%);
+  background-position:
+    right 18px center,
+    right 13px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.tray input[type="date"] {
+  flex: 0 0 auto;
+  color-scheme: dark;
+}
+
+.tray input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.tray ::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.tray input:not([type="checkbox"]):focus,
+.tray select:focus,
+.tray textarea:focus {
+  outline: none;
+  border-color: var(--focus);
+}
+
+.tray input[type="checkbox"] {
+  appearance: none;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 2px solid #55555b;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.tray input[type="checkbox"]:checked {
+  border-color: var(--check);
+  background: var(--check)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-4.9' fill='none' stroke='%230e2418' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+}
+
+.tray input[type="checkbox"]:hover {
+  border-color: var(--check);
+}
+
+.feed input[type="text"],
+.feed input:not([type]),
+.write select {
+  flex: 1;
+}
+
+.setup__folder {
+  height: 40px;
+}
+
+/* Chips act as tabs, toggles and choices. Off, they look like fields; on, they fill in. */
+
+.chip {
+  height: 32px;
+  border: 1px solid var(--field-line);
+  background: var(--field);
+  color: var(--muted);
+}
+
+.chip--on {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--ink);
+}
+
+/* Opens the folder picker, but reads as the field it fills in. */
+.setup__folder {
+  border: 1px solid var(--field-line);
+  background: var(--field);
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 0 16px;
+}
+
+.setup__folder[data-chosen] {
+  color: var(--text);
+}
+
+.feed .chip,
+.write__row .chip {
+  height: 40px;
+  padding: 0 16px;
+}
+
+.tray :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+.tray :is(input, select, textarea):focus-visible {
+  outline: none;
 }

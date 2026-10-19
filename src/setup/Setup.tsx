@@ -170,6 +170,7 @@ function AddProduct({ onAdd, onTyping }: AddProductProps) {
         <button
           type="button"
           className="button setup__folder"
+          data-chosen={path ? "" : undefined}
           title={path ?? undefined}
           onClick={async () => setPath((await pickFolder()) ?? path)}
         >
