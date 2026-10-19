@@ -130,6 +130,14 @@ export function deleteDraft(id: number): Promise<void> {
     : Promise.resolve();
 }
 
+export function openHome(): Promise<void> {
+  if (!inApp()) {
+    window.open("?view=home", "_blank");
+    return Promise.resolve();
+  }
+  return invoke("open_home").then(() => undefined);
+}
+
 export function setExpanded(expanded: boolean): Promise<void> {
   return inApp()
     ? invoke("set_expanded", { expanded }).then(() => undefined)

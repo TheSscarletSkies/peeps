@@ -96,6 +96,7 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
             <li key={pet.id}>
               <Dumpling
                 kind={pet.kind}
+                seed={pet.id}
                 color={pet.color}
                 mood="chill"
                 heat={0}

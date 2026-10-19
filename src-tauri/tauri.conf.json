@@ -24,6 +24,19 @@
         "skipTaskbar": true,
         "shadow": false,
         "visibleOnAllWorkspaces": true
+      },
+      {
+        "label": "home",
+        "title": "peeps",
+        "url": "index.html?view=home",
+        "width": 1080,
+        "height": 720,
+        "minWidth": 880,
+        "minHeight": 600,
+        "visible": false,
+        "center": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {

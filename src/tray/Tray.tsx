@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { hooksStatus, setExpanded } from "../lib/bridge";
-import type { Mood, Snapshot } from "../lib/types";
 import { HelperPanel } from "../helper/HelperPanel";
+import { MOOD_LABEL } from "../hub/ProductCard";
+import { hooksStatus, openHome, setExpanded } from "../lib/bridge";
+import type { Mood, Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
 import { PetPanel } from "./PetPanel";
@@ -15,22 +16,22 @@ const URGENT: Mood[] = [
   "litterBox",
 ];
 const COLLAPSE_DELAY_MS = 600;
-const HELPER_ID = "__helper";
+
+type View = "pets" | "helper";
 
 export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const [open, setOpen] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [view, setView] = useState<View>("pets");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [setup, setSetup] = useState(false);
   const closeTimer = useRef<number | undefined>(undefined);
 
-  const pets = snapshot.pets;
-  const helper = snapshot.helper;
+  const { pets, helper } = snapshot;
   const urgent = pets.filter((pet) => URGENT.includes(pet.mood));
-  const helperSelected = selectedId === HELPER_ID;
-  const selected = helperSelected
-    ? undefined
-    : (pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0]);
+  const selected =
+    pets.find((pet) => pet.id === selectedId) ?? urgent[0] ?? pets[0];
+  const others = pets.filter((pet) => pet.id !== selected?.id);
 
   useEffect(() => {
     void setExpanded(open);
@@ -56,6 +57,23 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
     );
   };
 
+  const tab = (id: View, label: string) => {
+    const on = view === id && !showSetup;
+    return (
+      <button
+        role="tab"
+        aria-selected={on}
+        className={on ? "chip chip--on" : "chip"}
+        onClick={() => {
+          setView(id);
+          setSetup(false);
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
+
   return (
     <div
       className={open ? "tray tray--open" : "tray"}
@@ -67,6 +85,7 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
           {pets.map((pet) => (
             <Dumpling
               key={pet.id}
+              seed={pet.id}
               kind={pet.kind}
               color={pet.color}
               mood={pet.mood}
@@ -94,78 +113,99 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
 
       {open && (
         <>
+          <div className="tray__bar">
+            <div className="tray__tabs" role="tablist" aria-label="Notch">
+              {tab("pets", "Pets")}
+              {tab("helper", helper.name)}
+            </div>
+            <button className="tray__link" onClick={() => void openHome()}>
+              Open peeps
+            </button>
+          </div>
+
           {snapshot.configError && (
             <p className="tray__error">
               Config problem: {snapshot.configError}
             </p>
           )}
-          {showSetup ? (
+
+          {showSetup && (
             <Setup
               snapshot={snapshot}
               onDone={() => setSetup(false)}
               onTyping={setTyping}
             />
-          ) : (
-            <>
-              <div className="steamer">
-                {pets.map((pet) => (
-                  <button
-                    key={pet.id}
-                    className={
-                      pet.id === selected?.id
-                        ? "steamer__pet steamer__pet--selected"
-                        : "steamer__pet"
-                    }
-                    onClick={() => setSelectedId(pet.id)}
-                    aria-label={`${pet.name}: ${pet.headline}`}
-                  >
-                    <Dumpling
-                      kind={pet.kind}
-                      color={pet.color}
-                      mood={pet.mood}
-                      heat={pet.heat}
-                    />
-                    <span className="steamer__name">{pet.name}</span>
-                  </button>
-                ))}
-                <span className="steamer__divider" aria-hidden="true" />
-                <button
-                  className={
-                    helperSelected
-                      ? "steamer__pet steamer__pet--selected"
-                      : "steamer__pet"
-                  }
-                  onClick={() => setSelectedId(HELPER_ID)}
-                  aria-label={`${helper.name}: ${helper.headline}`}
-                >
+          )}
+
+          {!showSetup && view === "helper" && (
+            <div
+              className="focus"
+              style={{ ["--pet" as string]: helper.color }}
+            >
+              <HelperPanel
+                helper={helper}
+                pets={pets}
+                tips={snapshot.tips}
+                onTyping={setTyping}
+              />
+            </div>
+          )}
+
+          {!showSetup && view === "pets" && selected && (
+            <div className="tray__pets">
+              <div
+                className="focus focus--pet"
+                style={{ ["--pet" as string]: selected.color }}
+              >
+                <div className="focus__pet">
                   <Dumpling
-                    kind={helper.kind}
-                    color={helper.color}
-                    mood={helper.mood}
-                    heat={0}
+                    seed={selected.id}
+                    kind={selected.kind}
+                    color={selected.color}
+                    mood={selected.mood}
+                    heat={selected.heat}
+                    size={88}
                   />
-                  <span className="steamer__name">{helper.name}</span>
-                </button>
-              </div>
-              {helperSelected && (
-                <HelperPanel
-                  helper={helper}
-                  pets={pets}
-                  tips={snapshot.tips}
-                  onTyping={setTyping}
-                />
-              )}
-              {selected && (
+                  <span className="focus__mood">
+                    {MOOD_LABEL[selected.mood]}
+                  </span>
+                </div>
                 <PetPanel
                   key={selected.id}
                   pet={selected}
                   onTyping={setTyping}
                 />
+              </div>
+              {others.length > 0 && (
+                <div className="pills">
+                  {others.map((pet) => (
+                    <button
+                      key={pet.id}
+                      className="pill"
+                      data-urgent={URGENT.includes(pet.mood) || undefined}
+                      style={{ ["--pet" as string]: pet.color }}
+                      onClick={() => setSelectedId(pet.id)}
+                      aria-label={`${pet.name}: ${pet.headline}`}
+                    >
+                      <Dumpling
+                        seed={pet.id}
+                        kind={pet.kind}
+                        color={pet.color}
+                        mood={pet.mood}
+                        heat={pet.heat}
+                        size={34}
+                      />
+                      <span className="pill__text">
+                        <span className="pill__name">{pet.name}</span>
+                        <span className="pill__mood">
+                          {MOOD_LABEL[pet.mood]}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
-              <button className="tray__settings" onClick={() => setSetup(true)}>
-                Settings
-              </button>
-            </>
+            </div>
           )}
         </>
       )}

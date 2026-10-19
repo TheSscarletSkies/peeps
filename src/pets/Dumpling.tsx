@@ -3,6 +3,7 @@ import { useId } from "react";
 import type { Mood, PetKind } from "../lib/types";
 import shapes from "./shapes.json";
 import { flushed } from "./tint";
+import { BASE, variantFor } from "./variant";
 
 interface Props {
   kind: PetKind;
@@ -10,6 +11,8 @@ interface Props {
   mood: Mood;
   heat: number;
   size?: number;
+  /** Gives the pet its own build. Use the product id so it never changes. */
+  seed?: string;
 }
 
 interface Shape {
@@ -222,12 +225,17 @@ function PropInFront({ mood }: { mood: Mood }) {
 }
 
 /** A product's pet. Its face, pose and effects follow the mood; it flushes and blushes with token burn. */
-export function Dumpling({ kind, color, mood, heat, size = 64 }: Props) {
+export function Dumpling({ kind, color, mood, heat, size = 64, seed }: Props) {
   // useId contains colons, which break url(#…) references.
   const id = useId().replace(/:/g, "");
   const shape = SHAPES[kind];
   const [hx = 36, hy = 50, hr = -30] = shape.highlight;
-  const blush = 1 + heat * 0.7;
+  const build = seed ? variantFor(seed) : BASE;
+  const blush = (1 + heat * 0.7) * build.blush;
+  // Stretch from the base of the pet so it always sits on the ground.
+  const stretch = `translate(60 86) scale(${build.width} ${build.height}) translate(-60 -86)`;
+  const spread = 1 + build.eyeSpread / 30;
+  const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
 
   return (
     <svg
@@ -263,43 +271,47 @@ export function Dumpling({ kind, color, mood, heat, size = 64 }: Props) {
         }
       >
         <g className="dumpling__body">
-          <path d={shape.body} fill={flushed(color, heat)} />
-          <path d={shape.body} fill={`url(#${id}shade)`} />
-          <path d={shape.body} fill={`url(#${id}glow)`} />
-          <ellipse
-            cx={hx}
-            cy={hy}
-            rx="4.5"
-            ry="2"
-            fill="#FFFFFF"
-            opacity={0.8}
-            transform={`rotate(${hr} ${hx} ${hy})`}
-          />
-          <path
-            d={shape.creases}
-            stroke="#B5785A"
-            strokeOpacity={0.28}
-            strokeWidth={1.6}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <ellipse
-            cx="38"
-            cy="73"
-            rx={9 * blush}
-            ry={5.5 * blush}
-            fill={`url(#${id}blush)`}
-          />
-          <ellipse
-            cx="82"
-            cy="73"
-            rx={9 * blush}
-            ry={5.5 * blush}
-            fill={`url(#${id}blush)`}
-          />
-          <Eyes mood={mood} />
-          <Brows mood={mood} />
-          <Mouth mood={mood} />
+          <g transform={stretch}>
+            <path d={shape.body} fill={flushed(color, heat)} />
+            <path d={shape.body} fill={`url(#${id}shade)`} />
+            <path d={shape.body} fill={`url(#${id}glow)`} />
+            <ellipse
+              cx={hx}
+              cy={hy}
+              rx="4.5"
+              ry="2"
+              fill="#FFFFFF"
+              opacity={0.8}
+              transform={`rotate(${hr} ${hx} ${hy})`}
+            />
+            <path
+              d={shape.creases}
+              stroke="#B5785A"
+              strokeOpacity={0.28}
+              strokeWidth={1.6}
+              strokeLinecap="round"
+              fill="none"
+            />
+          </g>
+          <g transform={face}>
+            <ellipse
+              cx="38"
+              cy="73"
+              rx={9 * blush}
+              ry={5.5 * blush}
+              fill={`url(#${id}blush)`}
+            />
+            <ellipse
+              cx="82"
+              cy="73"
+              rx={9 * blush}
+              ry={5.5 * blush}
+              fill={`url(#${id}blush)`}
+            />
+            <Eyes mood={mood} />
+            <Brows mood={mood} />
+            <Mouth mood={mood} />
+          </g>
         </g>
       </g>
       <PropInFront mood={mood} />

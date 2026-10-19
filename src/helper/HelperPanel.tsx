@@ -61,7 +61,7 @@ const DUE_LABEL: Record<DueState, string> = {
   undated: "",
 };
 
-function Todos({
+export function Todos({
   helper,
   onTyping,
 }: {
@@ -169,7 +169,7 @@ function Todos({
   );
 }
 
-function Write({
+export function Write({
   helper,
   onTyping,
 }: {
@@ -270,7 +270,7 @@ function Write({
 
 const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
-function Tokens({
+export function Tokens({
   helper,
   pets,
   tips,

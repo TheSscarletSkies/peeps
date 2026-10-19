@@ -30,6 +30,7 @@ pub fn run() {
             commands::uninstall_hooks,
             commands::set_secret,
             commands::set_expanded,
+            commands::open_home,
         ])
         .setup(|tauri_app| {
             let app = Arc::new(App::load(tauri_app.handle().clone())?);
@@ -37,6 +38,19 @@ pub fn run() {
 
             if let Some(window) = tauri_app.get_webview_window(window::LABEL) {
                 window::dock(&window, false)?;
+            }
+            if let Some(home) = tauri_app.get_webview_window(window::HOME) {
+                // Closing the peeps window only hides it; the pets keep living in the notch.
+                let hidden = home.clone();
+                home.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = hidden.hide();
+                    }
+                });
+                if app.config().products.is_empty() {
+                    window::show_home(&home)?;
+                }
             }
 
             let bridge_app = app.clone();

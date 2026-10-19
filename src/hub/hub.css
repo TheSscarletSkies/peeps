@@ -1,0 +1,424 @@
+/* The peeps window: warm, light and soft, so it reads as a home for the pets rather than a dashboard. */
+
+.hub {
+  --ink: #fbf6f0;
+  --surface: #fffdfa;
+  --line: #f1e7dc;
+  --text: #3b2a21;
+  --muted: #9b8577;
+  --accent: #ffc9a8;
+  --accent-ink: #4a2c1c;
+  --field: #f8f1e9;
+  --field-line: #eee2d5;
+  --focus: rgba(59, 42, 33, 0.35);
+  --check: #9fd9b4;
+  --check-line: #d6c7b9;
+  --card-shadow:
+    0 1px 2px rgba(95, 62, 40, 0.06), 0 8px 24px rgba(95, 62, 40, 0.06);
+
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100vh;
+  background: var(--ink);
+  color: var(--text);
+}
+
+.hub__side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 40px 14px 16px;
+}
+
+.hub__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.hub__side nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav:hover {
+  color: var(--text);
+}
+
+.nav--on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--card-shadow);
+}
+
+.nav__count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 11px;
+  text-align: center;
+}
+
+.hub__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: auto 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hub__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--check);
+}
+
+.hub__main {
+  overflow-y: auto;
+  padding: 28px 32px 40px 8px;
+}
+
+.hub__error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fde7e3;
+  color: #8a3b2c;
+  font-size: 13px;
+}
+
+/* Hero: the pets peek out of a big steamer. */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 200px;
+  margin-bottom: 24px;
+  padding: 32px 36px 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(120% 140% at 85% 110%, #ffe1cf 0%, transparent 60%),
+    radial-gradient(90% 120% at 10% 0%, #fff7ee 0%, transparent 70%), #fdeee2;
+}
+
+.hero__text {
+  align-self: flex-start;
+  max-width: 340px;
+}
+
+.hero h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hero p {
+  margin: 0;
+  color: #7b6354;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.hero__steamer {
+  position: relative;
+  width: 420px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.hero__pets {
+  position: absolute;
+  inset: 0 18px 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hero__pets .dumpling {
+  margin: 0 -10px;
+}
+
+.hero__basket {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 46px;
+  border-radius: 14px 14px 0 0;
+  background:
+    linear-gradient(#f6ddba, #f6ddba) top / 100% 12px no-repeat,
+    linear-gradient(#ddb283, #ddb283) 0 30px / 100% 3px no-repeat,
+    #efcb9f;
+  box-shadow: inset 0 -10px 18px rgba(170, 110, 60, 0.15);
+}
+
+/* Home: pet cards on the left, today and tokens on the right. */
+
+.home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+.home__pets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.home__side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.pet-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+
+.pet-card__stage {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0 6px;
+  background: radial-gradient(
+    80% 120% at 50% 100%,
+    color-mix(in srgb, var(--pet) 70%, #fff) 0%,
+    color-mix(in srgb, var(--pet) 30%, var(--surface)) 70%
+  );
+}
+
+.pet-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 18px;
+}
+
+.pet-card__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pet-card h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.pet-card__headline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pet-card__ask {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff4dc;
+}
+
+.pet-card__ask code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7a5310;
+  font-size: 12px;
+}
+
+.pet-card__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.pet-card__needs {
+  margin: 0;
+  padding-left: 18px;
+  color: #7b6354;
+  font-size: 13px;
+}
+
+.mood {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.mood[data-mood="needsYou"] {
+  background: #fff1c7;
+  color: #7a5310;
+}
+
+.mood[data-mood="failing"],
+.mood[data-mood="steaming"] {
+  background: #fde3de;
+  color: #8a3b2c;
+}
+
+.mood[data-mood="hungry"],
+.mood[data-mood="litterBox"] {
+  background: #ffe8d8;
+  color: #84462a;
+}
+
+.mood[data-mood="working"],
+.mood[data-mood="sweating"] {
+  background: #e3effd;
+  color: #2f5680;
+}
+
+.today {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.today li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.today li[data-due="overdue"] span {
+  color: #a2442f;
+}
+
+/* Section pages */
+
+.section__head {
+  margin: 12px 0 18px;
+}
+
+.section__head h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.section__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Shared pieces from the tray, adjusted for the light window. */
+
+.hub .button {
+  background: var(--field);
+  color: var(--text);
+}
+
+.hub .button--primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.hub .setup__step,
+.hub .todos li,
+.hub .drafts li {
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+
+.hub .card .todos li,
+.hub .card .drafts li {
+  background: var(--field);
+  box-shadow: none;
+}
+
+.hub .todos li[data-due="overdue"] {
+  background: #fdebe6;
+}
+
+.hub .todos li[data-due="overdue"] .todos__due {
+  color: #a2442f;
+}
+
+.hub .todos li[data-due="today"] .todos__due {
+  color: #9a6a0c;
+}
+
+.hub .todos__tag {
+  background: #ece5fb;
+  color: #5b4a8c;
+}
+
+.hub .week__bar {
+  background: var(--field);
+}
+
+.hub .setup__ok {
+  color: #2f7a4f;
+}
+
+.hub .tray__tip,
+.hub .setup__hint {
+  color: var(--muted);
+}

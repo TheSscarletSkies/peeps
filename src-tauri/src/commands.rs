@@ -12,7 +12,7 @@ use peeps_core::todos::{Todo, TodoKind};
 use peeps_core::{hooks_install, paths};
 use serde::Serialize;
 use serde_json::Value;
-use tauri::{State, WebviewWindow};
+use tauri::{Manager, State, WebviewWindow};
 
 use crate::state::{App, AppSnapshot};
 use crate::{secrets, window};
@@ -205,6 +205,14 @@ pub fn uninstall_hooks() -> Result<HooksStatus> {
 #[tauri::command]
 pub fn set_secret(name: String, value: String) -> Result<()> {
     secrets::set(&name, &value).map_err(message)
+}
+
+#[tauri::command]
+pub fn open_home(app: tauri::AppHandle) -> Result<()> {
+    let window = app
+        .get_webview_window(window::HOME)
+        .ok_or("the peeps window is missing")?;
+    window::show_home(&window).map_err(message)
 }
 
 #[tauri::command]

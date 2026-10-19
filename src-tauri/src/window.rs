@@ -1,9 +1,10 @@
 use tauri::{LogicalSize, PhysicalPosition, WebviewWindow};
 
 pub const LABEL: &str = "main";
+pub const HOME: &str = "home";
 
 const COLLAPSED: LogicalSize<f64> = LogicalSize::new(360.0, 48.0);
-const EXPANDED: LogicalSize<f64> = LogicalSize::new(560.0, 460.0);
+const EXPANDED: LogicalSize<f64> = LogicalSize::new(640.0, 440.0);
 
 /// Sizes the window and pins it to the top centre of its screen, under the notch.
 pub fn dock(window: &WebviewWindow, expanded: bool) -> tauri::Result<()> {
@@ -20,4 +21,11 @@ pub fn dock(window: &WebviewWindow, expanded: bool) -> tauri::Result<()> {
         origin.x + (screen - width) / 2,
         origin.y,
     ))
+}
+
+/// Shows the peeps window and brings it to the front.
+pub fn show_home(window: &WebviewWindow) -> tauri::Result<()> {
+    window.show()?;
+    window.unminimize()?;
+    window.set_focus()
 }
