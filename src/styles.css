@@ -1905,3 +1905,58 @@ body,
   justify-content: space-between;
   gap: 12px;
 }
+
+/* A product's week: two quiet lines and two chips to log what the user did. */
+
+.numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.numbers__lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.numbers__lines [data-empty] {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.numbers__actions,
+.numbers__channels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.numbers__flash {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--good);
+}
+
+/* Amount, currency and Log on one line; who paid underneath, full width. */
+.numbers__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px auto;
+  gap: 6px;
+}
+
+.numbers__form > input {
+  min-width: 0;
+}
+
+.numbers__form > .numbers__currency {
+  text-transform: uppercase;
+}
+
+.numbers__form > input:nth-of-type(3) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}

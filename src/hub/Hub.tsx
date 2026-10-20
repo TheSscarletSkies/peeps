@@ -21,6 +21,7 @@ import {
   HomeIcon,
   MailIcon,
   MoonIcon,
+  NumbersIcon,
   ProductsIcon,
   RecapIcon,
   SoundIcon,
@@ -33,6 +34,7 @@ import { PetPanel } from "../tray/PetPanel";
 import { ProductCard } from "./ProductCard";
 import { DevicesPage } from "./DevicesPage";
 import { MailPage } from "./MailPage";
+import { NumbersPage } from "./NumbersPage";
 import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
@@ -45,6 +47,7 @@ type Page =
   | "todo"
   | "reminders"
   | "mail"
+  | "numbers"
   | "write"
   | "tokens"
   | "recap"
@@ -57,6 +60,7 @@ const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
   { id: "reminders", label: "Reminders", icon: <BellIcon /> },
   { id: "mail", label: "Mail", icon: <MailIcon /> },
+  { id: "numbers", label: "Numbers", icon: <NumbersIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
   { id: "recap", label: "Recap", icon: <RecapIcon /> },
@@ -201,6 +205,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               lead={`${helper.name} drafts, you approve. Nothing is sent without you.`}
             >
               <MailPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "numbers" && (
+            <Section
+              title="Numbers"
+              lead="Payments and posts for each product, from PayPal, YouTube and what you log."
+            >
+              <NumbersPage snapshot={snapshot} />
             </Section>
           )}
           {page === "write" && (
@@ -358,6 +370,9 @@ function HomePage({
               (chat) => chat.productId === opened.id,
             )}
             helper={helper}
+            numbers={snapshot.numbers.products.find(
+              (numbers) => numbers.productId === opened.id,
+            )}
             onTyping={noop}
           />
         </section>
@@ -371,6 +386,9 @@ function HomePage({
               pet={pet}
               celebrating={celebrating.has(pet.id)}
               arriving={arriving.has(pet.id)}
+              numbers={snapshot.numbers.products.find(
+                (numbers) => numbers.productId === pet.id,
+              )}
               onOpen={() => setOpenPet(pet.id)}
             />
           ))}

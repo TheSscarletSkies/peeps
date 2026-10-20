@@ -1011,3 +1011,28 @@ li[data-done] .started__check {
   align-self: flex-start;
   padding: 0;
 }
+
+/* Numbers */
+
+.ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ledger__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+
+.ledger__head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hub .numbers__lines {
+  font-size: 14px;
+}

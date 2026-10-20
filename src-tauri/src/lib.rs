@@ -2,6 +2,7 @@ mod assistant;
 mod bridge;
 mod commands;
 mod mailbox;
+mod numbers;
 mod remind;
 mod secrets;
 mod state;
@@ -42,6 +43,14 @@ pub fn run() {
             commands::compose_email,
             commands::send_email,
             commands::discard_email,
+            commands::log_payment,
+            commands::log_post,
+            commands::remove_entry,
+            commands::connect_paypal,
+            commands::disconnect_paypal,
+            commands::set_youtube_key,
+            commands::set_youtube_channel,
+            commands::refresh_numbers,
             commands::set_sync_folder,
             commands::add_product_path,
             commands::add_schedule,
@@ -90,6 +99,7 @@ pub fn run() {
             tauri::async_runtime::spawn(remind::run(app.clone()));
             tauri::async_runtime::spawn(sync::run(app.clone()));
             tauri::async_runtime::spawn(mailbox::run(app.clone()));
+            tauri::async_runtime::spawn(numbers::run(app.clone()));
             tauri::async_runtime::spawn(assistant::run_schedules(app.clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())

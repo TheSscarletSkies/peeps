@@ -42,6 +42,12 @@ export const STEPS: TourStep[] = [
     text: "Add Gmail or iCloud with an app password. I draft, you edit and press Send, and I tell you who hasn't replied.",
   },
   {
+    target: "numbers",
+    page: "numbers",
+    title: "Money and posts",
+    text: "PayPal payments and YouTube uploads show up on each product's card. Log a bank transfer or a TikTok post with one tap.",
+  },
+  {
     target: "write",
     page: "write",
     title: "Posts in your voice",

@@ -44,6 +44,41 @@ pub struct Summary {
     pub last_post_at: Option<DateTime<Utc>>,
 }
 
+/// Cents as money, like `USD 49.50`.
+pub fn money(cents: i64, currency: &str) -> String {
+    format!("{currency} {}.{:02}", cents / 100, cents % 100)
+}
+
+/// One plain line an agent or a person can read.
+pub fn describe(summary: &Summary) -> String {
+    let revenue = if summary.payments == 0 {
+        "no payments".to_owned()
+    } else {
+        let totals: Vec<String> = summary
+            .revenue
+            .iter()
+            .map(|(currency, cents)| money(*cents, currency))
+            .collect();
+        format!(
+            "{} from {} payment{}",
+            totals.join(" + "),
+            summary.payments,
+            if summary.payments == 1 { "" } else { "s" }
+        )
+    };
+    let posts = if summary.posts.is_empty() {
+        "no posts".to_owned()
+    } else {
+        let counts: Vec<String> = summary
+            .posts
+            .iter()
+            .map(|(channel, count)| format!("{count} {channel}"))
+            .collect();
+        format!("posts: {}", counts.join(", "))
+    };
+    format!("{revenue}; {posts}")
+}
+
 /// Turns "12.50" or "12" into 1250 cents. Rejects negatives and more than two decimals.
 pub fn parse_amount(text: &str) -> Option<i64> {
     let text = text.trim().trim_start_matches(['$', '£', '€']);
@@ -62,6 +97,66 @@ pub fn parse_amount(text: &str) -> Option<i64> {
         _ => fraction.parse().ok()?,
     };
     (whole >= 0).then_some(whole * 100 + fraction)
+}
+
+/// Where a post can go, for logging one by hand.
+pub const CHANNELS: [&str; 6] = ["tiktok", "instagram", "youtube", "linkedin", "x", "other"];
+
+/// A payment the user logs themselves, like a bank transfer or cash.
+pub fn manual_payment(
+    product: &str,
+    amount: &str,
+    currency: &str,
+    note: &str,
+    now: DateTime<Utc>,
+) -> Result<Entry, String> {
+    let cents = parse_amount(amount)
+        .filter(|cents| *cents > 0)
+        .ok_or_else(|| format!("`{amount}` isn't an amount; try 49 or 49.50"))?;
+    let currency = currency.trim().to_uppercase();
+    if currency.len() != 3 || !currency.chars().all(|c| c.is_ascii_alphabetic()) {
+        return Err(format!("`{currency}` isn't a currency code like USD"));
+    }
+    Ok(Entry {
+        uid: crate::todos::new_uid(),
+        product: product.to_owned(),
+        kind: Kind::Payment,
+        amount_cents: Some(cents),
+        currency: Some(currency),
+        channel: "manual".into(),
+        note: note.trim().to_owned(),
+        at: now,
+        updated_at: now,
+        deleted: false,
+    })
+}
+
+/// A post the user marks as done, for channels peeps can't read on its own.
+pub fn manual_post(
+    product: &str,
+    channel: &str,
+    note: &str,
+    now: DateTime<Utc>,
+) -> Result<Entry, String> {
+    let channel = channel.trim().to_lowercase();
+    if !CHANNELS.contains(&channel.as_str()) {
+        return Err(format!(
+            "`{channel}` isn't a channel peeps knows; use one of {}",
+            CHANNELS.join(", ")
+        ));
+    }
+    Ok(Entry {
+        uid: crate::todos::new_uid(),
+        product: product.to_owned(),
+        kind: Kind::Post,
+        amount_cents: None,
+        currency: None,
+        channel,
+        note: note.trim().to_owned(),
+        at: now,
+        updated_at: now,
+        deleted: false,
+    })
 }
 
 const SCHEMA: &str = "
@@ -309,6 +404,26 @@ mod tests {
     }
 
     #[test]
+    fn manual_entries_are_checked() {
+        let paid = manual_payment("funderly", "49.5", "usd", " Bank transfer ", at(14)).unwrap();
+        assert_eq!(paid.amount_cents, Some(4950));
+        assert_eq!(paid.currency.as_deref(), Some("USD"));
+        assert_eq!(paid.note, "Bank transfer");
+        assert_eq!(paid.channel, "manual");
+        assert!(manual_payment("funderly", "0", "USD", "", at(14)).is_err());
+        assert!(manual_payment("funderly", "10", "dollars", "", at(14)).is_err());
+
+        let posted = manual_post("enigma", "TikTok", "Part 3 teaser", at(14)).unwrap();
+        assert_eq!(posted.kind, Kind::Post);
+        assert_eq!(posted.channel, "tiktok");
+        assert!(manual_post("enigma", "myspace", "", at(14)).is_err());
+        assert_ne!(
+            posted.uid,
+            manual_post("enigma", "tiktok", "", at(14)).unwrap().uid
+        );
+    }
+
+    #[test]
     fn the_same_paypal_payment_counts_once() {
         let ledger = Ledger::in_memory().unwrap();
         assert!(ledger.add(&payment("paypal:7XK", 4900, "USD", 14)).unwrap());
@@ -321,6 +436,11 @@ mod tests {
         assert_eq!(week.payments, 3);
         assert_eq!(week.revenue["USD"], 6900);
         assert_eq!(week.revenue["GBP"], 1500);
+        assert_eq!(
+            describe(&week),
+            "GBP 15.00 + USD 69.00 from 3 payments; no posts"
+        );
+        assert_eq!(describe(&Summary::default()), "no payments; no posts");
     }
 
     #[test]
@@ -333,6 +453,7 @@ mod tests {
         assert_eq!(week.posts["tiktok"], 2);
         assert_eq!(week.posts["youtube"], 1);
         assert_eq!(week.last_post_at, Some(at(16)));
+        assert_eq!(describe(&week), "no payments; posts: 2 tiktok, 1 youtube");
         assert_eq!(
             ledger.summary("funderly", at(13)).unwrap(),
             Summary::default()

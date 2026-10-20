@@ -70,6 +70,13 @@ Tested by `src/life/*.test.ts`.
 
 Tested by `e2e/products.e2e.ts`, `crates/core/src/briefs.rs`, `crates/core/src/chat.rs`, `crates/core/src/tools.rs`, `crates/hook/tests/mcp.rs`.
 
+### UC20. Know what each product earned and posted
+
+**When** Funderly gets paid through PayPal, a sponsor pays Funderly by bank transfer, and Enigma Archives posts on YouTube and TikTok.
+**Then** each product's card (in the hub and the tray) shows its last seven days, like "$147 · 3 payments" and "3 posts · last 2 days ago". PayPal payments arrive on their own every 30 minutes, with a notification, once they connect a PayPal REST app on the Numbers page; YouTube uploads arrive with a free API key and the channel id. Bank transfers are logged with + Payment, and TikTok, Instagram, LinkedIn and X posts with one tap on Posted, since those platforms only open their APIs to reviewed apps with a server. Their Claude can log both ("Funderly got $49 from Green Hope") and reads the numbers in reviews and product chats. Entries sync between computers, and the same PayPal payment pulled on two computers counts once. Keys stay in each computer's keychain, and peeps can only read transactions.
+
+Tested by `e2e/numbers.e2e.ts`, `src/numbers/format.test.ts`, `crates/core/src/numbers.rs`, `crates/core/src/paypal.rs`, `crates/core/src/youtube.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
+
 ### UC18. A weekly review for each product
 
 **When** they switch on Weekly review on a product's Ask tab.
@@ -82,7 +89,7 @@ Tested by `e2e/products.e2e.ts`, `crates/core/src/chat.rs`, `src/tray/review.tes
 ### UC9. Ask the helper anything
 
 **When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
-**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, draft emails for approval, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
+**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, draft emails for approval, log payments and posts, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
 
 Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
 

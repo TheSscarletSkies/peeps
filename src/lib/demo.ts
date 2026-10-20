@@ -274,6 +274,75 @@ export const demoSnapshot: Snapshot = {
       },
     ],
   },
+  numbers: {
+    products: [
+      {
+        productId: "funderly",
+        youtubeChannel: null,
+        week: {
+          revenue: { USD: 14700 },
+          payments: 3,
+          posts: {},
+          lastPostAt: null,
+        },
+        recent: [
+          {
+            uid: "paypal:7XK41",
+            product: "funderly",
+            kind: "payment",
+            amountCents: 4900,
+            currency: "USD",
+            channel: "paypal",
+            note: "Sara Bright",
+            at: "2026-10-19T09:00:00Z",
+          },
+          {
+            uid: "m-1",
+            product: "funderly",
+            kind: "payment",
+            amountCents: 9800,
+            currency: "USD",
+            channel: "manual",
+            note: "Green Hope, bank transfer",
+            at: "2026-10-17T14:00:00Z",
+          },
+        ],
+      },
+      {
+        productId: "enigma-archives",
+        youtubeChannel: "UCabcdefghijklmnopqrstuv",
+        week: {
+          revenue: {},
+          payments: 0,
+          posts: { youtube: 1, tiktok: 2 },
+          lastPostAt: "2026-10-18T18:00:00Z",
+        },
+        recent: [
+          {
+            uid: "youtube:dQw4",
+            product: "enigma-archives",
+            kind: "post",
+            amountCents: null,
+            currency: null,
+            channel: "youtube",
+            note: "The Lighthouse Letters, part 3",
+            at: "2026-10-18T18:00:00Z",
+          },
+        ],
+      },
+      {
+        productId: "kaiveni-hiya",
+        youtubeChannel: null,
+        week: { revenue: {}, payments: 0, posts: {}, lastPostAt: null },
+        recent: [],
+      },
+    ],
+    paypal: { product: "funderly", sandbox: false },
+    paypalReady: true,
+    youtubeReady: true,
+    lastChecked: "2026-10-20T08:30:00Z",
+    error: null,
+  },
   productChats: [
     {
       productId: "funderly",

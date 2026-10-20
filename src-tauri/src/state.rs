@@ -12,6 +12,7 @@ use peeps_core::drafts::DraftStore;
 use peeps_core::helper::{self, HelperView, Week};
 use peeps_core::mail::{Email, MailStore};
 use peeps_core::notes::{self, Delivery, NoteStore};
+use peeps_core::numbers::{Entry, Ledger, Summary};
 use peeps_core::paths;
 use peeps_core::protocol::{Decision, HookEvent, HookInput, Reply};
 use peeps_core::schedule::ScheduleStore;
@@ -47,6 +48,17 @@ pub struct World {
     pub sync: SyncStatus,
     /// Accounts whose app password is in this computer's keychain, checked off the main path.
     pub mail_ready: std::collections::HashSet<String>,
+    pub numbers: NumbersStatus,
+}
+
+/// How reading PayPal and YouTube is going on this computer.
+#[derive(Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NumbersStatus {
+    pub paypal_ready: bool,
+    pub youtube_ready: bool,
+    pub last_checked: Option<DateTime<Utc>>,
+    pub error: Option<String>,
 }
 
 /// How syncing is going, for the Devices page.
@@ -108,7 +120,31 @@ pub struct AppSnapshot {
     pub sync: SyncStatus,
     pub product_chats: Vec<ProductChat>,
     pub mail: MailView,
+    pub numbers: NumbersView,
 }
+
+/// Payments and posts per product, and where they are read from.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NumbersView {
+    pub products: Vec<ProductNumbers>,
+    pub paypal: Option<peeps_core::paypal::Settings>,
+    #[serde(flatten)]
+    pub status: NumbersStatus,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProductNumbers {
+    pub product_id: String,
+    pub youtube_channel: Option<String>,
+    /// The last seven days.
+    pub week: Summary,
+    pub recent: Vec<Entry>,
+}
+
+/// How far back a product card's numbers look.
+pub const NUMBERS_DAYS: i64 = 7;
 
 /// Email for the window: accounts, drafts waiting for approval and who hasn't replied.
 #[derive(Clone, Serialize)]
@@ -182,6 +218,7 @@ pub struct App {
     chatting: Mutex<Option<String>>,
     schedules: Mutex<ScheduleStore>,
     mail: Mutex<MailStore>,
+    ledger: Mutex<Ledger>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
     handle: AppHandle,
@@ -208,6 +245,7 @@ impl App {
             chatting: Mutex::new(None),
             schedules: Mutex::new(ScheduleStore::open(&paths::database_file())?),
             mail: Mutex::new(MailStore::open(&paths::database_file())?),
+            ledger: Mutex::new(Ledger::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             handle,
@@ -273,13 +311,16 @@ impl App {
         self.mail.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    pub fn ledger(&self) -> MutexGuard<'_, Ledger> {
+        self.ledger.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     pub fn schedules(&self) -> MutexGuard<'_, ScheduleStore> {
         self.schedules
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Marks a chat turn as in progress. Returns false if the helper is still answering.
     /// Marks a conversation as being answered. One at a time, so the agent's approvals land in the
     /// right card. Returns false if something else is being answered.
     pub fn start_chatting(&self, scope: &str) -> bool {
@@ -464,6 +505,23 @@ impl App {
                     .mail()
                     .awaiting(now - TimeDelta::days(AWAITING_DAYS))
                     .unwrap_or_default(),
+            },
+            numbers: NumbersView {
+                products: config
+                    .products
+                    .iter()
+                    .map(|product| ProductNumbers {
+                        product_id: product.id.clone(),
+                        youtube_channel: product.youtube_channel.clone(),
+                        week: self
+                            .ledger()
+                            .summary(&product.id, now - TimeDelta::days(NUMBERS_DAYS))
+                            .unwrap_or_default(),
+                        recent: self.ledger().recent(&product.id, 8).unwrap_or_default(),
+                    })
+                    .collect(),
+                paypal: config.paypal.clone(),
+                status: world.numbers.clone(),
             },
         }
     }

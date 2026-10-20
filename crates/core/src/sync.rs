@@ -22,6 +22,8 @@ pub struct DeviceFile {
     pub todos: Vec<TodoRecord>,
     #[serde(default)]
     pub schedules: Vec<ScheduleRecord>,
+    #[serde(default)]
+    pub ledger: Vec<crate::numbers::Entry>,
 }
 
 /// Where things live inside the chosen folder.
@@ -168,6 +170,7 @@ mod tests {
             written_at: Utc::now(),
             todos: store.records().unwrap(),
             schedules: Vec::new(),
+            ledger: Vec::new(),
         }
     }
 

@@ -1,5 +1,6 @@
 //! What the user's own agent can do in peeps: look at the pets and the day, keep the to-do list,
-//! schedule drafts, leave notes for products and keep each product's brief.
+//! schedule drafts, leave notes for products, keep each product's brief, draft email for approval
+//! and keep track of payments and posts.
 
 use chrono::{NaiveDate, NaiveTime};
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,20 @@ pub enum Call {
         in_reply_to: Option<String>,
     },
     WaitingReplies,
+    ProductNumbers {
+        product: String,
+    },
+    LogPayment {
+        product: String,
+        amount: String,
+        currency: String,
+        note: String,
+    },
+    LogPost {
+        product: String,
+        channel: String,
+        note: String,
+    },
 }
 
 fn product_arg() -> Value {
@@ -175,7 +190,65 @@ pub fn definitions() -> Vec<Definition> {
             description: "Emails the user sent from peeps in the last 30 days that have had no reply, oldest first. Useful for follow-ups.",
             input_schema: json!({ "type": "object", "properties": {} }),
         },
+        Definition {
+            name: "product_numbers",
+            description: "A product's payments and posts over the last 7 and 30 days, from PayPal, YouTube and what the user logged, with the latest entries.",
+            input_schema: json!({
+                "type": "object",
+                "properties": { "product": product_arg() },
+                "required": ["product"]
+            }),
+        },
+        Definition {
+            name: "log_payment",
+            description: "Records a payment the user received outside PayPal, like a bank transfer. PayPal payments arrive on their own; don't log those.",
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "product": product_arg(),
+                    "amount": { "type": "string", "description": "Like 49 or 49.50." },
+                    "currency": { "type": "string", "description": "A code like USD; defaults to USD." },
+                    "note": { "type": "string", "description": "Who paid, or what for." }
+                },
+                "required": ["product", "amount"]
+            }),
+        },
+        Definition {
+            name: "log_post",
+            description: "Records that the user posted, for channels peeps can't read itself. YouTube uploads arrive on their own.",
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "product": product_arg(),
+                    "channel": { "type": "string", "enum": crate::numbers::CHANNELS },
+                    "note": { "type": "string", "description": "What the post was." }
+                },
+                "required": ["product", "channel"]
+            }),
+        },
     ]
+}
+
+#[derive(Deserialize)]
+struct PaymentArgs {
+    product: String,
+    amount: String,
+    #[serde(default = "usd")]
+    currency: String,
+    #[serde(default)]
+    note: String,
+}
+
+fn usd() -> String {
+    "USD".into()
+}
+
+#[derive(Deserialize)]
+struct PostArgs {
+    product: String,
+    channel: String,
+    #[serde(default)]
+    note: String,
 }
 
 #[derive(Deserialize)]
@@ -318,6 +391,28 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
             }
         }
         "waiting_replies" => Call::WaitingReplies,
+        "product_numbers" => Call::ProductNumbers {
+            product: serde_json::from_value::<Product>(args)
+                .map_err(bad)?
+                .product,
+        },
+        "log_payment" => {
+            let payment: PaymentArgs = serde_json::from_value(args).map_err(bad)?;
+            Call::LogPayment {
+                product: payment.product,
+                amount: payment.amount,
+                currency: payment.currency,
+                note: payment.note,
+            }
+        }
+        "log_post" => {
+            let post: PostArgs = serde_json::from_value(args).map_err(bad)?;
+            Call::LogPost {
+                product: post.product,
+                channel: post.channel,
+                note: post.note,
+            }
+        }
         other => return Err(format!("peeps has no tool called {other}")),
     })
 }
@@ -358,6 +453,15 @@ mod tests {
                 json!({ "to": "sara@example.com", "subject": "Welcome", "body": "Hi" }),
             ),
             ("waiting_replies", json!({})),
+            ("product_numbers", json!({ "product": "funderly" })),
+            (
+                "log_payment",
+                json!({ "product": "funderly", "amount": "49" }),
+            ),
+            (
+                "log_post",
+                json!({ "product": "enigma", "channel": "tiktok" }),
+            ),
         ];
         let names: Vec<_> = definitions().iter().map(|d| d.name).collect();
         assert_eq!(names.len(), examples.len());

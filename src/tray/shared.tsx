@@ -116,6 +116,9 @@ export function CardBody({
               (chat) => chat.productId === pet.id,
             )}
             helper={snapshot.helper}
+            numbers={snapshot.numbers.products.find(
+              (numbers) => numbers.productId === pet.id,
+            )}
             onTyping={noop}
           />
         </>

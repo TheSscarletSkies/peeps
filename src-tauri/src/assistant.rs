@@ -200,6 +200,12 @@ fn product_context(app: &App, id: &str, name: &str) -> String {
             lines.join("\n")
         })
         .unwrap_or_else(|| "No news.".to_owned());
+    let numbers = app
+        .ledger()
+        .summary(id, Utc::now() - TimeDelta::days(7))
+        .map(|week| format!("\nLast 7 days: {}", peeps_core::numbers::describe(&week)))
+        .unwrap_or_default();
+    let status = status + &numbers;
     let brief = briefs::read(&paths::config_file(), id, name);
     chat::product_context(
         name,

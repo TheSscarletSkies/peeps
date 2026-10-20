@@ -32,6 +32,8 @@ pub enum EditError {
     Duplicate(String),
     #[error("no calendar called `{0}`")]
     UnknownCalendar(String),
+    #[error("`{0}` is not a YouTube channel id; it starts with UC and has 24 characters")]
+    BadChannel(String),
     #[error("`{0}` is not an email address peeps knows")]
     BadAddress(String),
     #[error(transparent)]
@@ -336,6 +338,68 @@ pub fn set_reminders(text: &str, reminders: &Reminders) -> Result<String, EditEr
     Ok(updated)
 }
 
+/// Points PayPal payments at a product, or stops reading PayPal with `None`.
+pub fn set_paypal(
+    text: &str,
+    settings: Option<&crate::paypal::Settings>,
+) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    match settings {
+        Some(settings) => {
+            if !Config::parse(text)?
+                .products
+                .iter()
+                .any(|product| product.id == settings.product)
+            {
+                return Err(EditError::Unknown(settings.product.clone()));
+            }
+            let mut table = Table::new();
+            table["product"] = value(&settings.product);
+            if settings.sandbox {
+                table["sandbox"] = value(true);
+            }
+            doc["paypal"] = Item::Table(table);
+        }
+        None => {
+            doc.remove("paypal");
+        }
+    }
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
+/// Sets or clears the YouTube channel whose uploads count as a product's posts.
+pub fn set_youtube_channel(
+    text: &str,
+    id: &str,
+    channel: Option<&str>,
+) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let product = doc
+        .get_mut("product")
+        .and_then(Item::as_array_of_tables_mut)
+        .and_then(|products| {
+            products
+                .iter_mut()
+                .find(|table| table.get("id").and_then(Item::as_str) == Some(id))
+        })
+        .ok_or_else(|| EditError::Unknown(id.to_owned()))?;
+    match channel {
+        Some(channel) => {
+            let channel = crate::youtube::channel_id(channel)
+                .ok_or_else(|| EditError::BadChannel(channel.to_owned()))?;
+            product["youtube_channel"] = value(channel);
+        }
+        None => {
+            product.remove("youtube_channel");
+        }
+    }
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -546,5 +610,52 @@ mod tests {
         let one = remove_mail(&both, "HELLO@funderly.app").unwrap();
         assert_eq!(Config::parse(&one).unwrap().mail.len(), 1);
         assert!(remove_mail(&one, "nobody@x.com").is_err());
+    }
+
+    #[test]
+    fn paypal_and_youtube_point_at_products() {
+        let (text, id) = add_product("", &shop()).unwrap();
+        let settings = crate::paypal::Settings {
+            product: id.clone(),
+            sandbox: false,
+        };
+        let with = set_paypal(&text, Some(&settings)).unwrap();
+        assert_eq!(Config::parse(&with).unwrap().paypal, Some(settings));
+        assert!(set_paypal(
+            &text,
+            Some(&crate::paypal::Settings {
+                product: "nope".into(),
+                sandbox: false,
+            })
+        )
+        .is_err());
+        assert_eq!(
+            Config::parse(&set_paypal(&with, None).unwrap())
+                .unwrap()
+                .paypal,
+            None
+        );
+
+        let channel = set_youtube_channel(
+            &text,
+            &id,
+            Some("https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv"),
+        )
+        .unwrap();
+        assert_eq!(
+            Config::parse(&channel).unwrap().products[0]
+                .youtube_channel
+                .as_deref(),
+            Some("UCabcdefghijklmnopqrstuv")
+        );
+        assert!(matches!(
+            set_youtube_channel(&text, &id, Some("@enigma")),
+            Err(EditError::BadChannel(_))
+        ));
+        let cleared = set_youtube_channel(&channel, &id, None).unwrap();
+        assert_eq!(
+            Config::parse(&cleared).unwrap().products[0].youtube_channel,
+            None
+        );
     }
 }

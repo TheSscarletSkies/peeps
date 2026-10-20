@@ -2,6 +2,7 @@
 
 use chrono::{Local, TimeDelta, Utc};
 use peeps_core::briefs;
+use peeps_core::numbers;
 use peeps_core::paths;
 use peeps_core::schedule::NewSchedule;
 use peeps_core::tools::{self, Call};
@@ -160,6 +161,68 @@ fn run(app: &App, call: Call) -> Result<String> {
                 })
                 .collect())
         }
+        Call::ProductNumbers { product: id } => {
+            let name = product(&id)?.name.clone();
+            let now = Utc::now();
+            let ledger = app.ledger();
+            let week = ledger
+                .summary(&id, now - TimeDelta::days(7))
+                .map_err(|e| e.to_string())?;
+            let month = ledger
+                .summary(&id, now - TimeDelta::days(30))
+                .map_err(|e| e.to_string())?;
+            let mut out = format!(
+                "{name}\nLast 7 days: {}\nLast 30 days: {}\nLatest:\n",
+                numbers::describe(&week),
+                numbers::describe(&month)
+            );
+            let recent = ledger.recent(&id, 10).map_err(|e| e.to_string())?;
+            if recent.is_empty() {
+                out.push_str("- nothing logged yet\n");
+            }
+            for entry in recent {
+                let amount = entry
+                    .amount_cents
+                    .map(|cents| {
+                        format!(
+                            " {}",
+                            numbers::money(cents, entry.currency.as_deref().unwrap_or("USD"))
+                        )
+                    })
+                    .unwrap_or_default();
+                out.push_str(&format!(
+                    "- {} {}{amount} {}\n",
+                    entry.at.with_timezone(&Local).format("%a %-d %b"),
+                    entry.channel,
+                    entry.note
+                ));
+            }
+            Ok(out)
+        }
+        Call::LogPayment {
+            product: id,
+            amount,
+            currency,
+            note,
+        } => {
+            let name = product(&id)?.name.clone();
+            let entry = numbers::manual_payment(&id, &amount, &currency, &note, Utc::now())?;
+            app.ledger().add(&entry).map_err(|e| e.to_string())?;
+            Ok(format!(
+                "Logged {} for {name}.",
+                numbers::money(entry.amount_cents.unwrap_or(0), &currency.to_uppercase())
+            ))
+        }
+        Call::LogPost {
+            product: id,
+            channel,
+            note,
+        } => {
+            let name = product(&id)?.name.clone();
+            let entry = numbers::manual_post(&id, &channel, &note, Utc::now())?;
+            app.ledger().add(&entry).map_err(|e| e.to_string())?;
+            Ok(format!("Logged a {} post for {name}.", entry.channel))
+        }
         Call::LogDecision {
             product: id,
             decision,
@@ -191,6 +254,17 @@ fn overview(app: &App) -> String {
         out.push('\n');
         for need in &pet.needs {
             out.push_str(&format!("  - needs: {}\n", need.message));
+        }
+        if let Some(numbers) = snapshot
+            .numbers
+            .products
+            .iter()
+            .find(|numbers| numbers.product_id == pet.id)
+        {
+            out.push_str(&format!(
+                "  - last 7 days: {}\n",
+                numbers::describe(&numbers.week)
+            ));
         }
         if let Some(permission) = &pet.permission {
             out.push_str(&format!(

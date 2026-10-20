@@ -37,6 +37,9 @@ pub struct Config {
     /// Mail accounts the helper may send from, after the user approves each email.
     #[serde(default)]
     pub mail: Vec<crate::mail::Account>,
+    /// The PayPal account whose payments count as one product's revenue.
+    #[serde(default)]
+    pub paypal: Option<crate::paypal::Settings>,
 }
 
 /// A private iCal link, such as Google's "secret address in iCal format".
@@ -170,6 +173,9 @@ pub struct Product {
     pub expect_activity_every_hours: Option<i64>,
     #[serde(default, rename = "check")]
     pub checks: Vec<CheckSpec>,
+    /// Its YouTube channel id (`UC…`); each upload is logged as a post.
+    #[serde(default)]
+    pub youtube_channel: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

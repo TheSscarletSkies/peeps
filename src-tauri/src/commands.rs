@@ -11,7 +11,7 @@ use peeps_core::protocol::Decision;
 use peeps_core::schedule::{NewSchedule, Schedule};
 use peeps_core::sync::{self, Joined};
 use peeps_core::todos::{self, Todo, TodoInput};
-use peeps_core::{briefs, hooks_install, mail, paths};
+use peeps_core::{briefs, hooks_install, mail, numbers, paths, paypal, youtube};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{Manager, State, WebviewWindow};
@@ -518,4 +518,127 @@ fn write_atomic(path: &Path, body: &str) -> Result<()> {
     staging.push(".peeps-tmp");
     std::fs::write(&staging, body).map_err(message)?;
     std::fs::rename(&staging, path).map_err(message)
+}
+
+fn known_product(app: &App, id: &str) -> Result<()> {
+    app.config()
+        .product(id)
+        .map(|_| ())
+        .ok_or_else(|| format!("unknown product `{id}`"))
+}
+
+#[tauri::command]
+pub fn log_payment(
+    app: State<'_, Arc<App>>,
+    product: String,
+    amount: String,
+    currency: String,
+    note: String,
+) -> Result<numbers::Entry> {
+    known_product(&app, &product)?;
+    let entry = numbers::manual_payment(&product, &amount, &currency, &note, Utc::now())?;
+    app.ledger().add(&entry).map_err(message)?;
+    app.publish();
+    Ok(entry)
+}
+
+#[tauri::command]
+pub fn log_post(
+    app: State<'_, Arc<App>>,
+    product: String,
+    channel: String,
+    note: String,
+) -> Result<numbers::Entry> {
+    known_product(&app, &product)?;
+    let entry = numbers::manual_post(&product, &channel, &note, Utc::now())?;
+    app.ledger().add(&entry).map_err(message)?;
+    app.publish();
+    Ok(entry)
+}
+
+#[tauri::command]
+pub fn remove_entry(app: State<'_, Arc<App>>, uid: String) -> Result<()> {
+    app.ledger().remove(&uid, Utc::now()).map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+/// Checks the PayPal app's keys, keeps them in the keychain and points payments at a product.
+#[tauri::command]
+pub async fn connect_paypal(
+    app: State<'_, Arc<App>>,
+    product: String,
+    client_id: String,
+    secret: String,
+    sandbox: bool,
+) -> Result<()> {
+    let (id, key) = (client_id.trim().to_owned(), secret.trim().to_owned());
+    let (probe_id, probe_key) = (id.clone(), key.clone());
+    tauri::async_runtime::spawn_blocking(move || paypal::token(&probe_id, &probe_key, sandbox))
+        .await
+        .map_err(message)??;
+    let path = paths::config_file();
+    let updated = config_edit::set_paypal(
+        &read_or_empty(&path)?,
+        Some(&paypal::Settings { product, sandbox }),
+    )
+    .map_err(message)?;
+    write_atomic(&path, &updated)?;
+    secrets::set(paypal::CLIENT_ID, &id).map_err(message)?;
+    secrets::set(paypal::SECRET, &key).map_err(message)?;
+    app.reload_config();
+    crate::numbers::refresh(app.inner().clone()).await;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn disconnect_paypal(app: State<'_, Arc<App>>) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_paypal(&read_or_empty(&path)?, None).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    secrets::remove(paypal::CLIENT_ID).map_err(message)?;
+    secrets::remove(paypal::SECRET).map_err(message)?;
+    app.reload_config();
+    app.world().numbers.paypal_ready = false;
+    app.publish();
+    Ok(())
+}
+
+/// Keeps the YouTube Data API key in the keychain; `None` forgets it.
+#[tauri::command]
+pub async fn set_youtube_key(app: State<'_, Arc<App>>, key: Option<String>) -> Result<()> {
+    match key
+        .map(|key| key.trim().to_owned())
+        .filter(|k| !k.is_empty())
+    {
+        Some(key) => secrets::set(youtube::KEY, &key).map_err(message)?,
+        None => secrets::remove(youtube::KEY).map_err(message)?,
+    }
+    crate::numbers::refresh(app.inner().clone()).await;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_youtube_channel(
+    app: State<'_, Arc<App>>,
+    product: String,
+    channel: Option<String>,
+) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_youtube_channel(
+        &read_or_empty(&path)?,
+        &product,
+        channel.as_deref().filter(|c| !c.trim().is_empty()),
+    )
+    .map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    crate::numbers::refresh(app.inner().clone()).await;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn refresh_numbers(app: State<'_, Arc<App>>) -> Result<()> {
+    crate::numbers::refresh(app.inner().clone()).await;
+    Ok(())
 }

@@ -91,6 +91,13 @@ export const BellIcon = () => (
   </Icon>
 );
 
+export const NumbersIcon = () => (
+  <Icon>
+    <path d="M4 18l5-6 4 3 7-8" />
+    <path d="M15 7h5v5" />
+  </Icon>
+);
+
 export const MailIcon = () => (
   <Icon>
     <rect x="3.5" y="5.5" width="17" height="13" rx="3" />

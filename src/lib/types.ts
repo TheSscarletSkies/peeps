@@ -214,6 +214,45 @@ export interface Snapshot {
   sync: SyncStatus;
   productChats: ProductChat[];
   mail: MailView;
+  numbers: NumbersView;
+}
+
+export interface LedgerEntry {
+  uid: string;
+  product: string;
+  kind: "payment" | "post";
+  /** Minor units, so 4950 is 49.50. */
+  amountCents: number | null;
+  currency: string | null;
+  /** manual, paypal, youtube, tiktok, instagram, linkedin, x or other. */
+  channel: string;
+  note: string;
+  at: string;
+}
+
+export interface NumbersSummary {
+  /** Cents per currency code. */
+  revenue: Record<string, number>;
+  payments: number;
+  posts: Record<string, number>;
+  lastPostAt: string | null;
+}
+
+export interface ProductNumbers {
+  productId: string;
+  youtubeChannel: string | null;
+  /** The last seven days. */
+  week: NumbersSummary;
+  recent: LedgerEntry[];
+}
+
+export interface NumbersView {
+  products: ProductNumbers[];
+  paypal: { product: string; sandbox: boolean } | null;
+  paypalReady: boolean;
+  youtubeReady: boolean;
+  lastChecked: string | null;
+  error: string | null;
 }
 
 export type MailProvider = "gmail" | "icloud";

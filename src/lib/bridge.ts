@@ -10,10 +10,12 @@ import type {
   Email,
   EmailDraft,
   Joined,
+  LedgerEntry,
   MailProvider,
   NewProduct,
   NewSchedule,
   Notch,
+  ProductNumbers,
   Note,
   Reminders,
   Snapshot,
@@ -24,13 +26,27 @@ import type {
 export const inApp = (): boolean => "__TAURI_INTERNALS__" in window;
 
 export function loadSnapshot(): Promise<Snapshot> {
-  return inApp() ? invoke<Snapshot>("snapshot") : Promise.resolve(demoSnapshot);
+  return inApp() ? invoke<Snapshot>("snapshot") : Promise.resolve(preview);
+}
+
+// The preview has no app behind it; logging numbers updates this copy so the cards respond.
+let preview: Snapshot = demoSnapshot;
+const previewHandlers = new Set<(snapshot: Snapshot) => void>();
+
+function updatePreview(change: (snapshot: Snapshot) => Snapshot) {
+  preview = change(preview);
+  previewHandlers.forEach((handler) => handler(preview));
 }
 
 export function onSnapshot(
   handler: (snapshot: Snapshot) => void,
 ): Promise<() => void> {
-  if (!inApp()) return Promise.resolve(() => undefined);
+  if (!inApp()) {
+    previewHandlers.add(handler);
+    return Promise.resolve(() => {
+      previewHandlers.delete(handler);
+    });
+  }
   return listen<Snapshot>("snapshot", (event) => handler(event.payload));
 }
 
@@ -365,5 +381,158 @@ export function sendEmail(
 export function discardEmail(id: number): Promise<void> {
   return inApp()
     ? invoke("discard_email", { id }).then(() => undefined)
+    : Promise.resolve();
+}
+
+function addToPreview(entry: LedgerEntry) {
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    numbers: {
+      ...snapshot.numbers,
+      products: snapshot.numbers.products.map((numbers) =>
+        numbers.productId === entry.product
+          ? { ...numbers, ...withEntry(numbers, entry) }
+          : numbers,
+      ),
+    },
+  }));
+}
+
+function withEntry(
+  numbers: ProductNumbers,
+  entry: LedgerEntry,
+): Pick<ProductNumbers, "week" | "recent"> {
+  const week = { ...numbers.week };
+  if (entry.kind === "payment" && entry.amountCents !== null) {
+    const currency = entry.currency ?? "USD";
+    week.revenue = {
+      ...week.revenue,
+      [currency]: (week.revenue[currency] ?? 0) + entry.amountCents,
+    };
+    week.payments += 1;
+  } else {
+    week.posts = {
+      ...week.posts,
+      [entry.channel]: (week.posts[entry.channel] ?? 0) + 1,
+    };
+    week.lastPostAt = entry.at;
+  }
+  return { week, recent: [entry, ...numbers.recent].slice(0, 8) };
+}
+
+function previewEntry(
+  product: string,
+  patch: Pick<
+    LedgerEntry,
+    "kind" | "amountCents" | "currency" | "channel" | "note"
+  >,
+): LedgerEntry {
+  return {
+    uid: `preview-${(demoId += 1)}`,
+    product,
+    at: new Date().toISOString(),
+    ...patch,
+  };
+}
+
+/** A payment from outside PayPal, like a bank transfer. `amount` is as typed, like "49.50". */
+export function logPayment(
+  product: string,
+  amount: string,
+  currency: string,
+  note: string,
+): Promise<LedgerEntry> {
+  if (inApp())
+    return invoke<LedgerEntry>("log_payment", {
+      product,
+      amount,
+      currency,
+      note,
+    });
+  const cents = Math.round(Number(amount) * 100);
+  if (!(cents > 0))
+    return Promise.reject(new Error(`\`${amount}\` isn't an amount`));
+  const entry = previewEntry(product, {
+    kind: "payment",
+    amountCents: cents,
+    currency: currency.toUpperCase(),
+    channel: "manual",
+    note,
+  });
+  addToPreview(entry);
+  return Promise.resolve(entry);
+}
+
+export function logPost(
+  product: string,
+  channel: string,
+  note: string,
+): Promise<LedgerEntry> {
+  if (inApp())
+    return invoke<LedgerEntry>("log_post", { product, channel, note });
+  const entry = previewEntry(product, {
+    kind: "post",
+    amountCents: null,
+    currency: null,
+    channel,
+    note,
+  });
+  addToPreview(entry);
+  return Promise.resolve(entry);
+}
+
+export function removeEntry(uid: string): Promise<void> {
+  if (inApp()) return invoke("remove_entry", { uid }).then(() => undefined);
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    numbers: {
+      ...snapshot.numbers,
+      products: snapshot.numbers.products.map((numbers) => ({
+        ...numbers,
+        recent: numbers.recent.filter((entry) => entry.uid !== uid),
+      })),
+    },
+  }));
+  return Promise.resolve();
+}
+
+/** Checks the PayPal app's keys before keeping them in the keychain. */
+export function connectPaypal(
+  product: string,
+  clientId: string,
+  secret: string,
+  sandbox: boolean,
+): Promise<void> {
+  return inApp()
+    ? invoke("connect_paypal", { product, clientId, secret, sandbox }).then(
+        () => undefined,
+      )
+    : Promise.resolve();
+}
+
+export function disconnectPaypal(): Promise<void> {
+  return inApp()
+    ? invoke("disconnect_paypal").then(() => undefined)
+    : Promise.resolve();
+}
+
+export function setYoutubeKey(key: string | null): Promise<void> {
+  return inApp()
+    ? invoke("set_youtube_key", { key }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function setYoutubeChannel(
+  product: string,
+  channel: string | null,
+): Promise<void> {
+  return inApp()
+    ? invoke("set_youtube_channel", { product, channel }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function refreshNumbers(): Promise<void> {
+  return inApp()
+    ? invoke("refresh_numbers").then(() => undefined)
     : Promise.resolve();
 }

@@ -4,7 +4,14 @@ import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { announceFed } from "../life/events";
 import { addNote, decide } from "../lib/bridge";
-import type { Delivery, Helper, Pet, ProductChat } from "../lib/types";
+import type {
+  Delivery,
+  Helper,
+  Pet,
+  ProductChat,
+  ProductNumbers,
+} from "../lib/types";
+import { NumbersStrip } from "../numbers/NumbersStrip";
 import { Conversation } from "../helper/Chat";
 import { BriefEditor } from "./BriefEditor";
 import { ReviewToggle } from "./ReviewToggle";
@@ -15,6 +22,7 @@ interface Props {
   chat?: ProductChat;
   /** Holds the model and effort the agent uses. */
   helper: Helper;
+  numbers?: ProductNumbers;
   onTyping: (typing: boolean) => void;
 }
 
@@ -26,7 +34,7 @@ const STARTERS = [
   "Plan the next three posts",
 ];
 
-export function PetPanel({ pet, chat, helper, onTyping }: Props) {
+export function PetPanel({ pet, chat, helper, numbers, onTyping }: Props) {
   const [tab, setTab] = useState<Tab>("note");
   const [text, setText] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nextSession");
@@ -63,6 +71,7 @@ export function PetPanel({ pet, chat, helper, onTyping }: Props) {
         <span className="panel__name">{pet.name}</span>
         <span className="panel__headline">{pet.headline}</span>
       </header>
+      <NumbersStrip productId={pet.id} name={pet.name} numbers={numbers} />
 
       {permission && (
         <div className="panel__permission">

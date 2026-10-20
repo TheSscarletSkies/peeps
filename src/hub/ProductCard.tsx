@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 import { addNote, decide } from "../lib/bridge";
-import type { Mood, Pet } from "../lib/types";
+import type { Mood, Pet, ProductNumbers } from "../lib/types";
+import { NumbersStrip } from "../numbers/NumbersStrip";
 import { announceFed } from "../life/events";
 import { LivePet } from "../life/LivePet";
 
@@ -21,11 +22,18 @@ interface Props {
   pet: Pet;
   celebrating?: boolean;
   arriving?: boolean;
+  numbers?: ProductNumbers;
   /** Opens the pet's full panel: notes, strategy chat and brief. */
   onOpen: () => void;
 }
 
-export function ProductCard({ pet, celebrating, arriving, onOpen }: Props) {
+export function ProductCard({
+  pet,
+  celebrating,
+  arriving,
+  numbers,
+  onOpen,
+}: Props) {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
   const permission = pet.permission;
@@ -60,6 +68,7 @@ export function ProductCard({ pet, celebrating, arriving, onOpen }: Props) {
           </span>
         </div>
         <p className="pet-card__headline">{pet.headline}</p>
+        <NumbersStrip productId={pet.id} name={pet.name} numbers={numbers} />
         <button className="tray__link pet-card__open" onClick={onOpen}>
           Ask {pet.name} · Brief
         </button>
