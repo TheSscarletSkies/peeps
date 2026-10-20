@@ -213,6 +213,51 @@ export interface Snapshot {
   reminders: Reminders;
   sync: SyncStatus;
   productChats: ProductChat[];
+  mail: MailView;
+}
+
+export type MailProvider = "gmail" | "icloud";
+
+export interface MailAccount {
+  address: string;
+  provider: MailProvider;
+  name: string;
+  /** The mailbox that signs in when `address` is an alias of it; empty when it is the same. */
+  login: string;
+  /** False on a computer that synced the account but has no app password for it yet. */
+  ready: boolean;
+}
+
+export interface Email {
+  id: number;
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  inReplyTo: string | null;
+  status: "pending" | "sent" | "failed" | "discarded";
+  messageId: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  repliedAt: string | null;
+  error: string | null;
+}
+
+/** What goes out: the user's last edits to a draft. */
+export interface EmailDraft {
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  inReplyTo?: string | null;
+}
+
+export interface MailView {
+  accounts: MailAccount[];
+  /** Drafts waiting for approval, and ones that failed to send. */
+  outbox: Email[];
+  /** Sent in the last 30 days with no reply yet. */
+  awaiting: Email[];
 }
 
 /** A product pet's conversation with the user. */

@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use peeps_core::chat::Message;
-use peeps_core::config::{ReminderRule, Reminders};
+use peeps_core::config::{Config, ReminderRule, Reminders};
 use peeps_core::config_edit::{self, NewProduct};
 use peeps_core::drafts::Draft;
 use peeps_core::notes::{Delivery, Note};
@@ -11,7 +11,7 @@ use peeps_core::protocol::Decision;
 use peeps_core::schedule::{NewSchedule, Schedule};
 use peeps_core::sync::{self, Joined};
 use peeps_core::todos::{self, Todo, TodoInput};
-use peeps_core::{briefs, hooks_install, paths};
+use peeps_core::{briefs, hooks_install, mail, paths};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{Manager, State, WebviewWindow};
@@ -207,6 +207,82 @@ pub fn write_brief(app: State<'_, Arc<App>>, product_id: String, text: String) -
         return Err(format!("unknown product `{product_id}`"));
     }
     briefs::write(&paths::config_file(), &product_id, &text).map_err(message)
+}
+
+/// Signs in to check the account, then keeps its app password in the keychain and the account in the config.
+#[tauri::command]
+pub async fn add_mail_account(
+    app: State<'_, Arc<App>>,
+    address: String,
+    provider: mail::Provider,
+    name: String,
+    login: Option<String>,
+    password: String,
+) -> Result<()> {
+    let account = mail::Account {
+        address: address.trim().to_lowercase(),
+        provider,
+        name,
+        login: login.unwrap_or_default().trim().to_lowercase(),
+    };
+    // App passwords are often pasted with spaces between groups of four.
+    let password: String = password.chars().filter(|c| !c.is_whitespace()).collect();
+    let probe = account.clone();
+    let secret = password.clone();
+    tauri::async_runtime::spawn_blocking(move || mail::check_login(&probe, &secret))
+        .await
+        .map_err(message)??;
+    let path = paths::config_file();
+    let text = read_or_empty(&path)?;
+    // A computer joining through sync already has the account; it only needs the password.
+    let known = Config::parse(&text)
+        .map(|config| config.mail.iter().any(|a| a.address == account.address))
+        .unwrap_or(false);
+    if !known {
+        let updated = config_edit::add_mail(&text, &account).map_err(message)?;
+        write_atomic(&path, &updated)?;
+    }
+    secrets::set(&mail::secret_name(&account.address), &password).map_err(message)?;
+    app.reload_config();
+    crate::mailbox::refresh_ready(&app);
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn remove_mail_account(app: State<'_, Arc<App>>, address: String) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::remove_mail(&read_or_empty(&path)?, &address).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    secrets::remove(&mail::secret_name(&address)).map_err(message)?;
+    app.reload_config();
+    crate::mailbox::refresh_ready(&app);
+    app.publish();
+    Ok(())
+}
+
+/// Writes an email by hand; like the helper's drafts, it waits until the user sends it.
+#[tauri::command]
+pub fn compose_email(app: State<'_, Arc<App>>, draft: mail::Draft) -> Result<mail::Email> {
+    let email = app.mail().draft(&draft, Utc::now()).map_err(message)?;
+    app.publish();
+    Ok(email)
+}
+
+#[tauri::command]
+pub async fn send_email(
+    app: State<'_, Arc<App>>,
+    id: i64,
+    draft: mail::Draft,
+) -> Result<mail::Email> {
+    crate::mailbox::send(app.inner().clone(), id, draft).await
+}
+
+#[tauri::command]
+pub fn discard_email(app: State<'_, Arc<App>>, id: i64) -> Result<()> {
+    app.mail().discard(id).map_err(message)?;
+    app.publish();
+    Ok(())
 }
 
 /// Saves which model and effort the helper's agent uses.

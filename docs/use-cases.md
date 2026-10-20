@@ -82,7 +82,7 @@ Tested by `e2e/products.e2e.ts`, `crates/core/src/chat.rs`, `src/tray/review.tes
 ### UC9. Ask the helper anything
 
 **When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
-**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
+**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, draft emails for approval, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
 
 Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
 
@@ -99,6 +99,13 @@ Tested by `e2e/helper.e2e.ts`, `crates/core/src/todos.rs`, `crates/core/src/quic
 **Then** a notification arrives 30 minutes before every class, including repeats, skipping cancelled ones and following moved ones. All-day events like exams remind on the morning. Rules win over a calendar's own lead, which wins over the default.
 
 Tested by `e2e/hub.e2e.ts`, `crates/core/src/calendar.rs`, `crates/core/src/reminders.rs`.
+
+### UC19. Email with approval
+
+**When** they add hello@funderly.app (Gmail, with an app password) and ask the helper "welcome the three new Funderly sign-ups".
+**Then** each email waits in the helper's card, which opens on Mail with a badge on the helper: From, To, Subject and the message are all editable, and nothing goes out until they press Send. Discard drops it. A failed send stays with the reason and a Try again. Sent mail is checked for replies every 10 minutes; a reply sends a notification, and the Mail page lists who hasn't answered in 30 days with a Follow up that asks the helper for a threaded draft. Gmail and iCloud work; a work address added to a personal Gmail with "Send mail as" signs in through that Gmail. A synced computer without the app password shows "Needs its app password on this computer". Outlook needs a sign-in peeps can't do without a server, so it isn't supported.
+
+Tested by `e2e/mail.e2e.ts`, `src/mail/mail.test.ts`, `crates/core/src/mail.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
 
 ### UC12. Get posts written on a schedule
 

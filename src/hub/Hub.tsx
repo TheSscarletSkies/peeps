@@ -19,6 +19,7 @@ import {
   BellIcon,
   DevicesIcon,
   HomeIcon,
+  MailIcon,
   MoonIcon,
   ProductsIcon,
   RecapIcon,
@@ -31,6 +32,7 @@ import {
 import { PetPanel } from "../tray/PetPanel";
 import { ProductCard } from "./ProductCard";
 import { DevicesPage } from "./DevicesPage";
+import { MailPage } from "./MailPage";
 import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
@@ -42,6 +44,7 @@ type Page =
   | "ask"
   | "todo"
   | "reminders"
+  | "mail"
   | "write"
   | "tokens"
   | "recap"
@@ -53,6 +56,7 @@ const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "ask", label: "Ask", icon: <AskIcon /> },
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
   { id: "reminders", label: "Reminders", icon: <BellIcon /> },
+  { id: "mail", label: "Mail", icon: <MailIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
   { id: "recap", label: "Recap", icon: <RecapIcon /> },
@@ -117,6 +121,11 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               {item.label}
               {item.id === "todo" && helper.todos.length > 0 && (
                 <span className="nav__count">{helper.todos.length}</span>
+              )}
+              {item.id === "mail" && snapshot.mail.outbox.length > 0 && (
+                <span className="nav__count">
+                  {snapshot.mail.outbox.length}
+                </span>
               )}
             </button>
           ))}
@@ -184,6 +193,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               lead="Your calendars and when each kind of event should nudge you."
             >
               <RemindersPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "mail" && (
+            <Section
+              title="Mail"
+              lead={`${helper.name} drafts, you approve. Nothing is sent without you.`}
+            >
+              <MailPage snapshot={snapshot} />
             </Section>
           )}
           {page === "write" && (

@@ -10,10 +10,13 @@ import {
   setTodoDone,
   writeDraft,
 } from "../lib/bridge";
+import { hasFiles } from "../life/drops";
 import { announceFed } from "../life/events";
+import { Outbox } from "../mail/Outbox";
 import type {
   DueState,
   Helper,
+  MailView,
   OpenTodo,
   Pet,
   Repeat,
@@ -34,17 +37,31 @@ import { Upcoming } from "./Upcoming";
 import { Chat } from "./Chat";
 import { scheduleLabel } from "./when";
 
-type Tab = "ask" | "todo" | "write" | "tokens";
+type Tab = "ask" | "mail" | "todo" | "write" | "tokens";
 
 interface Props {
   helper: Helper;
   pets: Pet[];
   tips: Tip[];
+  mail: MailView;
   onTyping: (typing: boolean) => void;
 }
 
-export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
-  const [tab, setTab] = useState<Tab>("ask");
+export function HelperPanel({ helper, pets, tips, mail, onTyping }: Props) {
+  const waiting = mail.outbox.length;
+  // An email waiting for approval is usually why the helper was opened, unless a file was dropped on it.
+  const [tab, setTab] = useState<Tab>(
+    waiting > 0 && !hasFiles("helper") ? "mail" : "ask",
+  );
+  const tabs: [Tab, string][] = [
+    ["ask", "Ask"],
+    ...(waiting > 0 || tab === "mail"
+      ? [["mail", `Mail${waiting > 0 ? ` ${waiting}` : ""}`] as [Tab, string]]
+      : []),
+    ["todo", "To-do"],
+    ["write", "Write"],
+    ["tokens", "Tokens"],
+  ];
 
   return (
     <section className="panel" aria-label={helper.name}>
@@ -54,14 +71,7 @@ export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
       </header>
       <Upcoming events={helper.upcoming} limit={2} />
       <div className="tabs" role="tablist" aria-label="Helper">
-        {(
-          [
-            ["ask", "Ask"],
-            ["todo", "To-do"],
-            ["write", "Write"],
-            ["tokens", "Tokens"],
-          ] as const
-        ).map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             role="tab"
@@ -74,6 +84,9 @@ export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
         ))}
       </div>
       {tab === "ask" && <Chat helper={helper} onTyping={onTyping} />}
+      {tab === "mail" && (
+        <Outbox mail={mail} limit={1} emptyText="No emails waiting for you." />
+      )}
       {tab === "todo" && <Todos helper={helper} onTyping={onTyping} />}
       {tab === "write" && <Write helper={helper} onTyping={onTyping} />}
       {tab === "tokens" && <Tokens helper={helper} pets={pets} tips={tips} />}

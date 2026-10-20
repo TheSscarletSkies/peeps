@@ -1836,3 +1836,72 @@ body,
   color: var(--text);
   font-size: 13px;
 }
+
+/* Email waiting for approval: the same fields everywhere, labels kept short and to the left. */
+
+.outbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.outbox__note {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--good);
+}
+
+.outbox__count {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.email {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.email__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.email__line > label {
+  flex: 0 0 56px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.email__line > :is(input, select) {
+  flex: 1;
+}
+
+.email textarea {
+  min-height: 120px;
+}
+
+.email .setup__hint,
+.email .tray__error {
+  margin: 0;
+}
+
+.mail__alias {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.mail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}

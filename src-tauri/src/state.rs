@@ -10,6 +10,7 @@ use peeps_core::chat::ChatStore;
 use peeps_core::config::{Config, Reminders};
 use peeps_core::drafts::DraftStore;
 use peeps_core::helper::{self, HelperView, Week};
+use peeps_core::mail::{Email, MailStore};
 use peeps_core::notes::{self, Delivery, NoteStore};
 use peeps_core::paths;
 use peeps_core::protocol::{Decision, HookEvent, HookInput, Reply};
@@ -44,6 +45,8 @@ pub struct World {
     /// Calendar feeds by name, as last downloaded.
     pub feeds: HashMap<String, Feed>,
     pub sync: SyncStatus,
+    /// Accounts whose app password is in this computer's keychain, checked off the main path.
+    pub mail_ready: std::collections::HashSet<String>,
 }
 
 /// How syncing is going, for the Devices page.
@@ -104,7 +107,31 @@ pub struct AppSnapshot {
     pub reminders: Reminders,
     pub sync: SyncStatus,
     pub product_chats: Vec<ProductChat>,
+    pub mail: MailView,
 }
+
+/// Email for the window: accounts, drafts waiting for approval and who hasn't replied.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MailView {
+    pub accounts: Vec<MailAccount>,
+    pub outbox: Vec<Email>,
+    pub awaiting: Vec<Email>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MailAccount {
+    pub address: String,
+    pub provider: peeps_core::mail::Provider,
+    pub name: String,
+    pub login: String,
+    /// False on a computer that synced the account but has no app password for it yet.
+    pub ready: bool,
+}
+
+/// How far back "hasn't replied" looks.
+pub const AWAITING_DAYS: i64 = 30;
 
 /// A product pet's conversation with the user.
 #[derive(Clone, Serialize)]
@@ -154,6 +181,7 @@ pub struct App {
     /// Which conversation the agent is answering, if any.
     chatting: Mutex<Option<String>>,
     schedules: Mutex<ScheduleStore>,
+    mail: Mutex<MailStore>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
     handle: AppHandle,
@@ -179,6 +207,7 @@ impl App {
             chat: Mutex::new(ChatStore::open(&paths::database_file())?),
             chatting: Mutex::new(None),
             schedules: Mutex::new(ScheduleStore::open(&paths::database_file())?),
+            mail: Mutex::new(MailStore::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             handle,
@@ -238,6 +267,10 @@ impl App {
 
     pub fn chat(&self) -> MutexGuard<'_, ChatStore> {
         self.chat.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    pub fn mail(&self) -> MutexGuard<'_, MailStore> {
+        self.mail.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     pub fn schedules(&self) -> MutexGuard<'_, ScheduleStore> {
@@ -414,6 +447,24 @@ impl App {
             reminders: config.reminders.clone(),
             sync: world.sync.clone(),
             product_chats,
+            mail: MailView {
+                accounts: config
+                    .mail
+                    .iter()
+                    .map(|account| MailAccount {
+                        address: account.address.clone(),
+                        provider: account.provider,
+                        name: account.name.clone(),
+                        login: account.login.clone(),
+                        ready: world.mail_ready.contains(&account.address),
+                    })
+                    .collect(),
+                outbox: self.mail().outbox().unwrap_or_default(),
+                awaiting: self
+                    .mail()
+                    .awaiting(now - TimeDelta::days(AWAITING_DAYS))
+                    .unwrap_or_default(),
+            },
         }
     }
 

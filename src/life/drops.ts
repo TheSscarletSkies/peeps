@@ -30,6 +30,10 @@ export function giveFiles(id: string, paths: string[]) {
   emit();
 }
 
+export function hasFiles(id: string): boolean {
+  return (waiting.get(id)?.length ?? 0) > 0;
+}
+
 export function takeFiles(id: string): string[] {
   const paths = waiting.get(id) ?? [];
   waiting.delete(id);

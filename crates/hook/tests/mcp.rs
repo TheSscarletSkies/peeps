@@ -35,7 +35,11 @@ fn speaks_mcp_over_stdio() {
         json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }),
         json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": { "name": "list_todos", "arguments": {} } }),
     ]);
-    assert_eq!(replies.len(), 3, "the notification gets no reply");
+    assert_eq!(
+        replies.len(),
+        3,
+        "the notification gets no reply; got {replies:?}"
+    );
     assert_eq!(replies[0]["result"]["serverInfo"]["name"], "peeps");
     let tools = replies[1]["result"]["tools"].as_array().unwrap();
     assert!(tools.iter().any(|tool| tool["name"] == "peeps_overview"));

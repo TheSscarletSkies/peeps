@@ -34,6 +34,9 @@ pub struct Config {
     pub calendars: Vec<CalendarFeed>,
     #[serde(default)]
     pub reminders: Reminders,
+    /// Mail accounts the helper may send from, after the user approves each email.
+    #[serde(default)]
+    pub mail: Vec<crate::mail::Account>,
 }
 
 /// A private iCal link, such as Google's "secret address in iCal format".

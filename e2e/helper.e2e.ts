@@ -5,6 +5,8 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole("button", { name: /^Helper/ }).click();
+  // The preview has an email waiting, so the card opens on Mail.
+  await page.getByRole("tab", { name: "Ask", exact: true }).click();
 });
 
 test("UC9: the helper answers a message", async ({ page }) => {

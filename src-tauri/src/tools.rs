@@ -98,6 +98,68 @@ fn run(app: &App, call: Call) -> Result<String> {
             briefs::write(&paths::config_file(), &id, &text).map_err(|e| e.to_string())?;
             Ok(format!("Updated {name}'s brief."))
         }
+        Call::DraftEmail {
+            from,
+            to,
+            subject,
+            body,
+            in_reply_to,
+        } => {
+            let account = match from {
+                Some(from) => config
+                    .mail
+                    .iter()
+                    .find(|account| account.address.eq_ignore_ascii_case(&from))
+                    .ok_or_else(|| {
+                        format!("`{from}` is not one of the user's mail accounts in peeps")
+                    })?,
+                None => config.mail.first().ok_or(
+                    "no mail account is set up in peeps yet; ask the user to add one under Mail",
+                )?,
+            };
+            let email = app
+                .mail()
+                .draft(
+                    &peeps_core::mail::Draft {
+                        from: account.address.clone(),
+                        to,
+                        subject,
+                        body,
+                        in_reply_to,
+                    },
+                    Utc::now(),
+                )
+                .map_err(|e| e.to_string())?;
+            app.notify("An email is ready for you", &email.subject);
+            Ok(format!(
+                "Drafted from {}. It is waiting in peeps for the user to read, edit and send; nothing has been sent.",
+                account.address
+            ))
+        }
+        Call::WaitingReplies => {
+            let waiting = app
+                .mail()
+                .awaiting(Utc::now() - TimeDelta::days(crate::state::AWAITING_DAYS))
+                .map_err(|e| e.to_string())?;
+            if waiting.is_empty() {
+                return Ok("Everyone has replied, or nothing was sent from peeps lately.".into());
+            }
+            Ok(waiting
+                .iter()
+                .map(|email| {
+                    format!(
+                        "- {} · \"{}\" · sent {} · Message-ID {}\n",
+                        email.to,
+                        email.subject,
+                        email
+                            .sent_at
+                            .map(|at| at.with_timezone(&Local).format("%a %-d %b").to_string())
+                            .unwrap_or_default(),
+                        email.message_id.clone().unwrap_or_default()
+                    )
+                })
+                .collect())
+        }
         Call::LogDecision {
             product: id,
             decision,
@@ -136,6 +198,21 @@ fn overview(app: &App) -> String {
                 permission.summary
             ));
         }
+    }
+    if !snapshot.mail.accounts.is_empty() {
+        out.push_str("\nMail accounts: ");
+        let addresses: Vec<_> = snapshot
+            .mail
+            .accounts
+            .iter()
+            .map(|a| a.address.as_str())
+            .collect();
+        out.push_str(&addresses.join(", "));
+        out.push_str(&format!(
+            "\n{} sent email(s) waiting for a reply, {} draft(s) waiting for the user.\n",
+            snapshot.mail.awaiting.len(),
+            snapshot.mail.outbox.len()
+        ));
     }
     out.push_str("\nTo-dos:\n");
     out.push_str(&todo_list(app));

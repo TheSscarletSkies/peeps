@@ -1,6 +1,7 @@
 mod assistant;
 mod bridge;
 mod commands;
+mod mailbox;
 mod remind;
 mod secrets;
 mod state;
@@ -36,6 +37,11 @@ pub fn run() {
             commands::set_helper_agent,
             commands::read_brief,
             commands::write_brief,
+            commands::add_mail_account,
+            commands::remove_mail_account,
+            commands::compose_email,
+            commands::send_email,
+            commands::discard_email,
             commands::set_sync_folder,
             commands::add_product_path,
             commands::add_schedule,
@@ -83,6 +89,7 @@ pub fn run() {
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));
             tauri::async_runtime::spawn(sync::run(app.clone()));
+            tauri::async_runtime::spawn(mailbox::run(app.clone()));
             tauri::async_runtime::spawn(assistant::run_schedules(app.clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())

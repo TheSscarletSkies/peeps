@@ -91,6 +91,13 @@ export const BellIcon = () => (
   </Icon>
 );
 
+export const MailIcon = () => (
+  <Icon>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="3" />
+    <path d="M4.5 7.5l7.5 5.5 7.5-5.5" />
+  </Icon>
+);
+
 export const AskIcon = () => (
   <Icon>
     <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0.5A2.5 2.5 0 0 1 5 13.5z" />

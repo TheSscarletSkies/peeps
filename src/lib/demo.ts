@@ -224,6 +224,56 @@ export const demoSnapshot: Snapshot = {
     ],
   },
   configError: null,
+  mail: {
+    accounts: [
+      {
+        address: "hello@funderly.app",
+        provider: "gmail",
+        name: "Mariyam at Funderly",
+        login: "",
+        ready: true,
+      },
+      {
+        address: "mariyam@icloud.com",
+        provider: "icloud",
+        name: "",
+        login: "",
+        ready: false,
+      },
+    ],
+    outbox: [
+      {
+        id: 1,
+        from: "hello@funderly.app",
+        to: "sara@brightfund.org",
+        subject: "Welcome to Funderly",
+        body: "Hi Sara,\n\nThanks for signing up! Most teams launch their first campaign in about ten minutes; this short video walks through it.\n\nReply here if anything gets in the way.\n\nMariyam",
+        inReplyTo: null,
+        status: "pending",
+        messageId: null,
+        createdAt: "2026-10-20T08:01:00Z",
+        sentAt: null,
+        repliedAt: null,
+        error: null,
+      },
+    ],
+    awaiting: [
+      {
+        id: 2,
+        from: "hello@funderly.app",
+        to: "tom@greenhope.org",
+        subject: "Your Funderly trial",
+        body: "",
+        inReplyTo: null,
+        status: "sent",
+        messageId: "<a1@funderly.app>",
+        createdAt: "2026-10-14T09:00:00Z",
+        sentAt: "2026-10-14T09:00:00Z",
+        repliedAt: null,
+        error: null,
+      },
+    ],
+  },
   productChats: [
     {
       productId: "funderly",

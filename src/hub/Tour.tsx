@@ -36,6 +36,12 @@ export const STEPS: TourStep[] = [
     text: "Paste your calendar links and choose how early I should remind you, like 30 minutes before anything called class.",
   },
   {
+    target: "mail",
+    page: "mail",
+    title: "Email, with your OK",
+    text: "Add Gmail or iCloud with an app password. I draft, you edit and press Send, and I tell you who hasn't replied.",
+  },
+  {
     target: "write",
     page: "write",
     title: "Posts in your voice",

@@ -9,6 +9,7 @@ pub mod drafts;
 pub mod helper;
 pub mod hooks_install;
 pub mod ipc;
+pub mod mail;
 pub mod mcp;
 pub mod mood;
 pub mod notes;

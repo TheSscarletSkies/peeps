@@ -32,6 +32,8 @@ pub enum EditError {
     Duplicate(String),
     #[error("no calendar called `{0}`")]
     UnknownCalendar(String),
+    #[error("`{0}` is not an email address peeps knows")]
+    BadAddress(String),
     #[error(transparent)]
     Invalid(#[from] ConfigError),
 }
@@ -128,6 +130,69 @@ fn color_or_default(color: &str) -> String {
     } else {
         Pet::default().color
     }
+}
+
+/// Adds a mail account. Its app password goes in the keychain, not here.
+pub fn add_mail(text: &str, account: &crate::mail::Account) -> Result<String, EditError> {
+    let address = account.address.trim().to_lowercase();
+    if !address.contains('@') {
+        return Err(EditError::BadAddress(address));
+    }
+    let existing = Config::parse(text)?;
+    if existing
+        .mail
+        .iter()
+        .any(|known| known.address.eq_ignore_ascii_case(&address))
+    {
+        return Err(EditError::Duplicate(address));
+    }
+    let mut table = Table::new();
+    table["address"] = value(&address);
+    table["provider"] = value(match account.provider {
+        crate::mail::Provider::Gmail => "gmail",
+        crate::mail::Provider::Icloud => "icloud",
+    });
+    if !account.name.trim().is_empty() {
+        table["name"] = value(account.name.trim());
+    }
+    let login = account.login.trim().to_lowercase();
+    if !login.is_empty() && login != address {
+        if !login.contains('@') {
+            return Err(EditError::BadAddress(login));
+        }
+        table["login"] = value(login);
+    }
+    let mut doc: DocumentMut = text.parse()?;
+    doc.entry("mail")
+        .or_insert(Item::ArrayOfTables(ArrayOfTables::new()))
+        .as_array_of_tables_mut()
+        .ok_or(EditError::Shape)?
+        .push(table);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
+pub fn remove_mail(text: &str, address: &str) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let accounts = doc
+        .get_mut("mail")
+        .and_then(Item::as_array_of_tables_mut)
+        .ok_or_else(|| EditError::BadAddress(address.to_owned()))?;
+    let index = accounts
+        .iter()
+        .position(|table| {
+            table
+                .get("address")
+                .and_then(Item::as_str)
+                .is_some_and(|known| known.eq_ignore_ascii_case(address))
+        })
+        .ok_or_else(|| EditError::BadAddress(address.to_owned()))?;
+    accounts.remove(index);
+    if accounts.is_empty() {
+        doc.remove("mail");
+    }
+    Ok(doc.to_string())
 }
 
 /// Adds this computer's folder to a product another computer created, so both share one pet.
@@ -446,5 +511,40 @@ mod tests {
             add_path(&text, "nope", "/x"),
             Err(EditError::Unknown(_))
         ));
+    }
+
+    #[test]
+    fn mail_accounts_are_added_once_and_removed() {
+        use crate::mail::{Account, Provider};
+        let funderly = Account {
+            address: "Hello@Funderly.app".into(),
+            provider: Provider::Gmail,
+            name: "Mariyam at Funderly".into(),
+            login: "Mariyam@gmail.com".into(),
+        };
+        let text = add_mail("", &funderly).unwrap();
+        let config = Config::parse(&text).unwrap();
+        assert_eq!(config.mail[0].address, "hello@funderly.app");
+        assert_eq!(config.mail[0].name, "Mariyam at Funderly");
+        assert_eq!(config.mail[0].login, "mariyam@gmail.com");
+        assert!(matches!(
+            add_mail(&text, &funderly),
+            Err(EditError::Duplicate(_))
+        ));
+        let personal = Account {
+            address: "m@icloud.com".into(),
+            provider: Provider::Icloud,
+            name: String::new(),
+            login: "m@icloud.com".into(),
+        };
+        let both = add_mail(&text, &personal).unwrap();
+        assert_eq!(
+            Config::parse(&both).unwrap().mail[1].provider,
+            Provider::Icloud
+        );
+        assert!(!both.contains("login = \"m@icloud.com\""));
+        let one = remove_mail(&both, "HELLO@funderly.app").unwrap();
+        assert_eq!(Config::parse(&one).unwrap().mail.len(), 1);
+        assert!(remove_mail(&one, "nobody@x.com").is_err());
     }
 }

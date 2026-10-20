@@ -7,7 +7,10 @@ import type {
   Decision,
   Delivery,
   Draft,
+  Email,
+  EmailDraft,
   Joined,
+  MailProvider,
   NewProduct,
   NewSchedule,
   Notch,
@@ -319,5 +322,48 @@ export function setSyncFolder(folder: string | null): Promise<Joined | null> {
 export function addProductPath(productId: string, path: string): Promise<void> {
   return inApp()
     ? invoke("add_product_path", { productId, path }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export interface NewMailAccount {
+  address: string;
+  provider: MailProvider;
+  name: string;
+  login: string;
+  password: string;
+}
+
+/** Signs in once to check the app password, then keeps it in the keychain. */
+export function addMailAccount(account: NewMailAccount): Promise<void> {
+  return inApp()
+    ? invoke("add_mail_account", { ...account }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function removeMailAccount(address: string): Promise<void> {
+  return inApp()
+    ? invoke("remove_mail_account", { address }).then(() => undefined)
+    : Promise.resolve();
+}
+
+/** Holds a hand-written email for sending; nothing goes out until `sendEmail`. */
+export function composeEmail(draft: EmailDraft): Promise<Email | null> {
+  return inApp()
+    ? invoke<Email>("compose_email", { draft })
+    : Promise.resolve(null);
+}
+
+export function sendEmail(
+  id: number,
+  draft: EmailDraft,
+): Promise<Email | null> {
+  return inApp()
+    ? invoke<Email>("send_email", { id, draft })
+    : Promise.resolve(null);
+}
+
+export function discardEmail(id: number): Promise<void> {
+  return inApp()
+    ? invoke("discard_email", { id }).then(() => undefined)
     : Promise.resolve();
 }

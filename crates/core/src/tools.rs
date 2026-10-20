@@ -49,6 +49,14 @@ pub enum Call {
         product: String,
         decision: String,
     },
+    DraftEmail {
+        from: Option<String>,
+        to: String,
+        subject: String,
+        body: String,
+        in_reply_to: Option<String>,
+    },
+    WaitingReplies,
 }
 
 fn product_arg() -> Value {
@@ -147,7 +155,37 @@ pub fn definitions() -> Vec<Definition> {
                 "required": ["product", "decision"]
             }),
         },
+        Definition {
+            name: "draft_email",
+            description: "Prepares an email from one of the user's own accounts. It is NOT sent: the user sees it in peeps, can edit it, and sends it themselves. Say that it is waiting for them.",
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "from": { "type": "string", "description": "Which of the user's addresses to send from; omit for their first account. peeps_overview lists them." },
+                    "to": { "type": "string", "description": "One or more addresses, separated by commas." },
+                    "subject": { "type": "string" },
+                    "body": { "type": "string", "description": "Plain text, signed off as the user." },
+                    "inReplyTo": { "type": "string", "description": "The Message-ID being answered, to keep the thread." }
+                },
+                "required": ["to", "subject", "body"]
+            }),
+        },
+        Definition {
+            name: "waiting_replies",
+            description: "Emails the user sent from peeps in the last 30 days that have had no reply, oldest first. Useful for follow-ups.",
+            input_schema: json!({ "type": "object", "properties": {} }),
+        },
     ]
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EmailArgs {
+    from: Option<String>,
+    to: String,
+    subject: String,
+    body: String,
+    in_reply_to: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -266,6 +304,20 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
                 decision: decision.decision,
             }
         }
+        "draft_email" => {
+            let email: EmailArgs = serde_json::from_value(args).map_err(bad)?;
+            if email.to.trim().is_empty() {
+                return Err("an email needs someone to go to".into());
+            }
+            Call::DraftEmail {
+                from: email.from,
+                to: email.to,
+                subject: email.subject,
+                body: email.body,
+                in_reply_to: email.in_reply_to,
+            }
+        }
+        "waiting_replies" => Call::WaitingReplies,
         other => return Err(format!("peeps has no tool called {other}")),
     })
 }
@@ -301,6 +353,11 @@ mod tests {
                 "log_decision",
                 json!({ "product": "funderly", "decision": "Annual pricing" }),
             ),
+            (
+                "draft_email",
+                json!({ "to": "sara@example.com", "subject": "Welcome", "body": "Hi" }),
+            ),
+            ("waiting_replies", json!({})),
         ];
         let names: Vec<_> = definitions().iter().map(|d| d.name).collect();
         assert_eq!(names.len(), examples.len());

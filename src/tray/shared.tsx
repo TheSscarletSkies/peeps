@@ -43,7 +43,8 @@ export function residentsOf(
   celebrating: Set<string>,
   arriving: Set<string>,
 ): Resident[] {
-  const { pets, helper } = snapshot;
+  const { pets, helper, mail } = snapshot;
+  const emails = mail.outbox.length;
   return [
     ...pets.map((resident) => ({
       id: resident.id,
@@ -67,8 +68,9 @@ export function residentsOf(
       id: HELPER,
       name: helper.name,
       mood: helper.mood,
-      // The helper only interrupts for a permission or an event about to start, not its own to-dos.
-      urgent: helper.mood === "needsYou",
+      // The helper interrupts for a permission, an event about to start or an email to approve,
+      // never for its own to-dos.
+      urgent: helper.mood === "needsYou" || emails > 0,
       pet: (size: number) => (
         <LivePet
           dropId={HELPER}
@@ -122,6 +124,7 @@ export function CardBody({
           helper={snapshot.helper}
           pets={snapshot.pets}
           tips={snapshot.tips}
+          mail={snapshot.mail}
           onTyping={noop}
         />
       )}
