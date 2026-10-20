@@ -67,7 +67,8 @@ export function residentsOf(
       id: HELPER,
       name: helper.name,
       mood: helper.mood,
-      urgent: URGENT.includes(helper.mood),
+      // The helper only interrupts for a permission or an event about to start, not its own to-dos.
+      urgent: helper.mood === "needsYou",
       pet: (size: number) => (
         <LivePet
           dropId={HELPER}

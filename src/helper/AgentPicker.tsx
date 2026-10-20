@@ -16,36 +16,18 @@ export const EFFORTS = [
   { id: "high", name: "High" },
 ];
 
-const ASKED = "peeps.agentAsked";
-
-export function wasAsked(): boolean {
-  try {
-    return localStorage.getItem(ASKED) === "yes";
-  } catch {
-    return false;
-  }
-}
-
-function remember() {
-  try {
-    localStorage.setItem(ASKED, "yes");
-  } catch {
-    // Without storage the helper simply asks again next time.
-  }
-}
-
 /** "Sonnet · Medium", or what the agent does on its own when nothing is picked. */
 export function agentLabel(helper: Helper): string {
   const model =
     MODELS.find((option) => option.id === helper.model)?.name ?? helper.model;
   const effort = EFFORTS.find((option) => option.id === helper.effort)?.name;
-  if (!model && !effort) return "Your Claude defaults";
+  if (!model && !effort) return "Claude defaults";
   return [model ?? "Default model", effort && `${effort} effort`]
     .filter(Boolean)
     .join(" · ");
 }
 
-/** Lets the user choose how the helper's agent thinks. Asked once, changeable any time. */
+/** Lets the user choose how the helper's agent thinks, from the chip above the message box. */
 export function AgentPicker({
   helper,
   onDone,
@@ -60,7 +42,6 @@ export function AgentPicker({
   const save = async (picked: string | null, level: string | null) => {
     try {
       await setHelperAgent(picked, level);
-      remember();
       onDone();
     } catch (reason) {
       setError(String(reason));
@@ -82,7 +63,9 @@ export function AgentPicker({
         />
         <div>
           <p className="agent-picker__title">Which Claude should I use?</p>
-          <p className="agent-picker__sub">You can change this any time.</p>
+          <p className="agent-picker__sub">
+            Until you pick, I use your own Claude settings.
+          </p>
         </div>
       </header>
 

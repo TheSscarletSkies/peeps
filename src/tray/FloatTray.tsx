@@ -180,39 +180,40 @@ export function FloatTray({
             ["--pet" as string]: pet?.color ?? snapshot.helper.color,
           }}
         >
-          {snapshot.pets.length === 0 ? (
+          <div className="float__pets" role="tablist" aria-label="Your pets">
             <button
-              className="button button--primary"
-              onClick={() => void openHome()}
+              role="tab"
+              aria-selected={openId === HELPER}
+              className="float__chip"
+              onClick={() => setOpenId(HELPER)}
             >
-              Set up peeps
+              {helper?.pet(30)}
+              <span>{snapshot.helper.name}</span>
             </button>
-          ) : (
-            <div className="float__pets" role="tablist" aria-label="Your pets">
-              {products.map((resident) => (
-                <button
-                  key={resident.id}
-                  role="tab"
-                  aria-selected={openId === resident.id}
-                  className="float__chip"
-                  data-drop={resident.id}
-                  data-urgent={resident.urgent || undefined}
-                  onClick={() => setOpenId(resident.id)}
-                  title={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}
-                >
-                  {resident.pet(30)}
-                  <span>{resident.name}</span>
-                </button>
-              ))}
+            {products.map((resident) => (
               <button
+                key={resident.id}
                 role="tab"
-                aria-selected={openId === HELPER}
+                aria-selected={openId === resident.id}
                 className="float__chip"
-                onClick={() => setOpenId(HELPER)}
+                data-drop={resident.id}
+                data-urgent={resident.urgent || undefined}
+                onClick={() => setOpenId(resident.id)}
+                title={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}
               >
-                {helper?.pet(30)}
-                <span>{snapshot.helper.name}</span>
+                {resident.pet(30)}
+                <span>{resident.name}</span>
               </button>
+            ))}
+            {snapshot.pets.length === 0 ? (
+              <button
+                className="float__chip float__chip--all"
+                onClick={() => void openHome()}
+                title="Each Claude Code project you add becomes a pet"
+              >
+                + Add a product
+              </button>
+            ) : (
               <button
                 role="tab"
                 aria-selected={openId === ALL}
@@ -222,8 +223,8 @@ export function FloatTray({
               >
                 ⋯
               </button>
-            </div>
-          )}
+            )}
+          </div>
           <CardBody
             openId={openId}
             snapshot={snapshot}

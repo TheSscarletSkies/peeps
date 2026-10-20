@@ -47,16 +47,18 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
   };
 
   return (
-    <section className="setup" aria-label="Set up peeps">
-      <header className="setup__head">
-        <span className="panel__name">Set up peeps</span>
-        <button className="button" onClick={onDone}>
-          Done
-        </button>
-      </header>
+    <section className="setup" aria-label="Products">
+      <p className="setup__intro">
+        Products are optional. Add the projects you build with Claude Code and
+        each gets a pet that shows when its agent is working, stuck or waiting
+        on you. Your helper works either way.
+      </p>
 
       <div className="setup__step">
-        <span className="setup__title">Connect Claude Code</span>
+        <span className="setup__title">1. Let peeps hear Claude Code</span>
+        <span className="setup__hint">
+          So pets know when an agent starts, finishes or asks for permission.
+        </span>
         {hooks?.installed ? (
           <div className="setup__row">
             <span className="setup__ok">Connected</span>
@@ -85,12 +87,11 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
       </div>
 
       <div className="setup__step">
-        <span className="setup__title">Your products</span>
-        {snapshot.pets.length === 0 && (
-          <span className="setup__hint">
-            Each product gets a pet. Agents working in its folder belong to it.
-          </span>
-        )}
+        <span className="setup__title">2. Add a product</span>
+        <span className="setup__hint">
+          Pick the folder you open in Claude Code. Agents working there belong
+          to its pet.
+        </span>
         <ul className="setup__products">
           {snapshot.pets.map((pet) => (
             <li key={pet.id}>
@@ -119,6 +120,13 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
       </div>
 
       {error && <p className="tray__error">{error}</p>}
+      {snapshot.pets.length > 0 && (
+        <div className="todo-form__actions">
+          <button className="button" onClick={onDone}>
+            Done
+          </button>
+        </div>
+      )}
     </section>
   );
 }

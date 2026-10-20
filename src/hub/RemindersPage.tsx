@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { REMINDERS } from "../helper/todoForm";
 import { Upcoming } from "../helper/Upcoming";
 import { addCalendar, removeCalendar, setReminders } from "../lib/bridge";
+import { Info } from "../lib/Info";
 import type { ReminderRule, Snapshot } from "../lib/types";
 
 const LEADS = REMINDERS.filter((option) => option.minutes !== null);
@@ -189,6 +190,9 @@ export function RemindersPage({ snapshot }: { snapshot: Snapshot }) {
             onChange={(event) => setLink(event.target.value)}
           />
           <div className="todo-form__actions">
+            <Info label="Where the link is kept">
+              The link is kept in your keychain, never in the config file.
+            </Info>
             <button
               className="button button--primary"
               type="submit"
@@ -198,9 +202,6 @@ export function RemindersPage({ snapshot }: { snapshot: Snapshot }) {
             </button>
           </div>
         </form>
-        <p className="setup__hint">
-          The link is kept in your keychain, never in the config file.
-        </p>
         <div className="providers">
           {PROVIDERS.map((provider) => (
             <details key={provider.name}>

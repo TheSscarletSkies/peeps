@@ -588,6 +588,7 @@ body,
 
 .todo-form__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 6px;
 }
@@ -741,13 +742,65 @@ body,
 
 :is(.notch, .float, .hub) input[type="date"] {
   flex: 0 0 auto;
+}
+
+/* Native pickers, their icons and dropdown lists follow the theme. */
+:is(.notch, .float, .hub) :is(input, select, textarea) {
   color-scheme: dark;
 }
 
-:is(.notch, .float, .hub)
-  input[type="date"]::-webkit-calendar-picker-indicator {
+.hub[data-theme="light"] :is(input, select, textarea) {
+  color-scheme: light;
+}
+
+:is(.notch, .float, .hub) ::-webkit-calendar-picker-indicator {
   opacity: 0.55;
   cursor: pointer;
+}
+
+/* A small ⓘ that opens a note, for details most people never need. */
+.info {
+  position: relative;
+  display: inline-flex;
+}
+
+.info summary {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--muted);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  font-style: italic;
+  list-style: none;
+  cursor: pointer;
+}
+
+.info summary::-webkit-details-marker {
+  display: none;
+}
+
+.info[open] summary {
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px var(--text);
+}
+
+.info p {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 28px;
+  width: 240px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-box);
+  background: var(--text);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 :is(.notch, .float, .hub) ::placeholder {
@@ -1124,14 +1177,15 @@ body,
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 60%,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.35) 45%,
-    transparent 70%
-  );
+  background: transparent;
   cursor: grab;
   touch-action: none;
+}
+
+/* Desktops are busy and often dark: a richer colour and a soft shadow keep the pastel pet readable. */
+.float__pet .dumpling {
+  filter: saturate(1.4) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
 }
 
 .float[data-side="right"] .float__pet {
@@ -1724,4 +1778,11 @@ body,
 .chat__agent {
   align-self: flex-start;
   font-size: 12px;
+}
+
+.setup__intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
 }

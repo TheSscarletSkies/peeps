@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MOOD_LABEL } from "../hub/ProductCard";
-import { openHome, setTraySize } from "../lib/bridge";
+import { setTraySize } from "../lib/bridge";
 import type { Notch, Snapshot } from "../lib/types";
 import { shown, toggleHidden, usePrefs } from "../life/prefs";
 import {
@@ -71,46 +71,39 @@ export function NotchTray({
       style={{ ["--strip" as string]: `${strip.height}px` }}
     >
       <div className="notch__strip" style={{ width: strip.width }}>
-        {snapshot.pets.length === 0 ? (
-          <button className="notch__setup" onClick={() => void openHome()}>
-            {residents[residents.length - 1]?.pet(22)}
-            Set up peeps
-          </button>
-        ) : (
-          <>
-            {visible.map((resident, index) => (
-              <Roamer
-                key={resident.id}
-                dropId={resident.id}
-                lanes={strip.lanes}
-                lane={laneFor(index, strip.lanes.length)}
-                start={spread(index, visible.length, strip.lanes.length)}
-                width={strip.width}
-                size={size}
-                still={resident.urgent}
-                label={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}
-                selected={openId === resident.id}
-                onSelect={() => toggle(resident.id)}
-              >
-                {resident.pet(size)}
-              </Roamer>
-            ))}
-            <button
-              className="notch__all"
-              data-nudge={waiting > 0 || undefined}
-              style={{ left: strip.iconX, width: ICON, height: ICON }}
-              aria-label={
-                waiting > 0
-                  ? `All pets, ${waiting} need${waiting === 1 ? "s" : ""} you`
-                  : "All pets"
-              }
-              aria-pressed={openId === ALL}
-              onClick={() => toggle(ALL)}
+        <>
+          {visible.map((resident, index) => (
+            <Roamer
+              key={resident.id}
+              dropId={resident.id}
+              lanes={strip.lanes}
+              lane={laneFor(index, strip.lanes.length)}
+              start={spread(index, visible.length, strip.lanes.length)}
+              width={strip.width}
+              size={size}
+              still={resident.urgent}
+              label={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}
+              selected={openId === resident.id}
+              onSelect={() => toggle(resident.id)}
             >
-              <AllIcon />
-            </button>
-          </>
-        )}
+              {resident.pet(size)}
+            </Roamer>
+          ))}
+          <button
+            className="notch__all"
+            data-nudge={waiting > 0 || undefined}
+            style={{ left: strip.iconX, width: ICON, height: ICON }}
+            aria-label={
+              waiting > 0
+                ? `All pets, ${waiting} need${waiting === 1 ? "s" : ""} you`
+                : "All pets"
+            }
+            aria-pressed={openId === ALL}
+            onClick={() => toggle(ALL)}
+          >
+            <AllIcon />
+          </button>
+        </>
       </div>
 
       {openId !== null && (

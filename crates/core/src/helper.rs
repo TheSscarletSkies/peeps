@@ -130,17 +130,18 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
     } else if inputs.drafting {
         (Mood::Working, "Writing a draft…".to_owned())
     } else if overdue > 0 {
+        // Its own to-dos make the helper peckish, not alarmed; only asks and imminent events need you.
         (
-            Mood::NeedsYou,
+            Mood::Hungry,
             plural(overdue, "to-do overdue", "to-dos overdue"),
         )
     } else if today > 0 {
         (
-            Mood::Hungry,
+            Mood::Chill,
             plural(today, "to-do due today", "to-dos due today"),
         )
     } else if todos.is_empty() {
-        (Mood::Stalled, "Nothing on the list".to_owned())
+        (Mood::Chill, "All clear. Ask me anything".to_owned())
     } else {
         (
             Mood::Chill,
@@ -281,7 +282,7 @@ mod tests {
     fn moods_follow_the_list() {
         assert_eq!(
             mood(vec![], false),
-            (Mood::Stalled, "Nothing on the list".into())
+            (Mood::Chill, "All clear. Ask me anything".into())
         );
         assert_eq!(
             mood(vec![todo(Some("2026-10-25")), todo(None)], false),
@@ -289,14 +290,14 @@ mod tests {
         );
         assert_eq!(
             mood(vec![todo(Some("2026-10-19"))], false),
-            (Mood::Hungry, "1 to-do due today".into())
+            (Mood::Chill, "1 to-do due today".into())
         );
         assert_eq!(
             mood(
                 vec![todo(Some("2026-10-01")), todo(Some("2026-10-19"))],
                 false
             ),
-            (Mood::NeedsYou, "1 to-do overdue".into())
+            (Mood::Hungry, "1 to-do overdue".into())
         );
         assert_eq!(mood(vec![todo(Some("2026-10-01"))], true).0, Mood::Working);
     }

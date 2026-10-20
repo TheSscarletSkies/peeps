@@ -64,9 +64,7 @@ const URGENT = new Set([
 const noop = () => undefined;
 
 export function Hub({ snapshot }: { snapshot: Snapshot }) {
-  const [page, setPage] = useState<Page>(
-    snapshot.pets.length === 0 ? "products" : "home",
-  );
+  const [page, setPage] = useState<Page>("home");
   const [theme, setTheme] = useState<Theme>(savedTheme);
   const [sound, setSound] = useState(soundEnabled);
   const { helper } = snapshot;
@@ -198,7 +196,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             </Section>
           )}
           {page === "products" && (
-            <Section title="Products" lead="Each product gets a pet.">
+            <Section title="Products" lead="A pet for every project you build.">
               <Setup
                 snapshot={snapshot}
                 onDone={() => setPage("home")}
