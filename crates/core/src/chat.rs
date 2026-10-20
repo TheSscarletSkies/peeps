@@ -85,6 +85,28 @@ pub fn with_agent(base: &[String], model: Option<&str>, effort: Option<&str>) ->
     command
 }
 
+/// Gives Claude Code the peeps tools through `peeps-hook mcp`. They only touch peeps' own data,
+/// so they are allowed up front instead of asking each time.
+pub fn with_tools(base: &[String], hook: &str) -> Vec<String> {
+    let mut command = base.to_vec();
+    if !is_claude(base) {
+        return command;
+    }
+    let config = serde_json::json!({
+        "mcpServers": { "peeps": { "command": hook, "args": ["mcp"] } }
+    });
+    command.splice(
+        1..1,
+        [
+            "--mcp-config".to_owned(),
+            config.to_string(),
+            "--allowedTools".to_owned(),
+            "mcp__peeps".to_owned(),
+        ],
+    );
+    command
+}
+
 /// The command for one turn: Claude Code resumes the conversation and gets the helper's context.
 pub fn command(base: &[String], session: Option<&str>, context: &str) -> Vec<String> {
     let mut command = base.to_vec();
@@ -123,6 +145,8 @@ pub fn context(
     format!(
         "You are {name}, the user's helper in the peeps app. Be brief and warm. Today is {today}.\n\
          Their products: {}.\n\nOpen to-dos:\n{}\n\nComing up:\n{}\n\n\
+         Use the peeps tools to act: add to-dos and reminders, schedule drafts, leave notes for \
+         products, and read or update product briefs. Log decisions the user makes.\n\
          Before sending anything to anyone, show the user exactly what will be sent and ask first.",
         if products.is_empty() {
             "none".to_owned()
@@ -274,6 +298,18 @@ mod tests {
         assert_eq!(with_agent(&drafts, None, None), drafts);
         let other = args(&["codex", "exec"]);
         assert_eq!(with_agent(&other, Some("opus"), None), other);
+    }
+
+    #[test]
+    fn claude_gets_the_peeps_tools() {
+        let chat = args(&["claude", "-p", "--output-format", "json"]);
+        let with = with_tools(&chat, "/Applications/peeps.app/Contents/MacOS/peeps-hook");
+        assert_eq!(with[1], "--mcp-config");
+        let config: serde_json::Value = serde_json::from_str(&with[2]).unwrap();
+        assert_eq!(config["mcpServers"]["peeps"]["args"][0], "mcp");
+        assert_eq!(&with[3..5], &args(&["--allowedTools", "mcp__peeps"])[..]);
+        assert_eq!(&with[5..], &chat[1..]);
+        assert_eq!(with_tools(&args(&["codex"]), "/x"), args(&["codex"]));
     }
 
     #[test]

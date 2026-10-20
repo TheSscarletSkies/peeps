@@ -299,7 +299,7 @@ pub fn notch() -> window::Notch {
 }
 
 /// `peeps-hook` ships next to the app binary.
-fn hook_command() -> Result<String> {
+pub(crate) fn hook_command() -> Result<String> {
     let name = if cfg!(windows) {
         "peeps-hook.exe"
     } else {

@@ -135,6 +135,11 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
         config.helper.model.as_deref(),
         config.helper.effort.as_deref(),
     );
+    // Without the hook binary the helper can still talk, just not act.
+    let base = match crate::commands::hook_command() {
+        Ok(hook) => chat::with_tools(&base, &hook),
+        Err(_) => base,
+    };
     let command = chat::command(&base, session.as_deref(), &context(app));
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();

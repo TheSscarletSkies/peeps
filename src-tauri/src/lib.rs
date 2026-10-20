@@ -5,6 +5,7 @@ mod remind;
 mod secrets;
 mod state;
 mod sync;
+mod tools;
 mod watch;
 mod window;
 

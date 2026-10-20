@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use interprocess::local_socket::tokio::{prelude::*, Stream};
 use interprocess::local_socket::ListenerOptions;
+use peeps_core::mcp::{ToolRequest, ToolResponse};
 use peeps_core::protocol::HookInput;
 use peeps_core::{ipc, paths};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -33,7 +34,25 @@ async fn handle(connection: Stream, app: &App) -> io::Result<()> {
     let Some(line) = lines.next_line().await? else {
         return Ok(());
     };
-    let input: HookInput = serde_json::from_str(&line).map_err(io::Error::other)?;
+    let value: serde_json::Value = serde_json::from_str(&line).map_err(io::Error::other)?;
+    if value.get("peeps_tool").is_some() {
+        let request: ToolRequest = serde_json::from_value(value).map_err(io::Error::other)?;
+        let response = match crate::tools::call(app, &request.peeps_tool, request.args).await {
+            Ok(text) => ToolResponse {
+                text: Some(text),
+                error: None,
+            },
+            Err(error) => ToolResponse {
+                text: None,
+                error: Some(error),
+            },
+        };
+        let mut text = serde_json::to_string(&response)?;
+        text.push('\n');
+        write.write_all(text.as_bytes()).await?;
+        return write.flush().await;
+    }
+    let input: HookInput = serde_json::from_value(value).map_err(io::Error::other)?;
 
     let reply = tokio::select! {
         reply = app.on_hook(input) => reply,
