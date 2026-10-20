@@ -212,6 +212,14 @@ export interface Snapshot {
   calendars: CalendarStatus[];
   reminders: Reminders;
   sync: SyncStatus;
+  productChats: ProductChat[];
+}
+
+/** A product pet's conversation with the user. */
+export interface ProductChat {
+  productId: string;
+  messages: ChatMessage[];
+  chatting: boolean;
 }
 
 export interface SyncStatus {

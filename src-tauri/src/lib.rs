@@ -34,6 +34,8 @@ pub fn run() {
             commands::send_chat,
             commands::new_chat,
             commands::set_helper_agent,
+            commands::read_brief,
+            commands::write_brief,
             commands::set_sync_folder,
             commands::add_product_path,
             commands::add_schedule,

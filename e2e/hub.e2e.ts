@@ -64,7 +64,7 @@ test("UC15: the window can switch to a light theme", async ({ page }) => {
 });
 
 test("UC9: the Ask page talks to the helper", async ({ page }) => {
-  await page.getByRole("button", { name: "Ask" }).click();
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
   await page.getByLabel("Message Helper").fill("Plan my week");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("In the app I'd ask your agent")).toBeVisible();

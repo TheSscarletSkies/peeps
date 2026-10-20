@@ -107,7 +107,15 @@ export function CardBody({
               {MOOD_LABEL[pet.mood]}
             </span>
           </div>
-          <PetPanel key={pet.id} pet={pet} onTyping={noop} />
+          <PetPanel
+            key={pet.id}
+            pet={pet}
+            chat={snapshot.productChats.find(
+              (chat) => chat.productId === pet.id,
+            )}
+            helper={snapshot.helper}
+            onTyping={noop}
+          />
         </>
       ) : (
         <HelperPanel

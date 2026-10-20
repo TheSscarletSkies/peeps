@@ -1797,3 +1797,20 @@ body,
   font-size: 13px;
   font-weight: 700;
 }
+
+/* A product's brief */
+
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:is(.notch, .float, .hub) .brief__text {
+  min-height: 220px;
+  max-height: 46vh;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  resize: vertical;
+}

@@ -11,7 +11,7 @@ use peeps_core::protocol::Decision;
 use peeps_core::schedule::{NewSchedule, Schedule};
 use peeps_core::sync::{self, Joined};
 use peeps_core::todos::{self, Todo, TodoInput};
-use peeps_core::{hooks_install, paths};
+use peeps_core::{briefs, hooks_install, paths};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{Manager, State, WebviewWindow};
@@ -137,8 +137,13 @@ pub async fn write_draft(app: State<'_, Arc<App>>, kind: String, topic: String) 
 }
 
 #[tauri::command]
-pub async fn send_chat(app: State<'_, Arc<App>>, text: String) -> Result<Message> {
-    assistant::send(app.inner().clone(), text).await
+pub async fn send_chat(
+    app: State<'_, Arc<App>>,
+    text: String,
+    scope: Option<String>,
+) -> Result<Message> {
+    let scope = scope.unwrap_or_else(|| peeps_core::chat::HELPER.to_owned());
+    assistant::send(app.inner().clone(), scope, text).await
 }
 
 /// Starts syncing through `folder`, or stops when it is `None`, keeping a local copy of the settings.
@@ -183,6 +188,27 @@ pub fn add_product_path(app: State<'_, Arc<App>>, product_id: String, path: Stri
     Ok(())
 }
 
+#[tauri::command]
+pub fn read_brief(app: State<'_, Arc<App>>, product_id: String) -> Result<String> {
+    let config = app.config();
+    let product = config
+        .product(&product_id)
+        .ok_or_else(|| format!("unknown product `{product_id}`"))?;
+    Ok(briefs::read(
+        &paths::config_file(),
+        &product.id,
+        &product.name,
+    ))
+}
+
+#[tauri::command]
+pub fn write_brief(app: State<'_, Arc<App>>, product_id: String, text: String) -> Result<()> {
+    if app.config().product(&product_id).is_none() {
+        return Err(format!("unknown product `{product_id}`"));
+    }
+    briefs::write(&paths::config_file(), &product_id, &text).map_err(message)
+}
+
 /// Saves which model and effort the helper's agent uses.
 #[tauri::command]
 pub fn set_helper_agent(
@@ -201,8 +227,10 @@ pub fn set_helper_agent(
 
 /// Starts a fresh conversation with the helper.
 #[tauri::command]
-pub fn new_chat(app: State<'_, Arc<App>>) -> Result<()> {
-    app.chat().clear().map_err(message)?;
+pub fn new_chat(app: State<'_, Arc<App>>, scope: Option<String>) -> Result<()> {
+    app.chat()
+        .clear(scope.as_deref().unwrap_or(peeps_core::chat::HELPER))
+        .map_err(message)?;
     app.publish();
     Ok(())
 }

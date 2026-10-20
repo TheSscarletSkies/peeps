@@ -6,7 +6,7 @@ use std::time::Duration;
 use chrono::{Local, TimeDelta, Utc};
 use peeps_core::chat::{self, Message, Speaker};
 use peeps_core::drafts::{self, Draft};
-use peeps_core::{paths, quick};
+use peeps_core::{briefs, paths, quick};
 
 use crate::state::App;
 
@@ -61,19 +61,23 @@ pub async fn draft(app: Arc<App>, kind: String, topic: String) -> Result<Draft> 
     saved
 }
 
-/// Sends one message to the helper and waits for its answer, keeping the conversation going.
-pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
+/// Sends one message to the helper, or to a product's pet when `scope` is a product id, and waits
+/// for the answer, keeping that conversation going.
+pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message> {
     let text = text.trim().to_owned();
     if text.is_empty() {
         return Err("say something first".into());
     }
-    if let Some(reply) = quick_reminder(&app, &text)? {
+    if scope != chat::HELPER && app.config().product(&scope).is_none() {
+        return Err(format!("unknown product `{scope}`"));
+    }
+    if let Some(reply) = quick_reminder(&app, &scope, &text)? {
         return Ok(reply);
     }
-    if !app.start_chatting() {
-        return Err("the helper is still answering".into());
+    if !app.start_chatting(&scope) {
+        return Err("still answering another message; one moment".into());
     }
-    let outcome = turn(&app, &text).await;
+    let outcome = turn(&app, &scope, &text).await;
     app.finish_chatting();
     let reply = match outcome {
         Ok(reply) => reply,
@@ -82,20 +86,20 @@ pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
     };
     let message = app
         .chat()
-        .add(Speaker::Helper, &reply, Utc::now())
+        .add(&scope, Speaker::Helper, &reply, Utc::now())
         .map_err(|error| error.to_string());
     app.publish();
     message
 }
 
 /// "Remind me to …" is understood here and added straight away, without waking the agent.
-fn quick_reminder(app: &App, text: &str) -> Result<Option<Message>> {
+fn quick_reminder(app: &App, scope: &str, text: &str) -> Result<Option<Message>> {
     let Some(quick) = quick::parse(text, Local::now().fixed_offset()) else {
         return Ok(None);
     };
     let now = Utc::now();
     app.chat()
-        .add(Speaker::You, text, now)
+        .add(scope, Speaker::You, text, now)
         .map_err(|error| error.to_string())?;
     app.todos()
         .add(&quick.input, now)
@@ -108,7 +112,7 @@ fn quick_reminder(app: &App, text: &str) -> Result<Option<Message>> {
     };
     let message = app
         .chat()
-        .add(Speaker::Helper, &reply, Utc::now())
+        .add(scope, Speaker::Helper, &reply, Utc::now())
         .map_err(|error| error.to_string())?;
     app.publish();
     Ok(Some(message))
@@ -122,14 +126,17 @@ fn lowercase_first(text: &str) -> String {
     }
 }
 
-async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
+async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
     app.chat()
-        .add(Speaker::You, text, Utc::now())
+        .add(scope, Speaker::You, text, Utc::now())
         .map_err(|error| error.to_string())?;
     app.publish();
 
     let config = app.config();
-    let session = app.chat().session().map_err(|error| error.to_string())?;
+    let session = app
+        .chat()
+        .session(scope)
+        .map_err(|error| error.to_string())?;
     let base = chat::with_agent(
         &config.helper.chat_command,
         config.helper.model.as_deref(),
@@ -140,7 +147,20 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
         Ok(hook) => chat::with_tools(&base, &hook),
         Err(_) => base,
     };
-    let command = chat::command(&base, session.as_deref(), &context(app));
+    let (context, dirs) = match config.product(scope) {
+        Some(product) => (
+            product_context(app, &product.id, &product.name),
+            product
+                .paths
+                .iter()
+                .map(|path| paths::expand_home(path))
+                .filter(|path| path.is_dir())
+                .map(|path| path.display().to_string())
+                .collect(),
+        ),
+        None => (context(app), Vec::new()),
+    };
+    let command = chat::with_dirs(&chat::command(&base, session.as_deref(), &context), &dirs);
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
@@ -156,10 +176,38 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     let reply = chat::parse_reply(&stdout)?;
     if let Some(session) = &reply.session {
         app.chat()
-            .set_session(session)
+            .set_session(scope, session)
             .map_err(|error| error.to_string())?;
     }
     Ok(reply.text)
+}
+
+/// A product's brief and live status, so its pet can advise on it.
+fn product_context(app: &App, id: &str, name: &str) -> String {
+    let snapshot = app.snapshot();
+    let status = snapshot
+        .snapshot
+        .pets
+        .iter()
+        .find(|pet| pet.id == id)
+        .map(|pet| {
+            let mut lines = vec![format!("{:?}: {}", pet.mood, pet.headline)];
+            lines.extend(
+                pet.needs
+                    .iter()
+                    .map(|need| format!("Needs: {}", need.message)),
+            );
+            lines.join("\n")
+        })
+        .unwrap_or_else(|| "No news.".to_owned());
+    let brief = briefs::read(&paths::config_file(), id, name);
+    chat::product_context(
+        name,
+        id,
+        &Local::now().format("%A %-d %B %Y").to_string(),
+        &status,
+        &brief,
+    )
 }
 
 /// Today's to-dos, events and products, so the agent can answer "what's on today?".

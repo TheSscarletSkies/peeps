@@ -4,21 +4,37 @@ import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { announceFed } from "../life/events";
 import { addNote, decide } from "../lib/bridge";
-import type { Delivery, Pet } from "../lib/types";
+import type { Delivery, Helper, Pet, ProductChat } from "../lib/types";
+import { Conversation } from "../helper/Chat";
+import { BriefEditor } from "./BriefEditor";
 
 interface Props {
   pet: Pet;
+  /** The pet's conversation, when it has one. */
+  chat?: ProductChat;
+  /** Holds the model and effort the agent uses. */
+  helper: Helper;
   onTyping: (typing: boolean) => void;
 }
 
-export function PetPanel({ pet, onTyping }: Props) {
+type Tab = "note" | "ask" | "brief";
+
+const STARTERS = [
+  "What should I focus on this week?",
+  "Where are we losing people?",
+  "Plan the next three posts",
+];
+
+export function PetPanel({ pet, chat, helper, onTyping }: Props) {
+  const [tab, setTab] = useState<Tab>("note");
   const [text, setText] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nextSession");
   const [status, setStatus] = useState<string | null>(null);
   const [files, setFiles] = useState<string[]>([]);
-  useGivenFiles(pet.id, (paths) =>
-    setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
-  );
+  useGivenFiles(pet.id, (paths) => {
+    setTab("note");
+    setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]);
+  });
 
   const permission = pet.permission;
   const ready = text.trim() !== "" || files.length > 0;
@@ -77,49 +93,92 @@ export function PetPanel({ pet, onTyping }: Props) {
         </ul>
       )}
 
-      <form
-        className="feed"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void feed();
-        }}
-      >
-        <label className="visually-hidden" htmlFor={`note-${pet.id}`}>
-          Note for {pet.name}
-        </label>
-        <input
-          id={`note-${pet.id}`}
-          value={text}
-          placeholder={
-            files.length > 0
-              ? "What should it do with these?"
-              : `Leave ${pet.name} a note`
-          }
-          onChange={(event) => setText(event.target.value)}
-          onFocus={() => onTyping(true)}
-          onBlur={() => onTyping(false)}
+      <div className="tabs" role="tablist" aria-label={pet.name}>
+        {(
+          [
+            ["note", "Note"],
+            ["ask", "Ask"],
+            ["brief", "Brief"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            className={tab === id ? "chip chip--on" : "chip"}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "note" && (
+        <>
+          <form
+            className="feed"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void feed();
+            }}
+          >
+            <label className="visually-hidden" htmlFor={`note-${pet.id}`}>
+              Note for {pet.name}
+            </label>
+            <input
+              id={`note-${pet.id}`}
+              value={text}
+              placeholder={
+                files.length > 0
+                  ? "What should it do with these?"
+                  : `Leave ${pet.name} a note`
+              }
+              onChange={(event) => setText(event.target.value)}
+              onFocus={() => onTyping(true)}
+              onBlur={() => onTyping(false)}
+            />
+            <select
+              aria-label="When to deliver"
+              value={delivery}
+              onChange={(event) => setDelivery(event.target.value as Delivery)}
+            >
+              <option value="nextSession">Next session</option>
+              <option value="nextStep">Next step</option>
+            </select>
+            <button
+              className="button button--primary"
+              type="submit"
+              disabled={!ready}
+            >
+              Feed
+            </button>
+          </form>
+          <Attachments
+            paths={files}
+            onRemove={(path) =>
+              setFiles((now) => now.filter((p) => p !== path))
+            }
+          />
+          {status && <p className="panel__status">{status}</p>}
+        </>
+      )}
+      {tab === "ask" && (
+        <Conversation
+          scope={pet.id}
+          name={pet.name}
+          kind={pet.kind}
+          color={pet.color}
+          seed={pet.id}
+          messages={chat?.messages ?? []}
+          chatting={chat?.chatting ?? false}
+          permission={null}
+          starters={STARTERS}
+          intro={`Think it through with ${pet.name}. It knows the brief and how things are going, can read the project, and turns what you agree on into to-dos.`}
+          agent={helper}
+          onTyping={onTyping}
         />
-        <select
-          aria-label="When to deliver"
-          value={delivery}
-          onChange={(event) => setDelivery(event.target.value as Delivery)}
-        >
-          <option value="nextSession">Next session</option>
-          <option value="nextStep">Next step</option>
-        </select>
-        <button
-          className="button button--primary"
-          type="submit"
-          disabled={!ready}
-        >
-          Feed
-        </button>
-      </form>
-      <Attachments
-        paths={files}
-        onRemove={(path) => setFiles((now) => now.filter((p) => p !== path))}
-      />
-      {status && <p className="panel__status">{status}</p>}
+      )}
+      {tab === "brief" && <BriefEditor pet={pet} onTyping={onTyping} />}
     </section>
   );
 }

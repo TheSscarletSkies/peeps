@@ -158,6 +158,32 @@ pub fn context(
     )
 }
 
+/// What a product's pet knows when the user talks to it: its brief and how it is doing right now.
+pub fn product_context(name: &str, id: &str, today: &str, status: &str, brief: &str) -> String {
+    format!(
+        "You are the peeps pet for {name} (product id `{id}`), acting as the user's product and \
+         marketing strategist for it. Today is {today}.\n\n\
+         How it is doing right now:\n{status}\n\n\
+         Its brief, which the user keeps up to date:\n<brief>\n{brief}\n</brief>\n\n\
+         Be specific and practical. Tie advice to the brief's goal, audience and numbers; when a \
+         number you need is missing, ask for it rather than guessing. When the user agrees on next \
+         steps, add them as to-dos tagged #{id} with add_todo. When they make a decision, record it \
+         with log_decision. Hand coding work to the product's own agent with leave_note. Update \
+         the brief with write_brief only when they ask.\n\
+         Before sending anything to anyone, show the user exactly what will be sent and ask first."
+    )
+}
+
+/// Lets Claude Code read a product's folder from the strategy chat.
+pub fn with_dirs(base: &[String], dirs: &[String]) -> Vec<String> {
+    let mut command = base.to_vec();
+    if is_claude(base) && !dirs.is_empty() {
+        command.push("--add-dir".to_owned());
+        command.extend(dirs.iter().cloned());
+    }
+    command
+}
+
 const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS chat (
         id INTEGER PRIMARY KEY,
@@ -169,7 +195,14 @@ const SCHEMA: &str = "
         id INTEGER PRIMARY KEY CHECK (id = 1),
         session TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+        scope TEXT PRIMARY KEY,
+        session TEXT NOT NULL
+    );
 ";
+
+/// The helper's own conversation; products talk under their ids.
+pub const HELPER: &str = "helper";
 
 pub struct ChatStore {
     db: Connection,
@@ -186,17 +219,33 @@ impl ChatStore {
 
     fn init(db: Connection) -> rusqlite::Result<Self> {
         db.execute_batch(SCHEMA)?;
+        let has_scope: bool = db
+            .prepare("SELECT 1 FROM pragma_table_info('chat') WHERE name = 'scope'")?
+            .exists([])?;
+        if !has_scope {
+            db.execute_batch(
+                "ALTER TABLE chat ADD COLUMN scope TEXT NOT NULL DEFAULT 'helper';
+                 INSERT OR IGNORE INTO chat_sessions (scope, session)
+                     SELECT 'helper', session FROM chat_session WHERE id = 1;",
+            )?;
+        }
         Ok(Self { db })
     }
 
-    pub fn add(&self, from: Speaker, text: &str, at: DateTime<Utc>) -> rusqlite::Result<Message> {
+    pub fn add(
+        &self,
+        scope: &str,
+        from: Speaker,
+        text: &str,
+        at: DateTime<Utc>,
+    ) -> rusqlite::Result<Message> {
         let speaker = match from {
             Speaker::You => "you",
             Speaker::Helper => "helper",
         };
         self.db.execute(
-            "INSERT INTO chat (speaker, text, at) VALUES (?1, ?2, ?3)",
-            params![speaker, text, at],
+            "INSERT INTO chat (scope, speaker, text, at) VALUES (?1, ?2, ?3, ?4)",
+            params![scope, speaker, text, at],
         )?;
         Ok(Message {
             id: self.db.last_insert_rowid(),
@@ -206,36 +255,43 @@ impl ChatStore {
         })
     }
 
-    /// The last `limit` messages, oldest first.
-    pub fn recent(&self, limit: usize) -> rusqlite::Result<Vec<Message>> {
+    /// The last `limit` messages in one conversation, oldest first.
+    pub fn recent(&self, scope: &str, limit: usize) -> rusqlite::Result<Vec<Message>> {
         let mut query = self.db.prepare(
-            "SELECT id, speaker, text, at FROM (SELECT * FROM chat ORDER BY id DESC LIMIT ?1) ORDER BY id",
+            "SELECT id, speaker, text, at FROM
+                 (SELECT * FROM chat WHERE scope = ?1 ORDER BY id DESC LIMIT ?2)
+             ORDER BY id",
         )?;
-        let rows = query.query_map(params![limit as i64], from_row)?;
+        let rows = query.query_map(params![scope, limit as i64], from_row)?;
         rows.collect()
     }
 
-    pub fn session(&self) -> rusqlite::Result<Option<String>> {
+    pub fn session(&self, scope: &str) -> rusqlite::Result<Option<String>> {
         self.db
-            .query_row("SELECT session FROM chat_session WHERE id = 1", [], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT session FROM chat_sessions WHERE scope = ?1",
+                params![scope],
+                |row| row.get(0),
+            )
             .optional()
     }
 
-    pub fn set_session(&self, session: &str) -> rusqlite::Result<()> {
+    pub fn set_session(&self, scope: &str, session: &str) -> rusqlite::Result<()> {
         self.db.execute(
-            "INSERT INTO chat_session (id, session) VALUES (1, ?1)
-             ON CONFLICT(id) DO UPDATE SET session = excluded.session",
-            params![session],
+            "INSERT INTO chat_sessions (scope, session) VALUES (?1, ?2)
+             ON CONFLICT(scope) DO UPDATE SET session = excluded.session",
+            params![scope, session],
         )?;
         Ok(())
     }
 
-    /// Starts over: clears the messages and forgets the conversation.
-    pub fn clear(&self) -> rusqlite::Result<()> {
+    /// Starts one conversation over: clears its messages and forgets it on the agent's side.
+    pub fn clear(&self, scope: &str) -> rusqlite::Result<()> {
         self.db
-            .execute_batch("DELETE FROM chat; DELETE FROM chat_session;")
+            .execute("DELETE FROM chat WHERE scope = ?1", params![scope])?;
+        self.db
+            .execute("DELETE FROM chat_sessions WHERE scope = ?1", params![scope])?;
+        Ok(())
     }
 }
 
@@ -313,6 +369,45 @@ mod tests {
     }
 
     #[test]
+    fn older_conversations_move_to_the_helper() {
+        let db = Connection::open_in_memory().unwrap();
+        db.execute_batch(
+            "CREATE TABLE chat (id INTEGER PRIMARY KEY, speaker TEXT NOT NULL, text TEXT NOT NULL, at TEXT NOT NULL);
+             CREATE TABLE chat_session (id INTEGER PRIMARY KEY CHECK (id = 1), session TEXT NOT NULL);
+             INSERT INTO chat (speaker, text, at) VALUES ('you', 'old', '2026-10-01T00:00:00Z');
+             INSERT INTO chat_session (id, session) VALUES (1, 'kept');",
+        )
+        .unwrap();
+        let store = ChatStore::init(db).unwrap();
+        assert_eq!(store.recent(HELPER, 5).unwrap()[0].text, "old");
+        assert_eq!(store.session(HELPER).unwrap().as_deref(), Some("kept"));
+    }
+
+    #[test]
+    fn product_chats_know_the_brief_and_can_read_the_repo() {
+        let text = product_context(
+            "Funderly",
+            "funderly",
+            "Tuesday",
+            "Hungry: 7 sign-ups waiting",
+            "## Goal\n100 paying teams",
+        );
+        assert!(text.contains("strategist"));
+        assert!(text.contains("<brief>\n## Goal\n100 paying teams\n</brief>"));
+        assert!(text.contains("tagged #funderly"));
+        let claude = args(&["claude", "-p"]);
+        assert_eq!(
+            with_dirs(&claude, &["/code/funderly".into()]),
+            args(&["claude", "-p", "--add-dir", "/code/funderly"])
+        );
+        assert_eq!(with_dirs(&claude, &[]), claude);
+        assert_eq!(
+            with_dirs(&args(&["codex"]), &["/x".into()]),
+            args(&["codex"])
+        );
+    }
+
+    #[test]
     fn context_lists_the_day() {
         let text = context(
             "Bao",
@@ -332,22 +427,31 @@ mod tests {
         let store = ChatStore::in_memory().unwrap();
         let now = Utc::now();
         for n in 0..5 {
-            store.add(Speaker::You, &format!("hi {n}"), now).unwrap();
+            store
+                .add(HELPER, Speaker::You, &format!("hi {n}"), now)
+                .unwrap();
         }
-        store.add(Speaker::Helper, "hello", now).unwrap();
-        let recent = store.recent(3).unwrap();
+        store.add(HELPER, Speaker::Helper, "hello", now).unwrap();
+        store
+            .add("funderly", Speaker::You, "pricing?", now)
+            .unwrap();
+        let recent = store.recent(HELPER, 3).unwrap();
         assert_eq!(
             recent.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
             ["hi 3", "hi 4", "hello"]
         );
         assert_eq!(recent[2].from, Speaker::Helper);
 
-        assert_eq!(store.session().unwrap(), None);
-        store.set_session("one").unwrap();
-        store.set_session("two").unwrap();
-        assert_eq!(store.session().unwrap().as_deref(), Some("two"));
-        store.clear().unwrap();
-        assert!(store.recent(10).unwrap().is_empty());
-        assert_eq!(store.session().unwrap(), None);
+        assert_eq!(store.session(HELPER).unwrap(), None);
+        store.set_session(HELPER, "one").unwrap();
+        store.set_session(HELPER, "two").unwrap();
+        store.set_session("funderly", "f").unwrap();
+        assert_eq!(store.session(HELPER).unwrap().as_deref(), Some("two"));
+        store.clear(HELPER).unwrap();
+        assert!(store.recent(HELPER, 10).unwrap().is_empty());
+        assert_eq!(store.session(HELPER).unwrap(), None);
+        // Each product keeps its own conversation.
+        assert_eq!(store.recent("funderly", 10).unwrap()[0].text, "pricing?");
+        assert_eq!(store.session("funderly").unwrap().as_deref(), Some("f"));
     }
 }

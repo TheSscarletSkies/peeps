@@ -21,9 +21,11 @@ interface Props {
   pet: Pet;
   celebrating?: boolean;
   arriving?: boolean;
+  /** Opens the pet's full panel: notes, strategy chat and brief. */
+  onOpen: () => void;
 }
 
-export function ProductCard({ pet, celebrating, arriving }: Props) {
+export function ProductCard({ pet, celebrating, arriving, onOpen }: Props) {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
   const permission = pet.permission;
@@ -58,6 +60,9 @@ export function ProductCard({ pet, celebrating, arriving }: Props) {
           </span>
         </div>
         <p className="pet-card__headline">{pet.headline}</p>
+        <button className="tray__link pet-card__open" onClick={onOpen}>
+          Ask {pet.name} · Brief
+        </button>
 
         {permission && (
           <div className="pet-card__ask">

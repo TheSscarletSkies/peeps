@@ -224,6 +224,26 @@ export const demoSnapshot: Snapshot = {
     ],
   },
   configError: null,
+  productChats: [
+    {
+      productId: "funderly",
+      messages: [
+        {
+          id: 101,
+          from: "you",
+          text: "Where are we losing people?",
+          at: "2026-10-20T08:00:00Z",
+        },
+        {
+          id: 102,
+          from: "helper",
+          text: "Most drop between sign-up and the first campaign. 7 people signed up last week and none launched. A welcome email with a 3-minute setup video is the cheapest fix. Want me to add it to your list?",
+          at: "2026-10-20T08:00:30Z",
+        },
+      ],
+      chatting: false,
+    },
+  ],
   sync: {
     folder: null,
     thisComputer: "Mariyam's MacBook",

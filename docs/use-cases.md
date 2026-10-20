@@ -63,12 +63,19 @@ Pets blink, glance around and wiggle on their own, cheer when an agent finishes,
 
 Tested by `src/life/*.test.ts`.
 
+### UC17. Think a product through with its pet
+
+**When** they open a product (Ask on its card) and ask "Where are we losing people?".
+**Then** the pet answers as that product's strategist through their own Claude, knowing its brief (goal, audience, voice, numbers, links, past decisions) and how it is doing right now, and able to read the project. What they agree on becomes to-dos tagged with the product, decisions are dated in the brief, and coding work can be handed to the product's agent as a note. Each product keeps its own conversation. The brief is plain Markdown beside the config, so it syncs and can be edited on the Brief tab.
+
+Tested by `e2e/products.e2e.ts`, `crates/core/src/briefs.rs`, `crates/core/src/chat.rs`, `crates/core/src/tools.rs`, `crates/hook/tests/mcp.rs`.
+
 ## The helper
 
 ### UC9. Ask the helper anything
 
 **When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
-**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
+**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
 
 Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
 

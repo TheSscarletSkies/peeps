@@ -28,6 +28,7 @@ import {
   TokensIcon,
   WriteIcon,
 } from "./icons";
+import { PetPanel } from "../tray/PetPanel";
 import { ProductCard } from "./ProductCard";
 import { DevicesPage } from "./DevicesPage";
 import { RecapPage } from "./RecapPage";
@@ -266,6 +267,8 @@ function HomePage({
 }) {
   const { pets, helper } = snapshot;
   const { celebrating, arriving } = usePetEvents(pets);
+  const [openPet, setOpenPet] = useState<string | null>(null);
+  const opened = pets.find((pet) => pet.id === openPet);
   const urgent = pets.filter((pet) => URGENT.has(pet.mood));
   const today = helper.todos.filter(
     (todo) => todo.dueState === "overdue" || todo.dueState === "today",
@@ -320,6 +323,29 @@ function HomePage({
 
       <GettingStarted snapshot={snapshot} onGo={onGo} />
 
+      {opened && (
+        <section
+          className="card product-focus"
+          style={{ ["--pet" as string]: opened.color }}
+        >
+          <button
+            className="tray__link product-focus__close"
+            onClick={() => setOpenPet(null)}
+          >
+            Close
+          </button>
+          <PetPanel
+            key={opened.id}
+            pet={opened}
+            chat={snapshot.productChats.find(
+              (chat) => chat.productId === opened.id,
+            )}
+            helper={helper}
+            onTyping={noop}
+          />
+        </section>
+      )}
+
       <div className="home">
         <section className="home__pets" aria-label="Your products">
           {pets.map((pet) => (
@@ -328,6 +354,7 @@ function HomePage({
               pet={pet}
               celebrating={celebrating.has(pet.id)}
               arriving={arriving.has(pet.id)}
+              onOpen={() => setOpenPet(pet.id)}
             />
           ))}
         </section>

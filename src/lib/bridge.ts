@@ -247,8 +247,8 @@ export function setReminders(reminders: Reminders): Promise<void> {
 let demoId = 1000;
 
 /** Sends a message to the helper. The browser preview answers with a stand-in reply. */
-export function sendChat(text: string): Promise<ChatMessage> {
-  if (inApp()) return invoke<ChatMessage>("send_chat", { text });
+export function sendChat(text: string, scope = "helper"): Promise<ChatMessage> {
+  if (inApp()) return invoke<ChatMessage>("send_chat", { text, scope });
   return new Promise((resolve) =>
     setTimeout(
       () =>
@@ -263,8 +263,29 @@ export function sendChat(text: string): Promise<ChatMessage> {
   );
 }
 
-export function newChat(): Promise<void> {
-  return inApp() ? invoke("new_chat").then(() => undefined) : Promise.resolve();
+export function newChat(scope = "helper"): Promise<void> {
+  return inApp()
+    ? invoke("new_chat", { scope }).then(() => undefined)
+    : Promise.resolve();
+}
+
+const demoBriefs = new Map<string, string>();
+
+/** A product's brief in Markdown. The browser preview keeps edits in memory. */
+export function readBrief(productId: string, name: string): Promise<string> {
+  if (inApp()) return invoke<string>("read_brief", { productId });
+  return Promise.resolve(
+    demoBriefs.get(productId) ??
+      `# ${name}\n\n## Goal\n\n## Audience\n\n## Voice\n\n## Numbers\n\n## Links\n\n## Decisions\n`,
+  );
+}
+
+export function writeBrief(productId: string, text: string): Promise<void> {
+  if (inApp()) {
+    return invoke("write_brief", { productId, text }).then(() => undefined);
+  }
+  demoBriefs.set(productId, text);
+  return Promise.resolve();
 }
 
 export function addSchedule(schedule: NewSchedule): Promise<void> {

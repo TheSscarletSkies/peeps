@@ -103,6 +103,16 @@ pub struct AppSnapshot {
     pub calendars: Vec<CalendarStatus>,
     pub reminders: Reminders,
     pub sync: SyncStatus,
+    pub product_chats: Vec<ProductChat>,
+}
+
+/// A product pet's conversation with the user.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProductChat {
+    pub product_id: String,
+    pub messages: Vec<peeps_core::chat::Message>,
+    pub chatting: bool,
 }
 
 /// How far ahead the helper lists events.
@@ -141,7 +151,8 @@ pub struct App {
     drafts: Mutex<DraftStore>,
     drafting: AtomicBool,
     chat: Mutex<ChatStore>,
-    chatting: AtomicBool,
+    /// Which conversation the agent is answering, if any.
+    chatting: Mutex<Option<String>>,
     schedules: Mutex<ScheduleStore>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
@@ -166,7 +177,7 @@ impl App {
             drafts: Mutex::new(DraftStore::open(&paths::database_file())?),
             drafting: AtomicBool::new(false),
             chat: Mutex::new(ChatStore::open(&paths::database_file())?),
-            chatting: AtomicBool::new(false),
+            chatting: Mutex::new(None),
             schedules: Mutex::new(ScheduleStore::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
@@ -236,12 +247,26 @@ impl App {
     }
 
     /// Marks a chat turn as in progress. Returns false if the helper is still answering.
-    pub fn start_chatting(&self) -> bool {
-        !self.chatting.swap(true, Ordering::SeqCst)
+    /// Marks a conversation as being answered. One at a time, so the agent's approvals land in the
+    /// right card. Returns false if something else is being answered.
+    pub fn start_chatting(&self, scope: &str) -> bool {
+        let mut chatting = self.chatting.lock().unwrap_or_else(PoisonError::into_inner);
+        if chatting.is_some() {
+            return false;
+        }
+        *chatting = Some(scope.to_owned());
+        true
     }
 
     pub fn finish_chatting(&self) {
-        self.chatting.store(false, Ordering::SeqCst);
+        *self.chatting.lock().unwrap_or_else(PoisonError::into_inner) = None;
+    }
+
+    fn chatting_scope(&self) -> Option<String> {
+        self.chatting
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 
     /// Marks a draft as in progress. Returns false if one is already being written.
@@ -315,7 +340,23 @@ impl App {
         let todos_done_this_week = self.todos().done_since(week_ago).unwrap_or_default();
         let drafts = self.drafts().recent(RECENT_DRAFTS).unwrap_or_default();
         let drafts_this_week = self.drafts().count_since(week_ago).unwrap_or_default();
-        let chat = self.chat().recent(RECENT_CHAT).unwrap_or_default();
+        let chat = self
+            .chat()
+            .recent(peeps_core::chat::HELPER, RECENT_CHAT)
+            .unwrap_or_default();
+        let chatting_scope = self.chatting_scope();
+        let product_chats = config
+            .products
+            .iter()
+            .map(|product| ProductChat {
+                product_id: product.id.clone(),
+                messages: self
+                    .chat()
+                    .recent(&product.id, RECENT_CHAT)
+                    .unwrap_or_default(),
+                chatting: chatting_scope.as_deref() == Some(product.id.as_str()),
+            })
+            .collect();
         let schedules = self.schedules().all().unwrap_or_default();
         let world = self.world();
         let permission = world
@@ -341,7 +382,7 @@ impl App {
                 upcoming,
                 now,
                 chat,
-                chatting: self.chatting.load(Ordering::SeqCst),
+                chatting: chatting_scope.as_deref() == Some(peeps_core::chat::HELPER),
                 schedules,
                 permission,
             }),
@@ -372,6 +413,7 @@ impl App {
                 .collect(),
             reminders: config.reminders.clone(),
             sync: world.sync.clone(),
+            product_chats,
         }
     }
 
@@ -421,7 +463,11 @@ impl App {
                 Some(self.ask(&input, product).await)
             }
             (HookEvent::PermissionRequest, None) if Self::is_assistant(input.cwd.as_deref()) => {
-                Some(self.ask(&input, HELPER_ID.to_owned()).await)
+                // The agent answering a product's chat asks on that product's card.
+                let card = self
+                    .chatting_scope()
+                    .unwrap_or_else(|| HELPER_ID.to_owned());
+                Some(self.ask(&input, card).await)
             }
             (HookEvent::SessionStart, Some(product)) => {
                 Some(self.deliver(&product, Delivery::NextSession))

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { decide, newChat, sendChat } from "../lib/bridge";
-import type { ChatMessage, Helper } from "../lib/types";
+import type { ChatMessage, Helper, Permission, PetKind } from "../lib/types";
 import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { Dumpling } from "../pets/Dumpling";
@@ -10,7 +10,7 @@ import { agentLabel, AgentPicker } from "./AgentPicker";
 const STARTERS = [
   "What's on today?",
   "Plan my week around classes",
-  "Draft a reply to Funderly sign-ups",
+  "Remind me to drink water every 2 hours",
 ];
 
 /** Talks to the user's own agent through the helper. Tool requests come back here for a yes or no. */
@@ -21,22 +21,69 @@ export function Chat({
   helper: Helper;
   onTyping: (typing: boolean) => void;
 }) {
+  return (
+    <Conversation
+      scope="helper"
+      name={helper.name}
+      kind={helper.kind}
+      color={helper.color}
+      messages={helper.chat}
+      chatting={helper.chatting}
+      permission={helper.permission}
+      starters={STARTERS}
+      intro="Ask anything. I use your own Claude, with your connectors, and check with you before doing anything that leaves your computer."
+      agent={helper}
+      onTyping={onTyping}
+    />
+  );
+}
+
+interface ConversationProps {
+  /** "helper", or the product id whose pet is talking. */
+  scope: string;
+  name: string;
+  kind: PetKind;
+  color: string;
+  seed?: string;
+  messages: ChatMessage[];
+  chatting: boolean;
+  permission: Permission | null;
+  starters: string[];
+  intro: string;
+  /** Holds the model and effort shown on the chip. */
+  agent: Helper;
+  onTyping: (typing: boolean) => void;
+}
+
+/** One conversation with a pet, run through the user's own agent. */
+export function Conversation({
+  scope,
+  name,
+  kind,
+  color,
+  seed,
+  messages: saved,
+  chatting,
+  permission,
+  starters,
+  intro,
+  agent,
+  onTyping,
+}: ConversationProps) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const [waiting, setWaiting] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
-  useGivenFiles("helper", (paths) =>
+  useGivenFiles(scope, (paths) =>
     setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
   );
   const list = useRef<HTMLOListElement>(null);
-  const permission = helper.permission;
-
   // The app echoes messages back in its snapshot; local copies only bridge the gap.
-  useEffect(() => setPending([]), [helper.chat.length]);
+  useEffect(() => setPending([]), [saved.length]);
 
-  const messages = [...helper.chat, ...pending];
-  const thinking = waiting || helper.chatting;
+  const messages = [...saved, ...pending];
+  const thinking = waiting || chatting;
 
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
@@ -58,7 +105,7 @@ export function Chat({
       },
     ]);
     try {
-      const reply = await sendChat(trimmed);
+      const reply = await sendChat(trimmed, scope);
       setPending((now) => [...now, reply]);
     } catch (error) {
       setPending((now) => [
@@ -79,12 +126,9 @@ export function Chat({
     <div className="chat">
       {messages.length === 0 ? (
         <div className="chat__empty">
-          <p className="setup__hint">
-            Ask anything. I use your own Claude, with your connectors, and check
-            with you before doing anything that leaves your computer.
-          </p>
+          <p className="setup__hint">{intro}</p>
           <div className="chat__starters">
-            {STARTERS.map((starter) => (
+            {starters.map((starter) => (
               <button
                 key={starter}
                 className="chip"
@@ -105,8 +149,9 @@ export function Chat({
             >
               {message.from === "helper" && (
                 <Dumpling
-                  kind={helper.kind}
-                  color={helper.color}
+                  seed={seed}
+                  kind={kind}
+                  color={color}
                   mood="chill"
                   heat={0}
                   size={26}
@@ -118,8 +163,9 @@ export function Chat({
           {thinking && (
             <li className="chat__message" data-from="helper">
               <Dumpling
-                kind={helper.kind}
-                color={helper.color}
+                seed={seed}
+                kind={kind}
+                color={color}
                 mood="working"
                 heat={0}
                 size={26}
@@ -155,14 +201,14 @@ export function Chat({
       )}
 
       {picking ? (
-        <AgentPicker helper={helper} onDone={() => setPicking(false)} />
+        <AgentPicker helper={agent} onDone={() => setPicking(false)} />
       ) : (
         <button
           className="chip chat__agent"
           onClick={() => setPicking(true)}
           title="Change model and effort"
         >
-          {agentLabel(helper)}
+          {agentLabel(agent)}
         </button>
       )}
 
@@ -173,14 +219,14 @@ export function Chat({
           void send(text);
         }}
       >
-        <label className="visually-hidden" htmlFor="chat-text">
-          Message {helper.name}
+        <label className="visually-hidden" htmlFor={`chat-${scope}`}>
+          Message {name}
         </label>
         <textarea
-          id="chat-text"
+          id={`chat-${scope}`}
           rows={1}
           value={text}
-          placeholder={`Ask ${helper.name}…`}
+          placeholder={`Ask ${name}…`}
           onChange={(event) => setText(event.target.value)}
           onFocus={() => onTyping(true)}
           onBlur={() => onTyping(false)}
@@ -208,7 +254,7 @@ export function Chat({
           className="tray__link chat__new"
           onClick={() => {
             setPending([]);
-            void newChat();
+            void newChat(scope);
           }}
         >
           New chat
