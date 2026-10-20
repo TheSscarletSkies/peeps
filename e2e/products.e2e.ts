@@ -10,6 +10,9 @@ test("UC17: a product pet can be asked for strategy and keeps a brief", async ({
   await page.getByRole("button", { name: "Ask Funderly · Brief" }).click();
   const panel = page.locator(".product-focus");
   await panel.getByRole("tab", { name: "Ask" }).click();
+  await expect(
+    panel.getByRole("switch", { name: "Weekly review for Funderly" }),
+  ).toHaveText("Off");
   await expect(panel.getByText("Where are we losing people?")).toBeVisible();
   await panel
     .getByLabel("Message Funderly")

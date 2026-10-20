@@ -253,6 +253,26 @@ fn context(app: &App) -> String {
     )
 }
 
+/// Runs a product's weekly review in its conversation and lets the user know it is ready.
+async fn review(app: &Arc<App>, product_id: &str) {
+    let Some(name) = app.config().product(product_id).map(|p| p.name.clone()) else {
+        return;
+    };
+    match send(
+        app.clone(),
+        product_id.to_owned(),
+        chat::review_prompt(product_id),
+    )
+    .await
+    {
+        Ok(_) => app.notify(
+            &format!("{name}'s weekly review is ready"),
+            "Three moves for this week are on your list.",
+        ),
+        Err(error) => app.notify(&format!("Couldn't run {name}'s weekly review"), &error),
+    }
+}
+
 /// Writes scheduled drafts when they come due and lets the user know.
 pub async fn run_schedules(app: Arc<App>) {
     let mut interval = tokio::time::interval(SCHEDULE_TICK);
@@ -265,6 +285,10 @@ pub async fn run_schedules(app: Arc<App>) {
             // Move on first, so a failing agent can't make the same schedule fire every tick.
             if let Err(error) = app.schedules().advance(schedule.id, zone, now) {
                 eprintln!("peeps: could not move schedule {}: {error}", schedule.id);
+                continue;
+            }
+            if schedule.kind == drafts::REVIEW {
+                review(&app, &schedule.topic).await;
                 continue;
             }
             let label = drafts::label(&schedule.kind);

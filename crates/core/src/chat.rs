@@ -174,6 +174,17 @@ pub fn product_context(name: &str, id: &str, today: &str, status: &str, brief: &
     )
 }
 
+/// What a product's pet is asked each week. The answer lands in its conversation.
+pub fn review_prompt(id: &str) -> String {
+    format!(
+        "It's time for this week's review. Use peeps_overview, read_brief for `{id}`, and what you \
+         can see in the project. Write it short: what happened since last week, the numbers that \
+         matter (say which ones you could not see so I can add them), and the three moves that \
+         would help most this week, best first. Add those three as to-dos tagged #{id}, due by \
+         Friday, then finish with a one-line summary."
+    )
+}
+
 /// Lets Claude Code read a product's folder from the strategy chat.
 pub fn with_dirs(base: &[String], dirs: &[String]) -> Vec<String> {
     let mut command = base.to_vec();
@@ -405,6 +416,14 @@ mod tests {
             with_dirs(&args(&["codex"]), &["/x".into()]),
             args(&["codex"])
         );
+    }
+
+    #[test]
+    fn the_weekly_review_asks_for_three_moves_as_to_dos() {
+        let prompt = review_prompt("kaiveni-hiya");
+        assert!(prompt.contains("read_brief for `kaiveni-hiya`"));
+        assert!(prompt.contains("three moves"));
+        assert!(prompt.contains("tagged #kaiveni-hiya"));
     }
 
     #[test]

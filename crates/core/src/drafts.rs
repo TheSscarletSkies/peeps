@@ -32,11 +32,16 @@ pub enum DraftError {
     Io(#[from] std::io::Error),
 }
 
+/// Schedules of this kind run a product's weekly review instead of writing a draft; the topic is
+/// the product id.
+pub const REVIEW: &str = "review";
+
 /// A human name for a draft kind, used in the prompt and the interface.
 pub fn label(kind: &str) -> String {
     match kind {
         "linkedin" => "LinkedIn post".into(),
         "x" => "post for X".into(),
+        REVIEW => "weekly review".into(),
         other => other.replace(['-', '_'], " "),
     }
 }

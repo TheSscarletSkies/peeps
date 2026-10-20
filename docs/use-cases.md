@@ -70,6 +70,13 @@ Tested by `src/life/*.test.ts`.
 
 Tested by `e2e/products.e2e.ts`, `crates/core/src/briefs.rs`, `crates/core/src/chat.rs`, `crates/core/src/tools.rs`, `crates/hook/tests/mcp.rs`.
 
+### UC18. A weekly review for each product
+
+**When** they switch on Weekly review on a product's Ask tab.
+**Then** every Monday at 9 its pet reads the brief, the live status and the project, writes a short review in the product's conversation with the numbers that matter and the three most useful moves, adds those as to-dos tagged with the product, due by Friday, and sends a notification.
+
+Tested by `e2e/products.e2e.ts`, `crates/core/src/chat.rs`, `src/tray/review.test.ts`.
+
 ## The helper
 
 ### UC9. Ask the helper anything

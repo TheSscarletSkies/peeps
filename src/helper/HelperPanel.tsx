@@ -431,6 +431,10 @@ export function Write({
   const [time, setTime] = useState("09:00");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
+  // Weekly reviews live on their product's card, not with drafts.
+  const drafts = helper.schedules.filter(
+    (schedule) => schedule.kind !== "review",
+  );
 
   const write = async () => {
     setError(null);
@@ -540,9 +544,9 @@ export function Write({
         />
       </form>
       {error && <p className="tray__error">{error}</p>}
-      {helper.schedules.length > 0 && (
+      {drafts.length > 0 && (
         <ul className="schedules" aria-label="Scheduled drafts">
-          {helper.schedules.map((schedule) => (
+          {drafts.map((schedule) => (
             <li key={schedule.id}>
               <span className="schedules__when">{scheduleLabel(schedule)}</span>
               <span className="schedules__what">

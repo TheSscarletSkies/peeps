@@ -1814,3 +1814,25 @@ body,
   line-height: 1.55;
   resize: vertical;
 }
+
+.review-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-box);
+  background: color-mix(in srgb, var(--pet, #ffc9a8) 10%, var(--surface));
+}
+
+.review-toggle > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-toggle strong {
+  color: var(--text);
+  font-size: 13px;
+}

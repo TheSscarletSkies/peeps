@@ -7,6 +7,7 @@ import { addNote, decide } from "../lib/bridge";
 import type { Delivery, Helper, Pet, ProductChat } from "../lib/types";
 import { Conversation } from "../helper/Chat";
 import { BriefEditor } from "./BriefEditor";
+import { ReviewToggle } from "./ReviewToggle";
 
 interface Props {
   pet: Pet;
@@ -162,6 +163,7 @@ export function PetPanel({ pet, chat, helper, onTyping }: Props) {
           {status && <p className="panel__status">{status}</p>}
         </>
       )}
+      {tab === "ask" && <ReviewToggle pet={pet} helper={helper} />}
       {tab === "ask" && (
         <Conversation
           scope={pet.id}
