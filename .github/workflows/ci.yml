@@ -63,3 +63,34 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+
+  # The e2e tests use the preview's demo data, so this is the only check that the real backend
+  # gets the window drawn.
+  app-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Tauri system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev webkit2gtk-driver xvfb
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: cargo install tauri-driver --version 2.1.0 --locked
+      - run: npm run build
+      - run: node scripts/build-hook.mjs
+      # Without custom-protocol the app loads the dev server instead of the built interface.
+      - run: cargo build -p peeps-desktop --features tauri/custom-protocol
+      - run: xvfb-run -a npm run smoke
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-smoke
+          path: test-results/app-smoke.png
+          if-no-files-found: ignore
