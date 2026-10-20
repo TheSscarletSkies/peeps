@@ -193,6 +193,15 @@ export function editTodo(id: number, input: TodoInput): Promise<void> {
     : Promise.resolve();
 }
 
+/** Letters, digits and single dashes, like the app's own file names. */
+export function safeName(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return slug || "peeps";
+}
+
 /** Saves a PNG to Downloads in the app, or downloads it in the browser preview. */
 export async function saveImage(name: string, blob: Blob): Promise<string> {
   if (inApp()) {
@@ -201,10 +210,13 @@ export async function saveImage(name: string, blob: Blob): Promise<string> {
   }
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `${name}.png`;
+  link.download = `${safeName(name)}.png`;
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(link.href);
-  return `${name}.png`;
+  link.remove();
+  // The browser reads the file after this returns, so the link has to outlive the click.
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  return link.download;
 }
 
 export function addCalendar(

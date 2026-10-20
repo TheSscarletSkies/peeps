@@ -1,0 +1,117 @@
+# Use cases
+
+What peeps is for, written from the side of the person using it. Each case lists what should happen and where it is tested: `e2e/` runs the interface in a browser with demo data, `crates/core` holds the Rust unit tests, and `src/**/*.test.ts` the interface logic.
+
+The person in these examples runs three products (Funderly, Enigma Archives, Kaiveni Hiya), studies, and wants to spend their attention only where it is needed.
+
+## Products
+
+### UC1. See every product at a glance
+
+**When** they glance at the top of the screen.
+**Then** each product is a pet beside the notch (or floating, on screens without one), showing its mood: working, sweating on a long task, steaming when its context is nearly full, hungry when a check fires, crying when a session failed, asleep when nothing has happened for a while. Pets that need them stay still and show a `!`; the rest wander.
+
+Tested by `e2e/notch.e2e.ts` (pets and moods), `crates/core/src/mood.rs`, `crates/core/src/snapshot.rs`.
+
+### UC2. Approve a tool from anywhere
+
+**When** an agent asks to run something, like `git push origin main`.
+**Then** that product's pet needs them; clicking it shows the exact command with Allow and Deny, and the agent carries on as soon as they choose. The same works for the helper's own agent.
+
+Tested by `e2e/notch.e2e.ts`, `crates/core/src/protocol.rs`, `crates/core/src/session.rs`.
+
+### UC3. Leave a note for a product's next session
+
+**When** they think of something for Funderly while it is busy.
+**Then** they feed the pet a note; the agent reads it when its next session starts, or after its next step. Nothing running is interrupted.
+
+Tested by `e2e/notch.e2e.ts`, `crates/core/src/notes.rs`.
+
+### UC4. Hand a file to a product or the helper
+
+**When** they drag a file from Finder or Explorer onto a pet.
+**Then** the pet opens its mouth while the file hovers and gulps it on drop. A product's card opens with the file attached to a note; the helper attaches it to the next message. The agent receives the full path.
+
+Tested by `e2e/drops.e2e.ts`, `src/life/drops.test.ts`.
+
+### UC5. Watch their own data
+
+**When** Funderly has sign-ups nobody answered, or Enigma Archives has not posted in four days.
+**Then** a check written in the config (an HTTP query such as Supabase, or any script) makes that pet hungry or need its litter box, with the reason on its card.
+
+Tested by `crates/core/src/checks/`.
+
+## Living with the pets
+
+### UC6. Arrange the pets
+
+**When** the strip gets crowded or a product is quiet.
+**Then** they can drag any pet anywhere in the strip, hide pets (a hidden pet still comes out when it needs them), choose small, medium or large, and choose where pets live: the notch, the top of the screen, or floating anywhere.
+
+Tested by `e2e/notch.e2e.ts`, `src/life/roam.test.ts`, `src/life/prefs.test.ts`.
+
+### UC7. Use peeps on a screen without a notch
+
+**When** they use Windows, or a Mac with an external display.
+**Then** the helper floats wherever they drop it, never over the browser's tabs unless they put it there. A badge counts pets that need them; a click opens all pets and the helper beside it, towards the side with room.
+
+Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
+
+### UC8. Enjoy them
+
+Pets blink, glance around and wiggle on their own, cheer when an agent finishes, hatch when a product is added, squish when poked, get dizzy after three quick pokes, show love when fed or when a to-do is ticked, and wear a hat or scarf in season.
+
+Tested by `src/life/*.test.ts`.
+
+## The helper
+
+### UC9. Ask the helper anything
+
+**When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
+**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny.
+
+Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
+
+### UC10. Keep to-dos and habits
+
+**When** they add "Pay rent #bills" due on the 1st, monthly, reminded the morning of.
+**Then** tags become coloured chips with a filter, repeating to-dos roll forward when ticked and count a streak while done on time, and a notification arrives at the chosen lead.
+
+Tested by `e2e/helper.e2e.ts`, `crates/core/src/todos.rs`, `src/helper/todoForm.test.ts`.
+
+### UC11. Never miss a class
+
+**When** they add their college Google calendar and a rule "titles with _class_ remind 30 min before".
+**Then** a notification arrives 30 minutes before every class, including repeats, skipping cancelled ones and following moved ones. All-day events like exams remind on the morning. Rules win over a calendar's own lead, which wins over the default.
+
+Tested by `e2e/hub.e2e.ts`, `crates/core/src/calendar.rs`, `crates/core/src/reminders.rs`.
+
+### UC12. Get posts written on a schedule
+
+**When** they schedule "LinkedIn post, every Monday at 9, about what I shipped".
+**Then** the helper drafts it with their agent at that time, in their voice guide, and notifies them that it is ready to copy.
+
+Tested by `e2e/helper.e2e.ts`, `crates/core/src/schedule.rs`.
+
+### UC13. Share the week
+
+**When** they open Recap.
+**Then** they get a 1080 by 1350 card with agent hours, tokens, to-dos done, drafts written, the busiest day and each product's hours, saved to Downloads or copied.
+
+Tested by `e2e/hub.e2e.ts`, `src/hub/recap.test.ts`, `crates/core/src/helper.rs`.
+
+## Getting going
+
+### UC14. Set up in a few minutes
+
+**When** they open peeps for the first time.
+**Then** Home lists four steps (connect Claude Code, add a product, add a calendar, add a to-do), ticks them off as they happen and can be hidden.
+
+Tested by `e2e/hub.e2e.ts`, `src/hub/gettingStarted.test.ts`.
+
+### UC15. Light or dark
+
+**When** they prefer a light window.
+**Then** the sidebar toggle switches the peeps window to a cream theme and remembers it.
+
+Tested by `e2e/hub.e2e.ts`.

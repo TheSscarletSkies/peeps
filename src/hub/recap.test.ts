@@ -28,3 +28,13 @@ describe("recap", () => {
     expect(week.lines).toHaveLength(2);
   });
 });
+
+describe("saved file names", () => {
+  it("match the app's", async () => {
+    const { safeName } = await import("../lib/bridge");
+    expect(safeName("peeps week Oct 13 – Oct 19")).toBe(
+      "peeps-week-oct-13-oct-19",
+    );
+    expect(safeName("  ")).toBe("peeps");
+  });
+});

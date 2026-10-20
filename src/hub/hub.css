@@ -143,7 +143,7 @@
   padding: 10px 14px;
   border-radius: var(--r-box);
   background: #2a1a17;
-  color: #ffb3a7;
+  color: var(--bad);
   font-size: 13px;
 }
 
@@ -353,7 +353,7 @@
 .mood[data-mood="failing"],
 .mood[data-mood="steaming"] {
   background: rgba(255, 140, 120, 0.16);
-  color: #ffb3a7;
+  color: var(--bad);
 }
 
 .mood[data-mood="hungry"],
@@ -385,7 +385,7 @@
 }
 
 .today li[data-due="overdue"] span {
-  color: #ffb3a7;
+  color: var(--bad);
 }
 
 /* Section pages */
@@ -604,6 +604,8 @@
   --focus: rgba(43, 36, 32, 0.35);
   --check: #6cc490;
   --check-line: #cfc5ba;
+  --good: #2f8a55;
+  --bad: #b0443a;
   --card-shadow: 0 1px 2px rgba(80, 50, 30, 0.06), inset 0 0 0 1px var(--line);
 }
 
@@ -706,7 +708,7 @@
 }
 
 .calendars__state[data-error] {
-  color: #ffb3a7;
+  color: var(--bad);
 }
 
 .calendars__lead {

@@ -18,6 +18,8 @@
   --check: #9ee6b8;
   --check-line: #55555b;
   --accent-ink: #1a1406;
+  --good: #9fd9b4;
+  --bad: #ffb3a7;
   font-family: "Nunito", ui-rounded, system-ui, sans-serif;
   font-weight: 500;
   color: var(--text);
@@ -530,7 +532,7 @@ body,
 .segmented button {
   padding: 0 12px;
   border: 0;
-  border-radius: 9px;
+  border-radius: calc(var(--r-control) - 3px);
   background: transparent;
   color: var(--muted);
   font-family: inherit;
@@ -566,7 +568,7 @@ body,
 .todos__repeat {
   font-size: 11px;
   font-weight: 800;
-  color: #9fd9b4;
+  color: var(--good);
 }
 
 .todo-form {
@@ -603,7 +605,7 @@ body,
 }
 
 .todos li[data-due="overdue"] .todos__due {
-  color: #ffb3a7;
+  color: var(--bad);
 }
 
 .todos li[data-due="today"] .todos__due {
@@ -947,7 +949,7 @@ body,
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--r-tag);
   background: transparent;
   color: #6f6c68;
   fill: currentColor;
@@ -1152,7 +1154,7 @@ body,
   height: 18px;
   padding: 0 5px;
   box-sizing: border-box;
-  border-radius: 9px;
+  border-radius: 50%;
   background: #ff8c78;
   color: #2b1210;
   font-size: 11px;
@@ -1608,7 +1610,7 @@ body,
 
 .schedules__when {
   flex-shrink: 0;
-  color: #9fd9b4;
+  color: var(--good);
   font-weight: 800;
 }
 
@@ -1636,7 +1638,7 @@ body,
   align-items: center;
   gap: 4px;
   max-width: 100%;
-  height: 28px;
+  height: var(--h-small);
   padding: 0 4px 0 10px;
   border-radius: var(--r-tag);
   background: color-mix(in srgb, var(--pet, #ffc9a8) 18%, var(--field));
