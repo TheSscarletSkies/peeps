@@ -83,7 +83,13 @@ pub fn run(command: &[String], prompt: &str, timeout: Duration) -> Result<String
         })?;
 
     if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(prompt.as_bytes())?;
+        // An agent that quits straight away closes its input; its own error says why.
+        match stdin.write_all(prompt.as_bytes()) {
+            Err(error) if error.kind() != std::io::ErrorKind::BrokenPipe => {
+                return Err(error.into())
+            }
+            _ => {}
+        }
     }
     // Read both pipes on their own threads so a long reply cannot fill a pipe and stall the agent.
     let stdout = drain(child.stdout.take());
