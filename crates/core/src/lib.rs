@@ -13,6 +13,7 @@ pub mod mail;
 pub mod mcp;
 pub mod mood;
 pub mod notes;
+pub mod numbers;
 pub mod paths;
 pub mod protocol;
 pub mod quick;
