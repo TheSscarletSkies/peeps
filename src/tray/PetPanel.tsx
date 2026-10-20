@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { Attachments } from "../life/Attachments";
+import { useGivenFiles, withFiles } from "../life/drops";
 import { announceFed } from "../life/events";
 import { addNote, decide } from "../lib/bridge";
 import type { Delivery, Pet } from "../lib/types";
@@ -13,15 +15,21 @@ export function PetPanel({ pet, onTyping }: Props) {
   const [text, setText] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nextSession");
   const [status, setStatus] = useState<string | null>(null);
+  const [files, setFiles] = useState<string[]>([]);
+  useGivenFiles(pet.id, (paths) =>
+    setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
+  );
 
   const permission = pet.permission;
+  const ready = text.trim() !== "" || files.length > 0;
 
   const feed = async () => {
-    if (!text.trim()) return;
+    if (!ready) return;
     try {
-      await addNote(pet.id, text, delivery);
+      await addNote(pet.id, withFiles(text, files), delivery);
       announceFed(pet.id);
       setText("");
+      setFiles([]);
       setStatus(
         delivery === "nextSession"
           ? `${pet.name} reads this when its next session starts.`
@@ -82,7 +90,11 @@ export function PetPanel({ pet, onTyping }: Props) {
         <input
           id={`note-${pet.id}`}
           value={text}
-          placeholder={`Leave ${pet.name} a note`}
+          placeholder={
+            files.length > 0
+              ? "What should it do with these?"
+              : `Leave ${pet.name} a note`
+          }
           onChange={(event) => setText(event.target.value)}
           onFocus={() => onTyping(true)}
           onBlur={() => onTyping(false)}
@@ -98,11 +110,15 @@ export function PetPanel({ pet, onTyping }: Props) {
         <button
           className="button button--primary"
           type="submit"
-          disabled={!text.trim()}
+          disabled={!ready}
         >
           Feed
         </button>
       </form>
+      <Attachments
+        paths={files}
+        onRemove={(path) => setFiles((now) => now.filter((p) => p !== path))}
+      />
       {status && <p className="panel__status">{status}</p>}
     </section>
   );

@@ -16,6 +16,8 @@ import {
 } from "../life/roam";
 import { ALL, AllIcon, CardBody, Roster, type Resident } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
+import { giveFiles, useFileDrop } from "../life/drops";
+import { announceFed } from "../life/events";
 
 const CARD_WIDTH = 400;
 
@@ -35,6 +37,11 @@ export function NotchTray({
   const open = openId !== null;
   const cardHeight = useHeight(card, open);
   useCloseOnLeave(() => setOpenId(null));
+  useFileDrop((id, paths) => {
+    giveFiles(id, paths);
+    announceFed(id);
+    setOpenId(id);
+  });
 
   const visible = residents.filter((resident) =>
     shown(resident.id, resident.urgent, prefs),
@@ -74,6 +81,7 @@ export function NotchTray({
             {visible.map((resident, index) => (
               <Roamer
                 key={resident.id}
+                dropId={resident.id}
                 lanes={strip.lanes}
                 lane={laneFor(index, strip.lanes.length)}
                 start={spread(index, visible.length, strip.lanes.length)}
@@ -142,6 +150,7 @@ function spread(index: number, total: number, laneCount: number): number {
 }
 
 interface RoamerProps {
+  dropId: string;
   lanes: Lane[];
   lane: number;
   start: number;
@@ -163,6 +172,7 @@ const DRAG_THRESHOLD = 3;
  * Drag one to move it, even across the notch.
  */
 function Roamer({
+  dropId,
   lanes,
   lane: defaultLane,
   start,
@@ -223,6 +233,7 @@ function Roamer({
       }}
       aria-label={label}
       aria-pressed={selected}
+      data-drop={dropId}
       onPointerDown={(event) => {
         const left =
           event.currentTarget.parentElement?.getBoundingClientRect().left ?? 0;

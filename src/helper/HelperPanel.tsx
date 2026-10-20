@@ -10,6 +10,7 @@ import {
   setTodoDone,
   writeDraft,
 } from "../lib/bridge";
+import { announceFed } from "../life/events";
 import type {
   DueState,
   Helper,
@@ -246,7 +247,10 @@ function TodoRow({
         type="checkbox"
         aria-label={`Done: ${todo.title}`}
         checked={false}
-        onChange={() => void setTodoDone(todo.id, true)}
+        onChange={() => {
+          announceFed("helper");
+          void setTodoDone(todo.id, true);
+        }}
       />
       <button
         className="todos__title"

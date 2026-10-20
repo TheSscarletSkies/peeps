@@ -15,6 +15,8 @@ import {
 import { shown, toggleHidden, usePrefs } from "../life/prefs";
 import { ALL, CardBody, HELPER, Roster, type Resident } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
+import { giveFiles, useFileDrop } from "../life/drops";
+import { announceFed } from "../life/events";
 
 const KEY = "peeps.float";
 const DRAG_THRESHOLD = 4;
@@ -81,6 +83,11 @@ export function FloatTray({
   const open = openId !== null;
   const panelHeight = useHeight(panel, open);
   useCloseOnLeave(() => setOpenId(null));
+  useFileDrop((id, paths) => {
+    giveFiles(id, paths);
+    announceFed(id);
+    setOpenId(id);
+  });
 
   const helper = residents.find((resident) => resident.id === HELPER);
   const products = residents.filter(
@@ -115,6 +122,7 @@ export function FloatTray({
     <div className="float" data-side={side}>
       <button
         className="float__pet"
+        data-drop={HELPER}
         style={{ top: open ? rect.petTop : 0 }}
         data-waiting={waiting > 0 || undefined}
         aria-label={
@@ -187,6 +195,7 @@ export function FloatTray({
                   role="tab"
                   aria-selected={openId === resident.id}
                   className="float__chip"
+                  data-drop={resident.id}
                   data-urgent={resident.urgent || undefined}
                   onClick={() => setOpenId(resident.id)}
                   title={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}

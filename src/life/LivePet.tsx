@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { Mood, PetKind } from "../lib/types";
 import { Dumpling, type Expression } from "../pets/Dumpling";
+import { useDropHover } from "./drops";
 import { onFed } from "./events";
 import { poke } from "./pokes";
 import { seasonalAccessory, type Accessory } from "./season";
@@ -19,6 +20,8 @@ interface Props {
   size?: number;
   celebrating?: boolean;
   arriving?: boolean;
+  /** Which drop target this pet answers to, when it is not its own id. */
+  dropId?: string;
 }
 
 /** `?season=scarf` or `?season=witchHat` previews an outfit out of season. */
@@ -38,7 +41,9 @@ export function LivePet({
   size,
   celebrating = false,
   arriving = false,
+  dropId,
 }: Props) {
+  const eager = useDropHover(dropId ?? id);
   const [dizzy, setDizzy] = useState(false);
   const [love, setLove] = useState(false);
   const [squish, setSquish] = useState(false);
@@ -57,11 +62,13 @@ export function LivePet({
   useEffect(
     () =>
       onFed((fedId) => {
-        if (fedId !== id) return;
+        if (fedId !== (dropId ?? id)) return;
+        setSquish(true);
+        later(() => setSquish(false), SQUISH_MS);
         setLove(true);
         later(() => setLove(false), LOVE_MS);
       }),
-    [id],
+    [id, dropId],
   );
 
   const onPoke = () => {
@@ -79,13 +86,15 @@ export function LivePet({
     }
   };
 
-  const expression: Expression | undefined = dizzy
-    ? "dizzy"
-    : celebrating
-      ? "celebrate"
-      : love
-        ? "love"
-        : undefined;
+  const expression: Expression | undefined = eager
+    ? "eager"
+    : dizzy
+      ? "dizzy"
+      : celebrating
+        ? "celebrate"
+        : love
+          ? "love"
+          : undefined;
 
   const motion = [squish && "motion-squish", arriving && "motion-hatch"]
     .filter(Boolean)

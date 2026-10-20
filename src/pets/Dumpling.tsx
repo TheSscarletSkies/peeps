@@ -22,7 +22,7 @@ interface Props {
 }
 
 /** Dizzy after a poke spree, celebrating finished work, in love after a pat or a note. */
-export type Expression = "dizzy" | "celebrate" | "love";
+export type Expression = "dizzy" | "celebrate" | "love" | "eager";
 type Look = Mood | Expression;
 
 interface Shape {
@@ -101,6 +101,13 @@ function Eyes({ mood }: { mood: Look }) {
       );
     case "celebrate":
       return <path d="M42 69q3-3.4 6 0M72 69q3-3.4 6 0" {...stroke} />;
+    case "eager":
+      return (
+        <>
+          <circle cx="45" cy="67.5" r="3.4" fill={EYE} />
+          <circle cx="75" cy="67.5" r="3.4" fill={EYE} />
+        </>
+      );
     case "love":
       return (
         <path
@@ -157,6 +164,13 @@ function Mouth({ mood }: { mood: Look }) {
       );
     case "dizzy":
       return <path d="M55.5 72q1.1-1.4 2.2 0t2.2 0t2.2 0t2.2 0" {...stroke} />;
+    case "eager":
+      return (
+        <>
+          <ellipse cx="60" cy="73.5" rx="4" ry="4.6" fill={EYE} />
+          <ellipse cx="60" cy="76" rx="2.6" ry="1.7" fill="#FF9AAA" />
+        </>
+      );
     case "celebrate":
     case "love":
       return (

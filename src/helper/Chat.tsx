@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { decide, newChat, sendChat } from "../lib/bridge";
 import type { ChatMessage, Helper } from "../lib/types";
+import { Attachments } from "../life/Attachments";
+import { useGivenFiles, withFiles } from "../life/drops";
 import { Dumpling } from "../pets/Dumpling";
 
 const STARTERS = [
@@ -21,6 +23,10 @@ export function Chat({
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const [waiting, setWaiting] = useState(false);
+  const [files, setFiles] = useState<string[]>([]);
+  useGivenFiles("helper", (paths) =>
+    setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
+  );
   const list = useRef<HTMLOListElement>(null);
   const permission = helper.permission;
 
@@ -35,9 +41,10 @@ export function Chat({
   }, [messages.length, thinking]);
 
   const send = async (message: string) => {
-    const trimmed = message.trim();
+    const trimmed = withFiles(message, files);
     if (!trimmed || thinking) return;
     setText("");
+    setFiles([]);
     setWaiting(true);
     setPending((now) => [
       ...now,
@@ -173,11 +180,15 @@ export function Chat({
         <button
           className="button button--primary"
           type="submit"
-          disabled={!text.trim() || thinking}
+          disabled={(!text.trim() && files.length === 0) || thinking}
         >
           Send
         </button>
       </form>
+      <Attachments
+        paths={files}
+        onRemove={(path) => setFiles((now) => now.filter((p) => p !== path))}
+      />
       {messages.length > 0 && (
         <button
           className="tray__link chat__new"

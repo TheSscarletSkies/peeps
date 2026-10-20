@@ -70,6 +70,7 @@ export function residentsOf(
       urgent: URGENT.includes(helper.mood),
       pet: (size: number) => (
         <LivePet
+          dropId={HELPER}
           kind={helper.kind}
           color={helper.color}
           mood={helper.mood}

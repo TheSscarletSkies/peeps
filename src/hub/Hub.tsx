@@ -4,6 +4,7 @@ import { Todos, Tokens, Write } from "../helper/HelperPanel";
 import { Chat } from "../helper/Chat";
 import { Upcoming } from "../helper/Upcoming";
 import { setTodoDone } from "../lib/bridge";
+import { announceFed } from "../life/events";
 import { Boundary } from "../lib/Boundary";
 import type { Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
@@ -280,6 +281,7 @@ function HomePage({
               />
             ))}
             <LivePet
+              dropId="helper"
               kind={helper.kind}
               color={helper.color}
               mood={helper.mood}
@@ -323,7 +325,10 @@ function HomePage({
                     <input
                       type="checkbox"
                       aria-label={`Done: ${todo.title}`}
-                      onChange={() => void setTodoDone(todo.id, true)}
+                      onChange={() => {
+                        announceFed("helper");
+                        void setTodoDone(todo.id, true);
+                      }}
                     />
                     <span>{todo.title}</span>
                   </li>
