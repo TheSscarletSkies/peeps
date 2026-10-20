@@ -69,3 +69,20 @@ test("UC9: the Ask page talks to the helper", async ({ page }) => {
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("In the app I'd ask your agent")).toBeVisible();
 });
+
+test("UC16: devices can share a sync folder without an account", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Devices" }).click();
+  await expect(page.getByText("Use peeps on all your computers")).toBeVisible();
+  for (const drive of ["iCloud Drive", "OneDrive", "Dropbox", "Google Drive"]) {
+    await expect(page.getByText(drive, { exact: true })).toBeVisible();
+  }
+  await expect(
+    page.getByRole("button", { name: "Choose a folder" }),
+  ).toBeEnabled();
+  await page.getByLabel("What stays on each computer").click();
+  await expect(
+    page.getByText("Calendar links and passwords stay"),
+  ).toBeVisible();
+});

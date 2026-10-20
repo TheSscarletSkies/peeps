@@ -7,6 +7,7 @@ import type {
   Decision,
   Delivery,
   Draft,
+  Joined,
   NewProduct,
   NewSchedule,
   Notch,
@@ -284,5 +285,18 @@ export function setHelperAgent(
 ): Promise<void> {
   return inApp()
     ? invoke("set_helper_agent", { model, effort }).then(() => undefined)
+    : Promise.resolve();
+}
+
+/** Starts syncing through a folder, or stops with `null`. */
+export function setSyncFolder(folder: string | null): Promise<Joined | null> {
+  return inApp()
+    ? invoke<Joined | null>("set_sync_folder", { folder })
+    : Promise.resolve(folder ? "started" : null);
+}
+
+export function addProductPath(productId: string, path: string): Promise<void> {
+  return inApp()
+    ? invoke("add_product_path", { productId, path }).then(() => undefined)
     : Promise.resolve();
 }

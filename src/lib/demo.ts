@@ -224,6 +224,13 @@ export const demoSnapshot: Snapshot = {
     ],
   },
   configError: null,
+  sync: {
+    folder: null,
+    thisComputer: "Mariyam's MacBook",
+    lastSynced: null,
+    computers: [],
+    error: null,
+  },
   calendars: [
     {
       name: "College",

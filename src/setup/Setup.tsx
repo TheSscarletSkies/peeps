@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   addProduct,
+  addProductPath,
   hooksStatus,
   installHooks,
   pickFolder,
@@ -104,6 +105,16 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
                 size={28}
               />
               <span>{pet.name}</span>
+              <button
+                className="button button--small"
+                title="On a second computer, point this pet at the project's folder here"
+                onClick={async () => {
+                  const folder = await pickFolder();
+                  if (folder) await run(() => addProductPath(pet.id, folder));
+                }}
+              >
+                + This computer's folder
+              </button>
               <button
                 className="button button--small"
                 onClick={() => run(() => removeProduct(pet.id))}

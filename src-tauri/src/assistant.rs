@@ -206,7 +206,7 @@ pub async fn run_schedules(app: Arc<App>) {
     loop {
         interval.tick().await;
         let now = Utc::now();
-        let due = app.schedules().due(now).unwrap_or_default();
+        let due = app.schedules().due(now, app.device()).unwrap_or_default();
         for schedule in due {
             let zone = *Local::now().offset();
             // Move on first, so a failing agent can't make the same schedule fire every tick.

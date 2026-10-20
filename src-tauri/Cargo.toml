@@ -16,6 +16,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 chrono.workspace = true
 dirs.workspace = true
+gethostname = "0.5"
 interprocess = { workspace = true, features = ["tokio"] }
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 peeps-core = { path = "../crates/core" }

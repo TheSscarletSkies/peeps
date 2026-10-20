@@ -211,7 +211,21 @@ export interface Snapshot {
   configError: string | null;
   calendars: CalendarStatus[];
   reminders: Reminders;
+  sync: SyncStatus;
 }
+
+export interface SyncStatus {
+  /** The folder this computer syncs through, if any. */
+  folder: string | null;
+  thisComputer: string;
+  lastSynced: string | null;
+  /** Other computers seen in the folder, with when they last wrote. */
+  computers: { name: string; seenAt: string }[];
+  error: string | null;
+}
+
+/** Whether this computer brought its settings to the folder or found another's there. */
+export type Joined = "started" | "joined";
 
 export interface Notch {
   /** Zero when the screen has no camera notch. */

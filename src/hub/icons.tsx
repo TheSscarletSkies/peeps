@@ -96,3 +96,11 @@ export const AskIcon = () => (
     <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0.5A2.5 2.5 0 0 1 5 13.5z" />
   </Icon>
 );
+
+export const DevicesIcon = () => (
+  <Icon>
+    <rect x="3" y="5" width="13" height="10" rx="2" />
+    <path d="M2 18h15" />
+    <rect x="17" y="9" width="5" height="10" rx="1.5" />
+  </Icon>
+);

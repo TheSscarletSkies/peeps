@@ -4,6 +4,7 @@ mod commands;
 mod remind;
 mod secrets;
 mod state;
+mod sync;
 mod watch;
 mod window;
 
@@ -32,6 +33,8 @@ pub fn run() {
             commands::send_chat,
             commands::new_chat,
             commands::set_helper_agent,
+            commands::set_sync_folder,
+            commands::add_product_path,
             commands::add_schedule,
             commands::delete_schedule,
             commands::hooks_status,
@@ -76,6 +79,7 @@ pub fn run() {
                 }
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));
+            tauri::async_runtime::spawn(sync::run(app.clone()));
             tauri::async_runtime::spawn(assistant::run_schedules(app.clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())

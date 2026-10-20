@@ -17,5 +17,6 @@ pub mod reminders;
 pub mod schedule;
 pub mod session;
 pub mod snapshot;
+pub mod sync;
 pub mod todos;
 pub mod usage;

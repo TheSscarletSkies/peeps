@@ -21,6 +21,7 @@ Watching costs nothing. Moods come from agent hooks, transcripts on disk and che
 - **Token tips.** Spots a large `CLAUDE.md` that loads every session, and the largest model doing consistently short work.
 - **Calendars and reminders.** Paste the private iCal link from Google, Outlook or iCloud and peeps shows what is coming up and sends a Mac notification beforehand. Lead times are yours to set: per calendar, by words in the title ("class" → 30 minutes), or one default. Links live in your keychain.
 - **Ask the helper.** Chat with your own Claude Code from the notch, knowing your day; anything it wants to do comes back as Allow or Deny. Drafts can be scheduled, like a LinkedIn post every Monday.
+- **Every computer, no account.** Choose a folder in iCloud Drive, OneDrive, Dropbox or Google Drive on each computer and to-dos, habits, scheduled drafts, products and settings stay in step.
 - **Drop files on a pet.** A product gets them in its next note, the helper with your next message.
 - **A helper pet.** To-dos with `#tags`, repeats and streaks for habits, times and reminders, drafts in your voice written by your own agent, and a weekly token report.
 - **Weekly recap.** Your week as one shareable card: agent hours, tokens, busiest day, to-dos done and drafts written.

@@ -48,6 +48,12 @@ export const STEPS: TourStep[] = [
     text: "Optional. Add the projects you build with Claude Code and each one hatches as a pet that tells you when it needs you.",
   },
   {
+    target: "devices",
+    page: "devices",
+    title: "On all your computers",
+    text: "Pick a folder in iCloud Drive, OneDrive, Dropbox or Google Drive and your Mac and PC stay in step. No account needed.",
+  },
+  {
     target: "toggles",
     title: "Make it yours",
     text: "Light or dark, and a soft boop when a pet needs you. You can replay this tour from the ? any time.",

@@ -43,6 +43,25 @@ pub struct World {
     pub week: Week,
     /// Calendar feeds by name, as last downloaded.
     pub feeds: HashMap<String, Feed>,
+    pub sync: SyncStatus,
+}
+
+/// How syncing is going, for the Devices page.
+#[derive(Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncStatus {
+    pub folder: Option<String>,
+    pub this_computer: String,
+    pub last_synced: Option<DateTime<Utc>>,
+    pub computers: Vec<Computer>,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Computer {
+    pub name: String,
+    pub seen_at: DateTime<Utc>,
 }
 
 #[derive(Default)]
@@ -83,6 +102,7 @@ pub struct AppSnapshot {
     pub config_error: Option<String>,
     pub calendars: Vec<CalendarStatus>,
     pub reminders: Reminders,
+    pub sync: SyncStatus,
 }
 
 /// How far ahead the helper lists events.
@@ -112,6 +132,9 @@ impl Loaded {
 pub struct App {
     loaded: RwLock<Loaded>,
     rescan: AtomicBool,
+    /// Something changed here that other computers should hear about.
+    unsynced: AtomicBool,
+    device: String,
     world: Mutex<World>,
     notes: Mutex<NoteStore>,
     todos: Mutex<TodoStore>,
@@ -135,6 +158,8 @@ impl App {
         Ok(Self {
             loaded: RwLock::new(Loaded::read()),
             rescan: AtomicBool::new(true),
+            unsynced: AtomicBool::new(true),
+            device: peeps_core::sync::device_id(&paths::device_file())?,
             world: Mutex::default(),
             notes: Mutex::new(NoteStore::open(&paths::database_file())?),
             todos: Mutex::new(TodoStore::open(&paths::database_file())?),
@@ -346,10 +371,22 @@ impl App {
                 })
                 .collect(),
             reminders: config.reminders.clone(),
+            sync: world.sync.clone(),
         }
     }
 
+    /// This computer's id in the sync folder.
+    pub fn device(&self) -> &str {
+        &self.device
+    }
+
+    /// True once after something changed that should be written to the sync folder.
+    pub fn take_unsynced(&self) -> bool {
+        self.unsynced.swap(false, Ordering::Relaxed)
+    }
+
     pub fn publish(&self) {
+        self.unsynced.store(true, Ordering::Relaxed);
         if let Err(error) = self.handle.emit(SNAPSHOT_EVENT, self.snapshot()) {
             eprintln!("peeps: could not update the window: {error}");
         }

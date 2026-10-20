@@ -9,6 +9,7 @@ use peeps_core::drafts::Draft;
 use peeps_core::notes::{Delivery, Note};
 use peeps_core::protocol::Decision;
 use peeps_core::schedule::{NewSchedule, Schedule};
+use peeps_core::sync::{self, Joined};
 use peeps_core::todos::{self, Todo, TodoInput};
 use peeps_core::{hooks_install, paths};
 use serde::Serialize;
@@ -140,6 +141,48 @@ pub async fn send_chat(app: State<'_, Arc<App>>, text: String) -> Result<Message
     assistant::send(app.inner().clone(), text).await
 }
 
+/// Starts syncing through `folder`, or stops when it is `None`, keeping a local copy of the settings.
+#[tauri::command]
+pub fn set_sync_folder(app: State<'_, Arc<App>>, folder: Option<String>) -> Result<Option<Joined>> {
+    let settings = paths::sync_settings_file();
+    let joined = match folder.as_deref().map(str::trim).filter(|f| !f.is_empty()) {
+        Some(folder) => {
+            let folder = PathBuf::from(folder);
+            if !folder.is_dir() {
+                return Err("that folder does not exist".into());
+            }
+            let joined = sync::join(&folder, &paths::local_config_file()).map_err(message)?;
+            sync::Local {
+                folder: Some(folder),
+            }
+            .write(&settings)
+            .map_err(message)?;
+            Some(joined)
+        }
+        None => {
+            let shared = paths::config_file();
+            if shared != paths::local_config_file() && shared.exists() {
+                std::fs::copy(&shared, paths::local_config_file()).map_err(message)?;
+            }
+            sync::Local::default().write(&settings).map_err(message)?;
+            None
+        }
+    };
+    app.reload_config();
+    Ok(joined)
+}
+
+/// Gives a product another computer made this computer's folder, so they share one pet.
+#[tauri::command]
+pub fn add_product_path(app: State<'_, Arc<App>>, product_id: String, path: String) -> Result<()> {
+    let config = paths::config_file();
+    let updated =
+        config_edit::add_path(&read_or_empty(&config)?, &product_id, &path).map_err(message)?;
+    write_atomic(&config, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 /// Saves which model and effort the helper's agent uses.
 #[tauri::command]
 pub fn set_helper_agent(
@@ -171,7 +214,12 @@ pub fn add_schedule(app: State<'_, Arc<App>>, schedule: NewSchedule) -> Result<S
     }
     let added = app
         .schedules()
-        .add(&schedule, *chrono::Local::now().offset(), Utc::now())
+        .add(
+            &schedule,
+            *chrono::Local::now().offset(),
+            Utc::now(),
+            app.device(),
+        )
         .map_err(message)?
         .ok_or("that time has already passed")?;
     app.publish();

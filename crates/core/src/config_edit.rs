@@ -130,6 +130,35 @@ fn color_or_default(color: &str) -> String {
     }
 }
 
+/// Adds this computer's folder to a product another computer created, so both share one pet.
+pub fn add_path(text: &str, id: &str, path: &str) -> Result<String, EditError> {
+    let path = path.trim();
+    if path.is_empty() {
+        return Err(EditError::EmptyPath);
+    }
+    let mut doc: DocumentMut = text.parse()?;
+    let product = doc
+        .get_mut("product")
+        .and_then(Item::as_array_of_tables_mut)
+        .and_then(|products| {
+            products
+                .iter_mut()
+                .find(|table| table.get("id").and_then(Item::as_str) == Some(id))
+        })
+        .ok_or_else(|| EditError::Unknown(id.to_owned()))?;
+    let paths = product
+        .entry("paths")
+        .or_insert(value(Array::new()))
+        .as_array_mut()
+        .ok_or(EditError::Shape)?;
+    if !paths.iter().any(|existing| existing.as_str() == Some(path)) {
+        paths.push(path);
+    }
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// Sets the helper's model and effort; `None` clears them so the agent's own defaults apply.
 pub fn set_helper_agent(
     text: &str,
@@ -398,5 +427,24 @@ mod tests {
         assert!(set_helper_agent("", Some("sonnet"), None)
             .unwrap()
             .contains("[helper]"));
+    }
+
+    #[test]
+    fn a_product_can_have_a_folder_on_each_computer() {
+        let new = NewProduct {
+            name: "Funderly".into(),
+            path: "/Users/m/code/funderly".into(),
+            kind: PetKind::Bao,
+            color: String::new(),
+        };
+        let (text, id) = add_product("", &new).unwrap();
+        let text = add_path(&text, &id, "C:\\Users\\m\\code\\funderly").unwrap();
+        let again = add_path(&text, &id, "C:\\Users\\m\\code\\funderly").unwrap();
+        let product = &Config::parse(&again).unwrap().products[0];
+        assert_eq!(product.paths.len(), 2);
+        assert!(matches!(
+            add_path(&text, "nope", "/x"),
+            Err(EditError::Unknown(_))
+        ));
     }
 }

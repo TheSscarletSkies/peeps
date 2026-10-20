@@ -109,6 +109,13 @@ Tested by `e2e/hub.e2e.ts`, `src/hub/recap.test.ts`, `crates/core/src/helper.rs`
 
 Tested by `e2e/hub.e2e.ts`, `src/hub/gettingStarted.test.ts`.
 
+### UC16. The same peeps on every computer
+
+**When** they use a MacBook and a Windows PC.
+**Then** they choose a folder in a cloud drive they already have (iCloud Drive, OneDrive, Dropbox or Google Drive) on each computer. To-dos, habits, scheduled drafts, products and settings stay in step with no account and nothing hosted. The newest edit wins, deletions travel, and a scheduled draft is written once by the computer that made it. A product can have a folder on each computer. Calendar links, passwords and chats stay on each computer.
+
+Tested by `e2e/hub.e2e.ts`, `crates/core/src/sync.rs`, `crates/core/src/todos.rs`, `crates/core/src/schedule.rs`, `crates/core/src/config_edit.rs`.
+
 ### UC15. Light or dark
 
 **When** they prefer a light window.

@@ -5,7 +5,7 @@ use std::path::Path;
 use chrono::{
     DateTime, Datelike, Days, FixedOffset, Months, NaiveDate, NaiveTime, TimeZone, Utc, Weekday,
 };
-use rusqlite::{params, Connection, Row};
+use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
@@ -121,7 +121,7 @@ pub struct TodoInput {
     pub until: Option<NaiveTime>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Todo {
     pub id: i64,
@@ -235,6 +235,22 @@ pub fn split_tags(text: &str) -> (String, Vec<String>) {
     (title.join(" "), tags)
 }
 
+/// A to-do as it travels between computers.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TodoRecord {
+    pub uid: String,
+    pub updated_at: DateTime<Utc>,
+    pub deleted: bool,
+    #[serde(flatten)]
+    pub todo: Todo,
+}
+
+/// An id that stays the same on every computer.
+pub fn new_uid() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+
 const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS todos (
         id INTEGER PRIMARY KEY,
@@ -251,13 +267,17 @@ const SCHEMA: &str = "
 ";
 
 /// Columns added after the first release, with how to fill them for older rows.
-const ADDED: [(&str, &str); 6] = [
+const ADDED: [(&str, &str); 9] = [
     ("tags", "TEXT NOT NULL DEFAULT ''"),
     ("time", "TEXT"),
     ("repeat", "TEXT NOT NULL DEFAULT 'never'"),
     ("remind_minutes", "INTEGER"),
     ("streak", "INTEGER NOT NULL DEFAULT 0"),
     ("until", "TEXT"),
+    // Sync: an id that is the same on every computer, when it last changed, and deletions kept as markers.
+    ("uid", "TEXT"),
+    ("updated_at", "TEXT"),
+    ("deleted", "INTEGER NOT NULL DEFAULT 0"),
 ];
 
 const COLUMNS: &str =
@@ -291,6 +311,16 @@ impl TodoStore {
         db.execute_batch(
             "UPDATE todos SET tags = TRIM(tags || ' study'), kind = 'task' WHERE kind = 'study'",
         )?;
+        let unnamed: Vec<i64> = db
+            .prepare("SELECT id FROM todos WHERE uid IS NULL")?
+            .query_map([], |row| row.get(0))?
+            .collect::<rusqlite::Result<_>>()?;
+        for id in unnamed {
+            db.execute(
+                "UPDATE todos SET uid = ?1, updated_at = COALESCE(updated_at, created_at) WHERE id = ?2",
+                params![new_uid(), id],
+            )?;
+        }
         Ok(Self { db })
     }
 
@@ -302,8 +332,9 @@ impl TodoStore {
             (due, _) => due,
         };
         self.db.execute(
-            "INSERT INTO todos (title, kind, tags, due, time, repeat, remind_minutes, created_at, until)
-             VALUES (?1, 'task', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO todos (title, kind, tags, due, time, repeat, remind_minutes, created_at, until,
+                 uid, updated_at)
+             VALUES (?1, 'task', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?7)",
             params![
                 title,
                 tags.join(" "),
@@ -312,7 +343,8 @@ impl TodoStore {
                 input.repeat.as_str(),
                 input.remind_minutes,
                 now,
-                input.until
+                input.until,
+                new_uid()
             ],
         )?;
         Ok(Todo {
@@ -335,7 +367,7 @@ impl TodoStore {
         let (title, tags) = split_tags(&input.title);
         let changed = self.db.execute(
             "UPDATE todos SET title = ?1, tags = ?2, due = ?3, time = ?4, repeat = ?5,
-                 remind_minutes = ?6, until = ?7 WHERE id = ?8",
+                 remind_minutes = ?6, until = ?7, updated_at = ?9 WHERE id = ?8",
             params![
                 title,
                 tags.join(" "),
@@ -344,7 +376,8 @@ impl TodoStore {
                 input.repeat.as_str(),
                 input.remind_minutes,
                 input.until,
-                id
+                id,
+                Utc::now()
             ],
         )?;
         Ok(changed > 0)
@@ -371,8 +404,8 @@ impl TodoStore {
                 1
             };
             self.db.execute(
-                "UPDATE todos SET due = ?1, streak = ?2 WHERE id = ?3",
-                params![today, count, id],
+                "UPDATE todos SET due = ?1, streak = ?2, updated_at = ?4 WHERE id = ?3",
+                params![today, count, id, now],
             )?;
             return Ok(true);
         }
@@ -388,13 +421,13 @@ impl TodoStore {
                 let on_time = todo.due.is_some_and(|due| due >= today);
                 let streak = if on_time { todo.streak + 1 } else { 1 };
                 self.db.execute(
-                    "UPDATE todos SET due = ?1, streak = ?2 WHERE id = ?3",
-                    params![next, streak, id],
+                    "UPDATE todos SET due = ?1, streak = ?2, updated_at = ?4 WHERE id = ?3",
+                    params![next, streak, id, now],
                 )?;
             }
             None => {
                 self.db.execute(
-                    "UPDATE todos SET done_at = ?1 WHERE id = ?2",
+                    "UPDATE todos SET done_at = ?1, updated_at = ?1 WHERE id = ?2",
                     params![now, id],
                 )?;
             }
@@ -404,19 +437,92 @@ impl TodoStore {
 
     /// Puts a finished to-do back on the list.
     pub fn reopen(&self, id: i64) -> rusqlite::Result<bool> {
-        let changed = self
-            .db
-            .execute("UPDATE todos SET done_at = NULL WHERE id = ?1", params![id])?;
+        let changed = self.db.execute(
+            "UPDATE todos SET done_at = NULL, updated_at = ?2 WHERE id = ?1",
+            params![id, Utc::now()],
+        )?;
         Ok(changed > 0)
     }
 
+    /// Marks a to-do deleted; the marker syncs, so it disappears on every computer.
     pub fn delete(&self, id: i64) -> rusqlite::Result<bool> {
         self.db
             .execute("DELETE FROM todo_log WHERE todo_id = ?1", params![id])?;
-        Ok(self
-            .db
-            .execute("DELETE FROM todos WHERE id = ?1", params![id])?
-            > 0)
+        Ok(self.db.execute(
+            "UPDATE todos SET deleted = 1, updated_at = ?2 WHERE id = ?1 AND deleted = 0",
+            params![id, Utc::now()],
+        )? > 0)
+    }
+
+    /// Every to-do, deleted ones included, as written to the sync folder.
+    pub fn records(&self) -> rusqlite::Result<Vec<TodoRecord>> {
+        let mut query = self.db.prepare(&format!(
+            "SELECT {COLUMNS}, uid, updated_at, deleted FROM todos WHERE uid IS NOT NULL"
+        ))?;
+        let rows = query.query_map([], |row| {
+            Ok(TodoRecord {
+                todo: Todo::from_row(row)?,
+                uid: row.get(11)?,
+                updated_at: row.get(12)?,
+                deleted: row.get(13)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// Takes in another computer's to-dos: new ones are added, and the newer edit of each wins.
+    /// Returns how many changed here.
+    pub fn apply(&self, records: &[TodoRecord]) -> rusqlite::Result<usize> {
+        let mut changed = 0;
+        for record in records {
+            let local: Option<(i64, DateTime<Utc>)> = self
+                .db
+                .query_row(
+                    "SELECT id, updated_at FROM todos WHERE uid = ?1",
+                    params![record.uid],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                )
+                .optional()?;
+            let todo = &record.todo;
+            let values = params![
+                todo.title,
+                todo.tags.join(" "),
+                todo.due,
+                todo.time,
+                todo.repeat.as_str(),
+                todo.remind_minutes,
+                todo.until,
+                todo.streak,
+                todo.created_at,
+                todo.done_at,
+                record.updated_at,
+                record.deleted,
+                record.uid,
+            ];
+            match local {
+                None if record.deleted => continue,
+                None => {
+                    self.db.execute(
+                        "INSERT INTO todos (title, kind, tags, due, time, repeat, remind_minutes, until,
+                             streak, created_at, done_at, updated_at, deleted, uid)
+                         VALUES (?1, 'task', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                        values,
+                    )?;
+                }
+                Some((_, updated)) if updated >= record.updated_at => continue,
+                Some(_) => {
+                    self.db.execute(
+                        "UPDATE todos SET title = ?1, tags = ?2, due = ?3, time = ?4, repeat = ?5,
+                             remind_minutes = ?6, until = ?7, streak = ?8, created_at = ?9,
+                             done_at = ?10, updated_at = ?11, deleted = ?12
+                         WHERE uid = ?13",
+                        values,
+                    )?;
+                }
+            }
+            changed += 1;
+        }
+        Ok(changed)
     }
 
     fn get(&self, id: i64) -> rusqlite::Result<Option<Todo>> {
@@ -430,7 +536,7 @@ impl TodoStore {
     /// Open to-dos, soonest due first, undated last.
     pub fn open_items(&self) -> rusqlite::Result<Vec<Todo>> {
         let mut query = self.db.prepare(&format!(
-            "SELECT {COLUMNS} FROM todos WHERE done_at IS NULL
+            "SELECT {COLUMNS} FROM todos WHERE done_at IS NULL AND deleted = 0
              ORDER BY due IS NULL, due, time IS NULL, time, id"
         ))?;
         let rows = query.query_map([], Todo::from_row)?;
@@ -449,7 +555,7 @@ impl TodoStore {
     /// Recently finished to-dos, newest first.
     pub fn recently_done(&self, limit: usize) -> rusqlite::Result<Vec<Todo>> {
         let mut query = self.db.prepare(&format!(
-            "SELECT {COLUMNS} FROM todos WHERE done_at IS NOT NULL
+            "SELECT {COLUMNS} FROM todos WHERE done_at IS NOT NULL AND deleted = 0
              ORDER BY done_at DESC LIMIT ?1"
         ))?;
         let rows = query.query_map(params![limit as i64], Todo::from_row)?;
@@ -669,5 +775,63 @@ mod tests {
         .unwrap();
         let store = TodoStore::init(db).unwrap();
         assert_eq!(store.open_items().unwrap()[0].tags, ["study"]);
+    }
+
+    #[test]
+    fn to_dos_travel_between_computers() {
+        let mac = TodoStore::in_memory().unwrap();
+        let windows = TodoStore::in_memory().unwrap();
+        let earlier = Utc::now() - chrono::TimeDelta::minutes(5);
+
+        let rent = mac
+            .add(&dated("Pay rent #bills", "2026-11-01"), earlier)
+            .unwrap();
+        assert_eq!(windows.apply(&mac.records().unwrap()).unwrap(), 1);
+        let there = windows.open_items().unwrap();
+        assert_eq!(there[0].title, "Pay rent");
+        assert_eq!(there[0].tags, ["bills"]);
+
+        // Applying the same thing again changes nothing.
+        assert_eq!(windows.apply(&mac.records().unwrap()).unwrap(), 0);
+
+        // An edit on Windows reaches the Mac; the Mac's older copy does not undo it.
+        let id_there = there[0].id;
+        windows
+            .edit(id_there, &dated("Pay rent and bills #bills", "2026-11-01"))
+            .unwrap();
+        assert_eq!(windows.apply(&mac.records().unwrap()).unwrap(), 0);
+        assert_eq!(mac.apply(&windows.records().unwrap()).unwrap(), 1);
+        assert_eq!(mac.open_items().unwrap()[0].title, "Pay rent and bills");
+
+        // Deleting on the Mac removes it on Windows too.
+        mac.delete(rent.id).unwrap();
+        assert!(mac.open_items().unwrap().is_empty());
+        windows.apply(&mac.records().unwrap()).unwrap();
+        assert!(windows.open_items().unwrap().is_empty());
+
+        // A marker for something never seen here is not resurrected as a to-do.
+        let fresh = TodoStore::in_memory().unwrap();
+        assert_eq!(fresh.apply(&mac.records().unwrap()).unwrap(), 0);
+        assert!(fresh.records().unwrap().is_empty());
+    }
+
+    #[test]
+    fn records_survive_the_trip_through_a_file() {
+        let store = TodoStore::in_memory().unwrap();
+        store
+            .add(
+                &TodoInput {
+                    repeat: Repeat::EveryTwoHours,
+                    time: NaiveTime::from_hms_opt(9, 0, 0),
+                    until: NaiveTime::from_hms_opt(21, 0, 0),
+                    remind_minutes: Some(0),
+                    ..input("Drink water")
+                },
+                Utc::now(),
+            )
+            .unwrap();
+        let json = serde_json::to_string(&store.records().unwrap()).unwrap();
+        let back: Vec<TodoRecord> = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, store.records().unwrap());
     }
 }

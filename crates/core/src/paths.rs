@@ -10,8 +10,25 @@ pub fn data_dir() -> PathBuf {
         .join(".peeps")
 }
 
+/// The settings file: in the sync folder when the user turned sync on, otherwise kept locally.
 pub fn config_file() -> PathBuf {
+    match crate::sync::Local::read(&sync_settings_file()).folder {
+        Some(folder) => crate::sync::Layout::new(&folder).config(),
+        None => local_config_file(),
+    }
+}
+
+pub fn local_config_file() -> PathBuf {
     data_dir().join("config.toml")
+}
+
+/// Which folder this computer syncs through. Never synced itself.
+pub fn sync_settings_file() -> PathBuf {
+    data_dir().join("sync.toml")
+}
+
+pub fn device_file() -> PathBuf {
+    data_dir().join("device")
 }
 
 pub fn database_file() -> PathBuf {

@@ -17,6 +17,7 @@ import { greeting } from "./greeting";
 import {
   AskIcon,
   BellIcon,
+  DevicesIcon,
   HomeIcon,
   MoonIcon,
   ProductsIcon,
@@ -28,6 +29,7 @@ import {
   WriteIcon,
 } from "./icons";
 import { ProductCard } from "./ProductCard";
+import { DevicesPage } from "./DevicesPage";
 import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
@@ -42,7 +44,8 @@ type Page =
   | "write"
   | "tokens"
   | "recap"
-  | "products";
+  | "products"
+  | "devices";
 
 const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "home", label: "Home", icon: <HomeIcon /> },
@@ -53,6 +56,7 @@ const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
   { id: "recap", label: "Recap", icon: <RecapIcon /> },
   { id: "products", label: "Products", icon: <ProductsIcon /> },
+  { id: "devices", label: "Devices", icon: <DevicesIcon /> },
 ];
 
 const URGENT = new Set([
@@ -208,6 +212,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               lead="Your week in one card, ready to share."
             >
               <RecapPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "devices" && (
+            <Section
+              title="Devices"
+              lead="The same peeps on your Mac and your Windows PC."
+            >
+              <DevicesPage snapshot={snapshot} />
             </Section>
           )}
           {page === "products" && (
