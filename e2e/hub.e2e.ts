@@ -2,8 +2,33 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/?view=home");
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("peeps.tour", "done");
+  });
   await page.reload();
+});
+
+test("UC14: a first visit gets a tour that can be followed or skipped", async ({
+  page,
+}) => {
+  await page.evaluate(() => localStorage.removeItem("peeps.tour"));
+  await page.reload();
+  const tour = page.getByRole("dialog", { name: "Tour" });
+  await expect(tour).toContainText("Hi, I'm your helper");
+  await tour.getByRole("button", { name: "Show me" }).click();
+  await expect(tour).toContainText("Ask me anything");
+  await expect(page.getByRole("heading", { name: /^Ask/ })).toBeVisible();
+  await tour.getByRole("button", { name: "Next" }).click();
+  await expect(tour).toContainText("Your list");
+  await tour.getByRole("button", { name: "Back" }).click();
+  await expect(tour).toContainText("Ask me anything");
+  await tour.getByRole("button", { name: "Skip" }).click();
+  await expect(tour).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("dialog", { name: "Tour" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Take the tour" }).click();
+  await expect(page.getByRole("dialog", { name: "Tour" })).toBeVisible();
 });
 
 test("UC14: Home shows what is left to set up", async ({ page }) => {

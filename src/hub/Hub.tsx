@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
 import { Chat } from "../helper/Chat";
@@ -31,6 +31,7 @@ import { ProductCard } from "./ProductCard";
 import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
+import { Tour, tourSeen } from "./Tour";
 import "./hub.css";
 
 type Page =
@@ -67,6 +68,8 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
   const [page, setPage] = useState<Page>("home");
   const [theme, setTheme] = useState<Theme>(savedTheme);
   const [sound, setSound] = useState(soundEnabled);
+  const [touring, setTouring] = useState(() => !tourSeen());
+  const goTo = useCallback((next: string) => setPage(next as Page), []);
   const { helper } = snapshot;
 
   const toggleTheme = () => {
@@ -82,6 +85,9 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
 
   return (
     <div className="hub" data-theme={theme}>
+      {touring && (
+        <Tour helper={helper} onPage={goTo} onClose={() => setTouring(false)} />
+      )}
       <aside className="hub__side">
         <div className="hub__brand">
           <Dumpling
@@ -98,6 +104,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             <button
               key={item.id}
               className={page === item.id ? "nav nav--on" : "nav"}
+              data-tour={item.id}
               aria-current={page === item.id ? "page" : undefined}
               onClick={() => setPage(item.id)}
             >
@@ -109,7 +116,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             </button>
           ))}
         </nav>
-        <div className="hub__toggles">
+        <div className="hub__toggles" data-tour="toggles">
           <button
             className="toggle-icon"
             onClick={toggleTheme}
@@ -126,6 +133,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             title={sound ? "Sound on" : "Sound off"}
           >
             <SoundIcon on={sound} />
+          </button>
+          <button
+            className="toggle-icon"
+            onClick={() => setTouring(true)}
+            aria-label="Take the tour"
+            title="Take the tour"
+          >
+            ?
           </button>
         </div>
         <p className="hub__status">

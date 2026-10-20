@@ -862,3 +862,95 @@ li[data-done] .started__check {
 .hub .agent-picker {
   background: var(--field);
 }
+
+/* The guided tour */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.tour__shade {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tour__spot {
+  position: absolute;
+  border-radius: var(--r-control);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 9999px rgba(0, 0, 0, 0.5);
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+  pointer-events: none;
+}
+
+.tour__bubble {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 12px 32px rgba(0, 0, 0, 0.35);
+  transition:
+    top 0.25s ease,
+    left 0.25s ease;
+  animation: drop 0.2s ease-out;
+}
+
+.tour__bubble--centre {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.tour__bubble p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tour__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tour__dots {
+  display: flex;
+  gap: 4px;
+  margin-right: auto;
+}
+
+.tour__dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--field-line);
+}
+
+.tour__dots span[data-on] {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+}

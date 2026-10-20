@@ -105,7 +105,7 @@ Tested by `e2e/hub.e2e.ts`, `src/hub/recap.test.ts`, `crates/core/src/helper.rs`
 ### UC14. Set up in a few minutes
 
 **When** they open peeps for the first time.
-**Then** Home lists four steps (connect Claude Code, add a product, add a calendar, add a to-do), ticks them off as they happen and can be hidden.
+**Then** a short tour walks through the window one tooltip at a time, with Back, Next and Skip, and can be replayed from the ? in the sidebar. Home also lists four steps (connect Claude Code, add a product, add a calendar, add a to-do), ticks them off as they happen and can be hidden.
 
 Tested by `e2e/hub.e2e.ts`, `src/hub/gettingStarted.test.ts`.
 
