@@ -13,12 +13,23 @@ mod window;
 
 use std::sync::Arc;
 
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
 
 use state::App;
 
+/// Brings up the peeps window, which is what someone opening the app wants to see.
+fn open_home(handle: &AppHandle) {
+    if let Some(home) = handle.get_webview_window(window::HOME) {
+        let _ = window::show_home(&home);
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
+        // Opening peeps again shows the running one rather than starting a second copy.
+        .plugin(tauri_plugin_single_instance::init(|handle, _, _| {
+            open_home(handle)
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
@@ -91,9 +102,7 @@ pub fn run() {
                         let _ = hidden.hide();
                     }
                 });
-                if app.config().products.is_empty() {
-                    window::show_home(&home)?;
-                }
+                window::show_home(&home)?;
             }
 
             let bridge_app = app.clone();
@@ -110,6 +119,16 @@ pub fn run() {
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("failed to start peeps");
+        .build(tauri::generate_context!())
+        .expect("failed to start peeps")
+        .run(|handle, event| {
+            // Clicking the Dock icon. The notch window is always visible, so whether any window
+            // is showing says nothing about whether the user can see peeps.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                open_home(handle);
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (handle, event);
+        });
 }
