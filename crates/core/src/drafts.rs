@@ -60,6 +60,16 @@ pub fn prompt(kind: &str, topic: &str, voice: Option<&str>) -> String {
 
 /// Runs the configured command and returns what it printed.
 pub fn run(command: &[String], prompt: &str, timeout: Duration) -> Result<String, DraftError> {
+    run_in(command, prompt, timeout, None)
+}
+
+/// Like [`run`], from a chosen working folder.
+pub fn run_in(
+    command: &[String],
+    prompt: &str,
+    timeout: Duration,
+    cwd: Option<&Path>,
+) -> Result<String, DraftError> {
     let (program, args) = command.split_first().ok_or(DraftError::NoCommand)?;
     let uses_placeholder = args.iter().any(|arg| arg.contains(PROMPT_PLACEHOLDER));
     let args: Vec<String> = args
@@ -67,7 +77,11 @@ pub fn run(command: &[String], prompt: &str, timeout: Duration) -> Result<String
         .map(|arg| arg.replace(PROMPT_PLACEHOLDER, prompt))
         .collect();
 
-    let mut child = Command::new(crate::paths::expand_home(program))
+    let mut process = Command::new(crate::paths::expand_home(program));
+    if let Some(dir) = cwd {
+        process.current_dir(dir);
+    }
+    let mut child = process
         .args(&args)
         .stdin(if uses_placeholder {
             Stdio::null()

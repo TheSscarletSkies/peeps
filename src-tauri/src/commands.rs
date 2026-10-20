@@ -1,20 +1,21 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use std::time::Duration;
-
 use chrono::Utc;
+use peeps_core::chat::Message;
 use peeps_core::config::{ReminderRule, Reminders};
 use peeps_core::config_edit::{self, NewProduct};
-use peeps_core::drafts::{self, Draft};
+use peeps_core::drafts::Draft;
 use peeps_core::notes::{Delivery, Note};
 use peeps_core::protocol::Decision;
+use peeps_core::schedule::{NewSchedule, Schedule};
 use peeps_core::todos::{self, Todo, TodoInput};
 use peeps_core::{hooks_install, paths};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{Manager, State, WebviewWindow};
 
+use crate::assistant;
 use crate::state::{App, AppSnapshot};
 use crate::{secrets, window};
 
@@ -131,46 +132,41 @@ pub fn delete_draft(app: State<'_, Arc<App>>, id: i64) -> Result<()> {
 /// Asks the user's own agent for a draft. Only one draft runs at a time.
 #[tauri::command]
 pub async fn write_draft(app: State<'_, Arc<App>>, kind: String, topic: String) -> Result<Draft> {
-    if topic.trim().is_empty() {
+    assistant::draft(app.inner().clone(), kind, topic).await
+}
+
+#[tauri::command]
+pub async fn send_chat(app: State<'_, Arc<App>>, text: String) -> Result<Message> {
+    assistant::send(app.inner().clone(), text).await
+}
+
+/// Starts a fresh conversation with the helper.
+#[tauri::command]
+pub fn new_chat(app: State<'_, Arc<App>>) -> Result<()> {
+    app.chat().clear().map_err(message)?;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn add_schedule(app: State<'_, Arc<App>>, schedule: NewSchedule) -> Result<Schedule> {
+    if schedule.topic.trim().is_empty() {
         return Err("tell the helper what to write about".into());
     }
-    let app = app.inner().clone();
-    if !app.start_drafting() {
-        return Err("the helper is already writing a draft".into());
-    }
+    let added = app
+        .schedules()
+        .add(&schedule, *chrono::Local::now().offset(), Utc::now())
+        .map_err(message)?
+        .ok_or("that time has already passed")?;
     app.publish();
+    Ok(added)
+}
 
-    let config = app.config();
-    let helper = &config.helper;
-    let voice = helper
-        .voices
-        .get(&kind)
-        .filter(|path| !path.is_empty())
-        .map(|path| std::fs::read_to_string(paths::expand_home(path)))
-        .transpose()
-        .map_err(|error| format!("could not read the voice guide: {error}"));
-    let command = helper.command.clone();
-    let timeout = Duration::from_secs(helper.timeout_seconds);
-
-    let result = match voice {
-        Ok(voice) => {
-            let prompt = drafts::prompt(&kind, &topic, voice.as_deref());
-            tauri::async_runtime::spawn_blocking(move || drafts::run(&command, &prompt, timeout))
-                .await
-                .map_err(message)
-                .and_then(|outcome| outcome.map_err(message))
-        }
-        Err(error) => Err(error),
-    };
-
-    let saved = result.and_then(|text| {
-        app.drafts()
-            .add(&kind, &topic, &text, Utc::now())
-            .map_err(message)
-    });
-    app.finish_drafting();
+#[tauri::command]
+pub fn delete_schedule(app: State<'_, Arc<App>>, id: i64) -> Result<()> {
+    app.schedules().delete(id).map_err(message)?;
     app.publish();
-    saved
+    Ok(())
 }
 
 #[derive(Serialize)]

@@ -18,6 +18,11 @@ pub fn database_file() -> PathBuf {
     data_dir().join("peeps.db")
 }
 
+/// Where the helper's own agent runs, so its conversations and approvals stay apart from products.
+pub fn assistant_dir() -> PathBuf {
+    data_dir().join("assistant")
+}
+
 pub fn claude_settings_file() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))

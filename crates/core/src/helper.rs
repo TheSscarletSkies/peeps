@@ -6,9 +6,12 @@ use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, TimeDelta, Utc};
 use serde::Serialize;
 
 use crate::calendar::Event;
+use crate::chat::Message;
 use crate::config::{Helper, PetKind};
 use crate::drafts::{self, Draft};
 use crate::mood::Mood;
+use crate::schedule::Schedule;
+use crate::snapshot::PermissionView;
 use crate::todos::{Due, Todo};
 use crate::usage::Usage;
 
@@ -30,6 +33,12 @@ pub struct HelperView {
     pub drafts_this_week: usize,
     /// The next few calendar events, soonest first.
     pub upcoming: Vec<Event>,
+    pub chat: Vec<Message>,
+    /// True while the agent is answering a chat message.
+    pub chatting: bool,
+    pub schedules: Vec<Schedule>,
+    /// The helper's own agent asking to use a tool.
+    pub permission: Option<PermissionView>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -80,6 +89,10 @@ pub struct HelperInputs<'a> {
     pub today: NaiveDate,
     pub upcoming: Vec<Event>,
     pub now: DateTime<Utc>,
+    pub chat: Vec<Message>,
+    pub chatting: bool,
+    pub schedules: Vec<Schedule>,
+    pub permission: Option<PermissionView>,
 }
 
 /// Events starting this soon take over the helper's headline.
@@ -104,7 +117,11 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
             && (event.start - inputs.now).num_minutes() <= SOON_MINUTES
     });
 
-    let (mood, headline) = if let Some(event) = next {
+    let (mood, headline) = if inputs.permission.is_some() {
+        (Mood::NeedsYou, "Asking to use a tool".to_owned())
+    } else if inputs.chatting {
+        (Mood::Working, "Thinking…".to_owned())
+    } else if let Some(event) = next {
         let minutes = (event.start - inputs.now).num_minutes().max(1);
         (Mood::NeedsYou, format!("{} in {minutes} min", event.title))
     } else if inputs.drafting {
@@ -151,6 +168,10 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         todos_done_this_week: inputs.todos_done_this_week,
         drafts_this_week: inputs.drafts_this_week,
         upcoming: inputs.upcoming,
+        chat: inputs.chat,
+        chatting: inputs.chatting,
+        schedules: inputs.schedules,
+        permission: inputs.permission,
     }
 }
 
@@ -243,6 +264,10 @@ mod tests {
             today: "2026-10-19".parse().unwrap(),
             upcoming: Vec::new(),
             now: Utc::now(),
+            chat: Vec::new(),
+            chatting: false,
+            schedules: Vec::new(),
+            permission: None,
         });
         (helper.mood, helper.headline)
     }
@@ -286,6 +311,10 @@ mod tests {
             today: "2026-10-19".parse().unwrap(),
             upcoming: Vec::new(),
             now: Utc::now(),
+            chat: Vec::new(),
+            chatting: false,
+            schedules: Vec::new(),
+            permission: None,
         });
         let labels: Vec<_> = helper
             .draft_kinds
@@ -377,6 +406,10 @@ mod tests {
             today: now.date_naive(),
             upcoming: vec![class],
             now,
+            chat: Vec::new(),
+            chatting: false,
+            schedules: Vec::new(),
+            permission: None,
         });
         assert_eq!(helper.mood, Mood::NeedsYou);
         assert_eq!(helper.headline, "Marketing class in 25 min");

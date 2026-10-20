@@ -95,6 +95,10 @@ pub struct Helper {
     pub timeout_seconds: u64,
     /// Draft kinds offered in the Write tab, each with an optional voice guide file.
     pub voices: BTreeMap<String, String>,
+    /// The agent the helper chats through. Each message goes in on stdin; Claude Code resumes the
+    /// same conversation and is told about your day.
+    pub chat_command: Vec<String>,
+    pub chat_timeout_seconds: u64,
 }
 
 impl Default for Helper {
@@ -111,6 +115,10 @@ impl Default for Helper {
                 ("linkedin".into(), String::new()),
                 ("x".into(), String::new()),
             ]),
+            chat_command: ["claude", "-p", "--output-format", "json"]
+                .map(String::from)
+                .to_vec(),
+            chat_timeout_seconds: 600,
         }
     }
 }

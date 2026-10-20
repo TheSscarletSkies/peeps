@@ -6,14 +6,16 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock};
 use chrono::{DateTime, Local, TimeDelta, Utc};
 use peeps_core::advice::Tip;
 use peeps_core::calendar::{self, Event, FeedEvent};
+use peeps_core::chat::ChatStore;
 use peeps_core::config::{Config, Reminders};
 use peeps_core::drafts::DraftStore;
 use peeps_core::helper::{self, HelperView, Week};
 use peeps_core::notes::{self, Delivery, NoteStore};
 use peeps_core::paths;
 use peeps_core::protocol::{Decision, HookEvent, HookInput, Reply};
+use peeps_core::schedule::ScheduleStore;
 use peeps_core::session::{describe_tool, Sessions};
-use peeps_core::snapshot::{self, CheckResults, PendingPermission, Snapshot};
+use peeps_core::snapshot::{self, CheckResults, PendingPermission, PermissionView, Snapshot};
 use peeps_core::todos::TodoStore;
 use peeps_core::usage::Transcript;
 use serde::Serialize;
@@ -23,6 +25,9 @@ use tokio::sync::oneshot;
 const RECENT_NOTES: usize = 20;
 const RECENT_DONE: usize = 10;
 const RECENT_DRAFTS: usize = 10;
+const RECENT_CHAT: usize = 40;
+/// Permission requests from the helper's own agent are filed under this id.
+pub const HELPER_ID: &str = "helper";
 const STARTER_CONFIG: &str = "# peeps: add products from the app, or by hand.\n\
 # Every option is described in the README; examples/ has full setups.\n";
 pub const SNAPSHOT_EVENT: &str = "snapshot";
@@ -112,6 +117,9 @@ pub struct App {
     todos: Mutex<TodoStore>,
     drafts: Mutex<DraftStore>,
     drafting: AtomicBool,
+    chat: Mutex<ChatStore>,
+    chatting: AtomicBool,
+    schedules: Mutex<ScheduleStore>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
     handle: AppHandle,
@@ -132,6 +140,9 @@ impl App {
             todos: Mutex::new(TodoStore::open(&paths::database_file())?),
             drafts: Mutex::new(DraftStore::open(&paths::database_file())?),
             drafting: AtomicBool::new(false),
+            chat: Mutex::new(ChatStore::open(&paths::database_file())?),
+            chatting: AtomicBool::new(false),
+            schedules: Mutex::new(ScheduleStore::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             handle,
@@ -187,6 +198,25 @@ impl App {
 
     pub fn drafts(&self) -> MutexGuard<'_, DraftStore> {
         self.drafts.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    pub fn chat(&self) -> MutexGuard<'_, ChatStore> {
+        self.chat.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    pub fn schedules(&self) -> MutexGuard<'_, ScheduleStore> {
+        self.schedules
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Marks a chat turn as in progress. Returns false if the helper is still answering.
+    pub fn start_chatting(&self) -> bool {
+        !self.chatting.swap(true, Ordering::SeqCst)
+    }
+
+    pub fn finish_chatting(&self) {
+        self.chatting.store(false, Ordering::SeqCst);
     }
 
     /// Marks a draft as in progress. Returns false if one is already being written.
@@ -260,7 +290,18 @@ impl App {
         let todos_done_this_week = self.todos().done_since(week_ago).unwrap_or_default();
         let drafts = self.drafts().recent(RECENT_DRAFTS).unwrap_or_default();
         let drafts_this_week = self.drafts().count_since(week_ago).unwrap_or_default();
+        let chat = self.chat().recent(RECENT_CHAT).unwrap_or_default();
+        let schedules = self.schedules().all().unwrap_or_default();
         let world = self.world();
+        let permission = world
+            .permissions
+            .iter()
+            .find(|pending| pending.product_id == HELPER_ID)
+            .map(|pending| PermissionView {
+                request_id: pending.request_id,
+                tool: pending.tool.clone(),
+                summary: pending.summary.clone(),
+            });
         AppSnapshot {
             helper: helper::view(helper::HelperInputs {
                 config: &config.helper,
@@ -274,6 +315,10 @@ impl App {
                 today: Local::now().date_naive(),
                 upcoming,
                 now,
+                chat,
+                chatting: self.chatting.load(Ordering::SeqCst),
+                schedules,
+                permission,
             }),
             snapshot: snapshot::build(snapshot::Inputs {
                 config: &config,
@@ -316,6 +361,11 @@ impl App {
             .map(|product| product.id.clone())
     }
 
+    /// True for the helper's own agent, which runs in its own folder.
+    fn is_assistant(cwd: Option<&str>) -> bool {
+        cwd.is_some_and(|dir| paths::is_within(Path::new(dir), &paths::assistant_dir()))
+    }
+
     /// Records a hook event and works out the reply, waiting for the user on permission requests.
     pub async fn on_hook(&self, input: HookInput) -> Option<Reply> {
         let now = Utc::now();
@@ -332,6 +382,9 @@ impl App {
         let reply = match (event, product) {
             (HookEvent::PermissionRequest, Some(product)) if self.config().settings.approvals => {
                 Some(self.ask(&input, product).await)
+            }
+            (HookEvent::PermissionRequest, None) if Self::is_assistant(input.cwd.as_deref()) => {
+                Some(self.ask(&input, HELPER_ID.to_owned()).await)
             }
             (HookEvent::SessionStart, Some(product)) => {
                 Some(self.deliver(&product, Delivery::NextSession))

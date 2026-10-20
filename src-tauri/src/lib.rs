@@ -1,3 +1,4 @@
+mod assistant;
 mod bridge;
 mod commands;
 mod remind;
@@ -28,6 +29,10 @@ pub fn run() {
             commands::delete_todo,
             commands::write_draft,
             commands::delete_draft,
+            commands::send_chat,
+            commands::new_chat,
+            commands::add_schedule,
+            commands::delete_schedule,
             commands::hooks_status,
             commands::install_hooks,
             commands::uninstall_hooks,
@@ -70,6 +75,7 @@ pub fn run() {
                 }
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));
+            tauri::async_runtime::spawn(assistant::run_schedules(app.clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())
         })

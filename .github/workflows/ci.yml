@@ -39,7 +39,7 @@ jobs:
         run: |
           set -o pipefail
           if ! cargo clippy -p peeps-desktop --all-targets -- -D warnings 2> clippy.log; then
-            python3 -c "import re,sys; t=open('clippy.log').read(); m=[b for b in re.split(r'\n(?=error|warning)', t) if b.startswith(('error','warning'))][:4]; print('::error title=clippy::' + '\n\n'.join(m).replace('%','%25').replace('\n','%0A'))"
+            python3 -c "t=open('clippy.log').read().splitlines()[-60:]; print('::error title=clippy::' + '%0A'.join(l.replace('%','%25') for l in t))"
             exit 1
           fi
 

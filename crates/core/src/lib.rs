@@ -1,5 +1,6 @@
 pub mod advice;
 pub mod calendar;
+pub mod chat;
 pub mod checks;
 pub mod config;
 pub mod config_edit;
