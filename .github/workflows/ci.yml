@@ -52,6 +52,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: No modules that differ only in case
+        run: |
+          clashes=$(git ls-files 'src/*.ts' 'src/*.tsx' 'e2e/*.ts' | sed -E 's/\.tsx?$//' | tr 'A-Z' 'a-z' | sort | uniq -d)
+          if [ -n "$clashes" ]; then echo "::error::Clash on macOS and Windows: $clashes"; exit 1; fi
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck

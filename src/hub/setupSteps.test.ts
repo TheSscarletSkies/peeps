@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { demoSnapshot } from "../lib/demo";
-import { gettingStarted } from "./gettingStarted";
+import { gettingStarted } from "./setupSteps";
 
 describe("getting started", () => {
   it("ticks off what is already done", () => {

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { hooksStatus } from "../lib/bridge";
 import type { Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
-import { gettingStarted, type Destination } from "./gettingStarted";
+import { gettingStarted, type Destination } from "./setupSteps";
 
 const KEY = "peeps.started";
 
