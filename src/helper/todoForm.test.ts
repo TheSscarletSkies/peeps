@@ -16,6 +16,7 @@ describe("todo form", () => {
       time: "18:00",
       repeat: "never",
       remindMinutes: 30,
+      until: null,
     });
   });
 
@@ -26,6 +27,20 @@ describe("todo form", () => {
       time: null,
       repeat: "never",
       remindMinutes: null,
+      until: null,
+    });
+  });
+
+  it("gives daytime nudges a window and always reminds", () => {
+    expect(
+      inputFrom({ ...EMPTY, text: "Drink water", repeat: "every2h" }),
+    ).toEqual({
+      title: "Drink water",
+      due: null,
+      time: "09:00",
+      repeat: "every2h",
+      remindMinutes: 0,
+      until: "21:00",
     });
   });
 

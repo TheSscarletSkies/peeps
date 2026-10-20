@@ -6,7 +6,7 @@ use std::time::Duration;
 use chrono::{Local, TimeDelta, Utc};
 use peeps_core::chat::{self, Message, Speaker};
 use peeps_core::drafts::{self, Draft};
-use peeps_core::paths;
+use peeps_core::{paths, quick};
 
 use crate::state::App;
 
@@ -67,6 +67,9 @@ pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
     if text.is_empty() {
         return Err("say something first".into());
     }
+    if let Some(reply) = quick_reminder(&app, &text)? {
+        return Ok(reply);
+    }
     if !app.start_chatting() {
         return Err("the helper is still answering".into());
     }
@@ -83,6 +86,40 @@ pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
         .map_err(|error| error.to_string());
     app.publish();
     message
+}
+
+/// "Remind me to …" is understood here and added straight away, without waking the agent.
+fn quick_reminder(app: &App, text: &str) -> Result<Option<Message>> {
+    let Some(quick) = quick::parse(text, Local::now().fixed_offset()) else {
+        return Ok(None);
+    };
+    let now = Utc::now();
+    app.chat()
+        .add(Speaker::You, text, now)
+        .map_err(|error| error.to_string())?;
+    app.todos()
+        .add(&quick.input, now)
+        .map_err(|error| error.to_string())?;
+    let task = lowercase_first(&quick.input.title);
+    let reply = if quick.input.remind_minutes.is_some() {
+        format!("Got it. I'll remind you to {task} {}.", quick.summary)
+    } else {
+        format!("Added “{}” to your list.", quick.input.title)
+    };
+    let message = app
+        .chat()
+        .add(Speaker::Helper, &reply, Utc::now())
+        .map_err(|error| error.to_string())?;
+    app.publish();
+    Ok(Some(message))
+}
+
+fn lowercase_first(text: &str) -> String {
+    let mut chars = text.chars();
+    match chars.next() {
+        Some(first) => first.to_lowercase().chain(chars).collect(),
+        None => String::new(),
+    }
 }
 
 async fn turn(app: &Arc<App>, text: &str) -> Result<String> {

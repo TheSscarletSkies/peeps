@@ -44,6 +44,16 @@ test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {
   await expect(page.locator(".todos li")).toHaveCount(1);
 });
 
+test("UC10: nudges through the day get a from–to window", async ({ page }) => {
+  await page.getByRole("tab", { name: "To-do" }).click();
+  await expect(page.getByText("Every 2 h · 3 today")).toBeVisible();
+  await page.getByLabel("To-do").last().fill("Stretch");
+  await page.getByLabel("Repeat").last().selectOption("every2h");
+  await expect(page.getByLabel("Due date")).toHaveCount(0);
+  await expect(page.getByLabel("From")).toHaveValue("09:00");
+  await expect(page.getByLabel("Until")).toHaveValue("21:00");
+});
+
 test("UC12: a draft can be scheduled to repeat", async ({ page }) => {
   await page.getByRole("tab", { name: "Write" }).click();
   await expect(

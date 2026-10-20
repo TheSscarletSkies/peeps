@@ -27,7 +27,11 @@ pub async fn run(app: Arc<App>) {
         let events = app.events(after - TimeDelta::days(1), now + LOOKAHEAD);
         let mut all = reminders::for_events(&events, &config.calendars, &config.reminders, zone);
         let todos = app.todos().open_items().unwrap_or_default();
-        all.extend(reminders::for_todos(&todos, zone));
+        all.extend(reminders::for_todos(
+            &todos,
+            zone,
+            Local::now().date_naive(),
+        ));
 
         let due = reminders::due(&all, after, now);
         for reminder in &due {

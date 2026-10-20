@@ -17,9 +17,25 @@ pub enum Repeat {
     Weekdays,
     Weekly,
     Monthly,
+    /// Through the day, between the to-do's time and `until`: drink water, stretch.
+    Hourly,
+    #[serde(rename = "every2h")]
+    EveryTwoHours,
+    #[serde(rename = "every3h")]
+    EveryThreeHours,
 }
 
 impl Repeat {
+    /// Hours between nudges for repeats that come round during the day.
+    pub fn hours(self) -> Option<i64> {
+        match self {
+            Self::Hourly => Some(1),
+            Self::EveryTwoHours => Some(2),
+            Self::EveryThreeHours => Some(3),
+            _ => None,
+        }
+    }
+
     fn as_str(self) -> &'static str {
         match self {
             Self::Never => "never",
@@ -27,6 +43,9 @@ impl Repeat {
             Self::Weekdays => "weekdays",
             Self::Weekly => "weekly",
             Self::Monthly => "monthly",
+            Self::Hourly => "hourly",
+            Self::EveryTwoHours => "every2h",
+            Self::EveryThreeHours => "every3h",
         }
     }
 
@@ -36,6 +55,9 @@ impl Repeat {
             "weekdays" => Self::Weekdays,
             "weekly" => Self::Weekly,
             "monthly" => Self::Monthly,
+            "hourly" => Self::Hourly,
+            "every2h" => Self::EveryTwoHours,
+            "every3h" => Self::EveryThreeHours,
             _ => Self::Never,
         }
     }
@@ -54,6 +76,9 @@ impl Repeat {
             }
             Self::Weekly => date.checked_add_days(Days::new(7)),
             Self::Monthly => date.checked_add_months(Months::new(1)),
+            Self::Hourly | Self::EveryTwoHours | Self::EveryThreeHours => {
+                date.checked_add_days(Days::new(1))
+            }
         }
     }
 }
@@ -75,9 +100,14 @@ const MORNING: NaiveTime = match NaiveTime::from_hms_opt(9, 0, 0) {
     Some(time) => time,
     None => panic!("nine o'clock exists"),
 };
+/// Nudges through the day stop here unless told otherwise.
+const EVENING: NaiveTime = match NaiveTime::from_hms_opt(21, 0, 0) {
+    Some(time) => time,
+    None => panic!("nine in the evening exists"),
+};
 
 /// What someone typed: a title that may carry `#tags`, and when it is due.
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TodoInput {
     pub title: String,
@@ -87,6 +117,8 @@ pub struct TodoInput {
     pub repeat: Repeat,
     /// Minutes before the due time to remind. `None` means no reminder.
     pub remind_minutes: Option<i64>,
+    /// When nudges through the day stop.
+    pub until: Option<NaiveTime>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -99,7 +131,8 @@ pub struct Todo {
     pub time: Option<NaiveTime>,
     pub repeat: Repeat,
     pub remind_minutes: Option<i64>,
-    /// Times in a row a repeating to-do was done on time.
+    pub until: Option<NaiveTime>,
+    /// Times in a row a repeating to-do was done on time; for nudges through the day, times today.
     pub streak: i64,
     pub created_at: DateTime<Utc>,
     pub done_at: Option<DateTime<Utc>>,
@@ -118,12 +151,38 @@ impl Todo {
         }
     }
 
-    /// A streak only counts while it is unbroken.
+    /// A streak only counts while it is unbroken; a daytime count starts again each morning.
     pub fn live_streak(&self, today: NaiveDate) -> i64 {
         match self.due {
             Some(due) if due < today => 0,
+            Some(due) if self.repeat.hours().is_some() && due != today => 0,
             _ => self.streak,
         }
+    }
+
+    /// Every nudge for a to-do that repeats through the day, on `day`, in the user's zone.
+    pub fn nudges_on(&self, day: NaiveDate, zone: FixedOffset) -> Vec<DateTime<Utc>> {
+        let Some(hours) = self.repeat.hours() else {
+            return Vec::new();
+        };
+        if self.remind_minutes.is_none() || self.due.is_some_and(|due| due > day) {
+            return Vec::new();
+        }
+        let start = self.time.unwrap_or(MORNING);
+        let end = self.until.unwrap_or(EVENING);
+        let mut at = start;
+        let mut found = Vec::new();
+        while at <= end {
+            if let Some(local) = zone.from_local_datetime(&day.and_time(at)).single() {
+                found.push(local.with_timezone(&Utc));
+            }
+            let (next, wrapped) = at.overflowing_add_signed(chrono::TimeDelta::hours(hours));
+            if wrapped != 0 {
+                break;
+            }
+            at = next;
+        }
+        found
     }
 
     /// When to remind, in the user's time zone: the due time, or the morning of, less the lead time.
@@ -147,6 +206,7 @@ impl Todo {
             streak: row.get(7)?,
             created_at: row.get(8)?,
             done_at: row.get(9)?,
+            until: row.get(10)?,
         })
     }
 }
@@ -191,16 +251,17 @@ const SCHEMA: &str = "
 ";
 
 /// Columns added after the first release, with how to fill them for older rows.
-const ADDED: [(&str, &str); 5] = [
+const ADDED: [(&str, &str); 6] = [
     ("tags", "TEXT NOT NULL DEFAULT ''"),
     ("time", "TEXT"),
     ("repeat", "TEXT NOT NULL DEFAULT 'never'"),
     ("remind_minutes", "INTEGER"),
     ("streak", "INTEGER NOT NULL DEFAULT 0"),
+    ("until", "TEXT"),
 ];
 
 const COLUMNS: &str =
-    "id, title, tags, due, time, repeat, remind_minutes, streak, created_at, done_at";
+    "id, title, tags, due, time, repeat, remind_minutes, streak, created_at, done_at, until";
 
 pub struct TodoStore {
     db: Connection,
@@ -241,8 +302,8 @@ impl TodoStore {
             (due, _) => due,
         };
         self.db.execute(
-            "INSERT INTO todos (title, kind, tags, due, time, repeat, remind_minutes, created_at)
-             VALUES (?1, 'task', ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT INTO todos (title, kind, tags, due, time, repeat, remind_minutes, created_at, until)
+             VALUES (?1, 'task', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 title,
                 tags.join(" "),
@@ -250,7 +311,8 @@ impl TodoStore {
                 input.time,
                 input.repeat.as_str(),
                 input.remind_minutes,
-                now
+                now,
+                input.until
             ],
         )?;
         Ok(Todo {
@@ -261,6 +323,7 @@ impl TodoStore {
             time: input.time,
             repeat: input.repeat,
             remind_minutes: input.remind_minutes,
+            until: input.until,
             streak: 0,
             created_at: now,
             done_at: None,
@@ -272,7 +335,7 @@ impl TodoStore {
         let (title, tags) = split_tags(&input.title);
         let changed = self.db.execute(
             "UPDATE todos SET title = ?1, tags = ?2, due = ?3, time = ?4, repeat = ?5,
-                 remind_minutes = ?6 WHERE id = ?7",
+                 remind_minutes = ?6, until = ?7 WHERE id = ?8",
             params![
                 title,
                 tags.join(" "),
@@ -280,6 +343,7 @@ impl TodoStore {
                 input.time,
                 input.repeat.as_str(),
                 input.remind_minutes,
+                input.until,
                 id
             ],
         )?;
@@ -300,6 +364,18 @@ impl TodoStore {
             "INSERT INTO todo_log (todo_id, done_at) VALUES (?1, ?2)",
             params![id, now],
         )?;
+        if todo.repeat.hours().is_some() {
+            let count = if todo.due == Some(today) {
+                todo.streak + 1
+            } else {
+                1
+            };
+            self.db.execute(
+                "UPDATE todos SET due = ?1, streak = ?2 WHERE id = ?3",
+                params![today, count, id],
+            )?;
+            return Ok(true);
+        }
         let next = todo.due.and_then(|due| {
             let mut next = todo.repeat.after(due)?;
             while next <= today {
@@ -499,6 +575,35 @@ mod tests {
             store.done_since(now - chrono::TimeDelta::days(1)).unwrap(),
             3
         );
+    }
+
+    #[test]
+    fn daytime_nudges_fill_the_window_and_count_today() {
+        let zone = FixedOffset::east_opt(5 * 3600).unwrap();
+        let store = TodoStore::in_memory().unwrap();
+        let water = TodoInput {
+            repeat: Repeat::EveryTwoHours,
+            time: NaiveTime::from_hms_opt(9, 0, 0),
+            until: NaiveTime::from_hms_opt(15, 0, 0),
+            remind_minutes: Some(0),
+            ..input("Drink water")
+        };
+        let todo = store.add(&water, Utc::now()).unwrap();
+        let day = day("2026-10-20");
+        let hours: Vec<String> = todo
+            .nudges_on(day, zone)
+            .iter()
+            .map(|at| at.with_timezone(&zone).format("%H:%M").to_string())
+            .collect();
+        assert_eq!(hours, ["09:00", "11:00", "13:00", "15:00"]);
+
+        store.complete(todo.id, Utc::now(), day).unwrap();
+        store.complete(todo.id, Utc::now(), day).unwrap();
+        let open = store.open_items().unwrap();
+        assert_eq!(open[0].streak, 2);
+        assert_eq!(open[0].live_streak(day), 2);
+        assert_eq!(open[0].live_streak(day.succ_opt().unwrap()), 0);
+        assert!(open[0].done_at.is_none());
     }
 
     #[test]

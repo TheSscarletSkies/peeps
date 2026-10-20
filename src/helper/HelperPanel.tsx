@@ -24,6 +24,7 @@ import {
   EMPTY,
   hasTitle,
   inputFrom,
+  isDaytime,
   REMINDERS,
   REPEATS,
   whenLabel,
@@ -105,6 +106,7 @@ function TodoForm({
   onCancel?: () => void;
 }) {
   const set = (patch: Partial<TodoDraft>) => onChange({ ...draft, ...patch });
+  const daytime = isDaytime(draft.repeat);
   return (
     <form
       className="todo-form"
@@ -127,16 +129,6 @@ function TodoForm({
         onChange={(event) => set({ text: event.target.value })}
       />
       <div className="feed">
-        <label className="visually-hidden" htmlFor={`${id}-due`}>
-          Due date
-        </label>
-        <input
-          id={`${id}-due`}
-          className="feed__date"
-          type="date"
-          value={draft.due}
-          onChange={(event) => set({ due: event.target.value })}
-        />
         <label className="visually-hidden" htmlFor={`${id}-repeat`}>
           Repeat
         </label>
@@ -151,8 +143,48 @@ function TodoForm({
             </option>
           ))}
         </select>
+        {!daytime && (
+          <>
+            <label className="visually-hidden" htmlFor={`${id}-due`}>
+              Due date
+            </label>
+            <input
+              id={`${id}-due`}
+              className="feed__date"
+              type="date"
+              value={draft.due}
+              onChange={(event) => set({ due: event.target.value })}
+            />
+          </>
+        )}
       </div>
-      {draft.due && (
+      {daytime && (
+        <div className="feed todo-form__window">
+          <span>From</span>
+          <label className="visually-hidden" htmlFor={`${id}-from`}>
+            From
+          </label>
+          <input
+            id={`${id}-from`}
+            className="feed__time"
+            type="time"
+            value={draft.time || "09:00"}
+            onChange={(event) => set({ time: event.target.value })}
+          />
+          <span>to</span>
+          <label className="visually-hidden" htmlFor={`${id}-until`}>
+            Until
+          </label>
+          <input
+            id={`${id}-until`}
+            className="feed__time"
+            type="time"
+            value={draft.until || "21:00"}
+            onChange={(event) => set({ until: event.target.value })}
+          />
+        </div>
+      )}
+      {!daytime && draft.due && (
         <div className="feed">
           <label className="visually-hidden" htmlFor={`${id}-time`}>
             Time
@@ -206,6 +238,9 @@ const REPEAT_LABEL: Record<Repeat, string> = {
   weekdays: "Weekdays",
   weekly: "Weekly",
   monthly: "Monthly",
+  hourly: "Every hour",
+  every2h: "Every 2 h",
+  every3h: "Every 3 h",
 };
 
 function TodoRow({
@@ -237,9 +272,12 @@ function TodoRow({
     );
   }
 
-  const when = todo.due
-    ? whenLabel(todo, DUE_LABEL[todo.dueState] || todo.due)
-    : "";
+  const daytime = isDaytime(todo.repeat);
+  const when = daytime
+    ? `${todo.time?.slice(0, 5) ?? ""}–${todo.until?.slice(0, 5) ?? ""}`
+    : todo.due
+      ? whenLabel(todo, DUE_LABEL[todo.dueState] || todo.due)
+      : "";
 
   return (
     <li data-due={todo.dueState}>
@@ -270,9 +308,11 @@ function TodoRow({
       <span className="todos__meta">
         {todo.repeat !== "never" && (
           <span className="todos__repeat">
-            {todo.liveStreak > 1
-              ? `${todo.liveStreak} in a row`
-              : REPEAT_LABEL[todo.repeat]}
+            {daytime
+              ? `${REPEAT_LABEL[todo.repeat]}${todo.liveStreak > 0 ? ` · ${todo.liveStreak} today` : ""}`
+              : todo.liveStreak > 1
+                ? `${todo.liveStreak} in a row`
+                : REPEAT_LABEL[todo.repeat]}
           </span>
         )}
         {when && <span className="todos__due">{when}</span>}

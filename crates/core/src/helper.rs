@@ -250,6 +250,7 @@ mod tests {
             time: None,
             repeat: Repeat::Never,
             remind_minutes: None,
+            until: None,
             streak: 0,
             created_at: Utc::now(),
             done_at: None,

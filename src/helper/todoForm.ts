@@ -6,7 +6,15 @@ export const REPEATS: { id: Repeat; label: string }[] = [
   { id: "weekdays", label: "Weekdays" },
   { id: "weekly", label: "Weekly" },
   { id: "monthly", label: "Monthly" },
+  { id: "hourly", label: "Every hour" },
+  { id: "every2h", label: "Every 2 hours" },
+  { id: "every3h", label: "Every 3 hours" },
 ];
+
+/** Repeats that come round during the day, between a start and an end time. */
+export function isDaytime(repeat: Repeat): boolean {
+  return repeat === "hourly" || repeat === "every2h" || repeat === "every3h";
+}
 
 /** Lead times on offer; `null` turns the reminder off. */
 export const REMINDERS: { minutes: number | null; label: string }[] = [
@@ -26,6 +34,7 @@ export interface TodoDraft {
   time: string;
   repeat: Repeat;
   remind: string;
+  until: string;
 }
 
 export const EMPTY: TodoDraft = {
@@ -34,6 +43,7 @@ export const EMPTY: TodoDraft = {
   time: "",
   repeat: "never",
   remind: "",
+  until: "",
 };
 
 /** Puts the tags back on the end of the title so they can be edited as text. */
@@ -44,16 +54,28 @@ export function draftFrom(todo: Todo): TodoDraft {
     time: todo.time?.slice(0, 5) ?? "",
     repeat: todo.repeat,
     remind: todo.remindMinutes === null ? "" : String(todo.remindMinutes),
+    until: todo.until?.slice(0, 5) ?? "",
   };
 }
 
 export function inputFrom(draft: TodoDraft): TodoInput {
+  if (isDaytime(draft.repeat)) {
+    return {
+      title: draft.text.trim(),
+      due: null,
+      time: draft.time || "09:00",
+      repeat: draft.repeat,
+      remindMinutes: 0,
+      until: draft.until || "21:00",
+    };
+  }
   return {
     title: draft.text.trim(),
     due: draft.due || null,
     time: draft.time || null,
     repeat: draft.repeat,
     remindMinutes: draft.remind === "" ? null : Number(draft.remind),
+    until: null,
   };
 }
 

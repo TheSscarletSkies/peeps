@@ -1,6 +1,6 @@
 //! Turns calendar events and to-dos into notifications at the right lead time.
 
-use chrono::{DateTime, FixedOffset, TimeDelta, Utc};
+use chrono::{DateTime, FixedOffset, NaiveDate, TimeDelta, Utc};
 
 use crate::calendar::Event;
 use crate::config::{CalendarFeed, Reminders};
@@ -71,23 +71,46 @@ pub fn for_events(
         .collect()
 }
 
-pub fn for_todos(todos: &[Todo], zone: FixedOffset) -> Vec<Reminder> {
-    todos
-        .iter()
-        .filter_map(|todo| {
-            let at = todo.remind_at(zone)?;
-            let body = match todo.time {
-                Some(_) => format!("Due at {}", clock(at_due(todo, at), zone)),
-                None => "Due today".to_owned(),
-            };
-            Some(Reminder {
-                key: format!("todo:{}:{}", todo.id, at.timestamp()),
-                title: todo.title.clone(),
-                body,
-                at,
-            })
-        })
-        .collect()
+pub fn for_todos(todos: &[Todo], zone: FixedOffset, today: NaiveDate) -> Vec<Reminder> {
+    let mut reminders = Vec::new();
+    for todo in todos {
+        if todo.repeat.hours().is_some() {
+            // Today's and tomorrow's nudges, so the evening's last one and the morning's first are both covered.
+            for day in [Some(today), today.succ_opt()].into_iter().flatten() {
+                for at in todo.nudges_on(day, zone) {
+                    reminders.push(Reminder {
+                        key: format!("todo:{}:{}", todo.id, at.timestamp()),
+                        title: todo.title.clone(),
+                        body: format!("Time to {}", lowercase_first(&todo.title)),
+                        at,
+                    });
+                }
+            }
+            continue;
+        }
+        let Some(at) = todo.remind_at(zone) else {
+            continue;
+        };
+        let body = match todo.time {
+            Some(_) => format!("Due at {}", clock(at_due(todo, at), zone)),
+            None => "Due today".to_owned(),
+        };
+        reminders.push(Reminder {
+            key: format!("todo:{}:{}", todo.id, at.timestamp()),
+            title: todo.title.clone(),
+            body,
+            at,
+        });
+    }
+    reminders
+}
+
+fn lowercase_first(text: &str) -> String {
+    let mut chars = text.chars();
+    match chars.next() {
+        Some(first) => first.to_lowercase().chain(chars).collect(),
+        None => String::new(),
+    }
 }
 
 fn at_due(todo: &Todo, remind_at: DateTime<Utc>) -> DateTime<Utc> {

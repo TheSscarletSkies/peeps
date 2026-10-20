@@ -61,7 +61,15 @@ export interface NewProduct {
 }
 
 export type DueState = "overdue" | "today" | "soon" | "later" | "undated";
-export type Repeat = "never" | "daily" | "weekdays" | "weekly" | "monthly";
+export type Repeat =
+  | "never"
+  | "daily"
+  | "weekdays"
+  | "weekly"
+  | "monthly"
+  | "hourly"
+  | "every2h"
+  | "every3h";
 
 /** What someone typed. Tags ride along in the title as `#tag`. */
 export interface TodoInput {
@@ -71,6 +79,8 @@ export interface TodoInput {
   repeat: Repeat;
   /** Minutes before the due time; null for no reminder. */
   remindMinutes: number | null;
+  /** When nudges through the day stop. */
+  until: string | null;
 }
 
 export interface Todo {
@@ -81,6 +91,7 @@ export interface Todo {
   time: string | null;
   repeat: Repeat;
   remindMinutes: number | null;
+  until: string | null;
   streak: number;
   createdAt: string;
   doneAt: string | null;

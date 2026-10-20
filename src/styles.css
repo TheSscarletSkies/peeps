@@ -1786,3 +1786,14 @@ body,
   font-size: 14px;
   line-height: 1.5;
 }
+
+.todo-form__window {
+  align-items: center;
+}
+
+.todo-form__window > span {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
