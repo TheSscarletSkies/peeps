@@ -19,9 +19,9 @@ test("UC9: the helper asks once which model and effort to use", async ({
 }) => {
   const picker = page.getByRole("region", { name: "Choose a model" });
   await expect(picker).toBeVisible();
-  await picker.getByRole("radio", { name: /Opus/ }).click();
+  await picker.getByRole("radio", { name: "Opus" }).click();
   await picker.getByRole("radio", { name: "High" }).click();
-  await picker.getByRole("button", { name: "Use Opus" }).click();
+  await picker.getByRole("button", { name: "Use Opus · High" }).click();
   await expect(picker).toHaveCount(0);
   await page.reload();
   await page.getByRole("button", { name: /^Helper/ }).click();

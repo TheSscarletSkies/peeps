@@ -2,10 +2,11 @@ import { useState } from "react";
 
 import { setHelperAgent } from "../lib/bridge";
 import type { Helper } from "../lib/types";
+import { Dumpling } from "../pets/Dumpling";
 
 export const MODELS = [
   { id: "haiku", name: "Haiku", note: "Quick and light" },
-  { id: "sonnet", name: "Sonnet", note: "Balanced, a good default" },
+  { id: "sonnet", name: "Sonnet", note: "Balanced, and a good default" },
   { id: "opus", name: "Opus", note: "Deepest thinking" },
 ];
 
@@ -66,31 +67,53 @@ export function AgentPicker({
     }
   };
 
+  const chosen = MODELS.find((option) => option.id === model) ?? MODELS[1];
+  const level = EFFORTS.find((option) => option.id === effort);
+
   return (
     <section className="agent-picker" aria-label="Choose a model">
-      <p className="agent-picker__title">Which Claude should I use?</p>
-      <div
-        className="agent-picker__models"
-        role="radiogroup"
-        aria-label="Model"
-      >
-        {MODELS.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            role="radio"
-            aria-checked={model === option.id}
-            className="agent-picker__model"
-            onClick={() => setModel(option.id)}
-          >
-            <strong>{option.name}</strong>
-            <span>{option.note}</span>
-          </button>
-        ))}
+      <header className="agent-picker__head">
+        <Dumpling
+          kind={helper.kind}
+          color={helper.color}
+          mood="chill"
+          heat={0}
+          size={28}
+        />
+        <div>
+          <p className="agent-picker__title">Which Claude should I use?</p>
+          <p className="agent-picker__sub">You can change this any time.</p>
+        </div>
+      </header>
+
+      <div className="agent-picker__row">
+        <span id="model-label">Model</span>
+        <div
+          className="segmented"
+          role="radiogroup"
+          aria-labelledby="model-label"
+        >
+          {MODELS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={model === option.id}
+              className={model === option.id ? "segmented__on" : undefined}
+              onClick={() => setModel(option.id)}
+            >
+              {option.name}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="roster__size">
-        <span>Effort</span>
-        <div className="segmented" role="radiogroup" aria-label="Effort">
+      <div className="agent-picker__row">
+        <span id="effort-label">Effort</span>
+        <div
+          className="segmented"
+          role="radiogroup"
+          aria-labelledby="effort-label"
+        >
           {EFFORTS.map((option) => (
             <button
               key={option.id}
@@ -105,21 +128,19 @@ export function AgentPicker({
           ))}
         </div>
       </div>
-      <p className="setup__hint">
-        Higher effort thinks longer and uses more of your plan. Drafts use the
-        same choice.
+      <p className="agent-picker__note">
+        {chosen?.note}. Higher effort thinks longer and uses more of your plan.
       </p>
-      <div className="todo-form__actions">
-        <button className="button" onClick={() => void save(null, null)}>
-          Use my Claude defaults
-        </button>
-        <button
-          className="button button--primary"
-          onClick={() => void save(model, effort)}
-        >
-          Use {MODELS.find((option) => option.id === model)?.name}
-        </button>
-      </div>
+
+      <button
+        className="button button--primary agent-picker__use"
+        onClick={() => void save(model, effort)}
+      >
+        Use {chosen?.name} · {level?.name}
+      </button>
+      <button className="tray__link" onClick={() => void save(null, null)}>
+        Use my Claude defaults instead
+      </button>
       {error && <p className="tray__error">{error}</p>}
     </section>
   );

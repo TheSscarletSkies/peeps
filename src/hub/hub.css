@@ -862,7 +862,3 @@ li[data-done] .started__check {
 .hub .agent-picker {
   background: var(--field);
 }
-
-.hub .agent-picker__model {
-  background: var(--surface);
-}

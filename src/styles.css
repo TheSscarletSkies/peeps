@@ -1665,10 +1665,16 @@ body,
 .agent-picker {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 12px;
+  padding: 16px;
   border-radius: var(--r-box);
   background: var(--surface);
+}
+
+.agent-picker__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .agent-picker__title {
@@ -1677,39 +1683,42 @@ body,
   font-weight: 800;
 }
 
-.agent-picker__models {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.agent-picker__model {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px;
-  border: 1px solid var(--field-line);
-  border-radius: var(--r-control);
-  background: var(--field);
-  color: var(--text);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.agent-picker__model strong {
-  font-size: 14px;
-}
-
-.agent-picker__model span {
+.agent-picker__sub {
+  margin: 0;
   color: var(--muted);
-  font-size: 11px;
-  line-height: 1.3;
+  font-size: 12px;
 }
 
-.agent-picker__model[aria-checked="true"] {
-  border-color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--text);
+.agent-picker__row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-picker__row > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.agent-picker__row .segmented button {
+  flex: 1;
+}
+
+.agent-picker__note {
+  margin: -4px 0 0 64px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.agent-picker__use {
+  width: 100%;
+}
+
+.agent-picker .tray__link {
+  align-self: center;
 }
 
 .chat__agent {
