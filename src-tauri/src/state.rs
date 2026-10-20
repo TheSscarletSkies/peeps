@@ -239,11 +239,16 @@ pub struct App {
     ledger: Mutex<Ledger>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
-    handle: AppHandle,
+    /// None only in tests, which have no window to update.
+    handle: Option<AppHandle>,
 }
 
 impl App {
     pub fn load(handle: AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
+        Self::open(Some(handle))
+    }
+
+    fn open(handle: Option<AppHandle>) -> Result<Self, Box<dyn std::error::Error>> {
         std::fs::create_dir_all(paths::data_dir())?;
         let config_path = paths::config_file();
         if !config_path.exists() {
@@ -400,8 +405,10 @@ impl App {
 
     pub fn notify(&self, title: &str, body: &str) {
         use tauri_plugin_notification::NotificationExt;
-        if let Err(error) = self
-            .handle
+        let Some(handle) = &self.handle else {
+            return;
+        };
+        if let Err(error) = handle
             .notification()
             .builder()
             .title(title)
@@ -475,6 +482,33 @@ impl App {
                 })
             })
             .collect();
+        // Each store is read in its own statement: a guard taken inside the snapshot's struct
+        // literal lives until the whole literal is built, so a second read of the same store
+        // there would wait on the first forever.
+        let (outbox, awaiting) = {
+            let mail = self.mail();
+            (
+                mail.outbox().unwrap_or_default(),
+                mail.awaiting(now - TimeDelta::days(AWAITING_DAYS))
+                    .unwrap_or_default(),
+            )
+        };
+        let product_numbers: Vec<ProductNumbers> = {
+            let ledger = self.ledger();
+            config
+                .products
+                .iter()
+                .map(|product| ProductNumbers {
+                    product_id: product.id.clone(),
+                    youtube_channel: product.youtube_channel.clone(),
+                    week: ledger
+                        .summary(&product.id, now - TimeDelta::days(NUMBERS_DAYS))
+                        .unwrap_or_default(),
+                    recent: ledger.recent(&product.id, 8).unwrap_or_default(),
+                })
+                .collect()
+        };
+        let config_error = self.config_error();
         let world = self.world();
         let permission = world
             .permissions
@@ -513,7 +547,7 @@ impl App {
                 tips: world.tips.clone(),
                 now: Utc::now(),
             }),
-            config_error: self.config_error(),
+            config_error,
             calendars: config
                 .calendars
                 .iter()
@@ -545,26 +579,11 @@ impl App {
                         ready: world.mail_ready.contains(&account.address),
                     })
                     .collect(),
-                outbox: self.mail().outbox().unwrap_or_default(),
-                awaiting: self
-                    .mail()
-                    .awaiting(now - TimeDelta::days(AWAITING_DAYS))
-                    .unwrap_or_default(),
+                outbox,
+                awaiting,
             },
             numbers: NumbersView {
-                products: config
-                    .products
-                    .iter()
-                    .map(|product| ProductNumbers {
-                        product_id: product.id.clone(),
-                        youtube_channel: product.youtube_channel.clone(),
-                        week: self
-                            .ledger()
-                            .summary(&product.id, now - TimeDelta::days(NUMBERS_DAYS))
-                            .unwrap_or_default(),
-                        recent: self.ledger().recent(&product.id, 8).unwrap_or_default(),
-                    })
-                    .collect(),
+                products: product_numbers,
                 paypal: config.paypal.clone(),
                 status: world.numbers.clone(),
             },
@@ -583,7 +602,10 @@ impl App {
 
     pub fn publish(&self) {
         self.unsynced.store(true, Ordering::Relaxed);
-        if let Err(error) = self.handle.emit(SNAPSHOT_EVENT, self.snapshot()) {
+        let Some(handle) = &self.handle else {
+            return;
+        };
+        if let Err(error) = handle.emit(SNAPSHOT_EVENT, self.snapshot()) {
             eprintln!("peeps: could not update the window: {error}");
         }
     }
@@ -703,5 +725,73 @@ impl Drop for PendingCleanup<'_> {
             .permissions
             .retain(|pending| pending.request_id != self.request_id);
         self.app.publish();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    use peeps_core::mail::Draft;
+    use peeps_core::numbers;
+
+    use super::*;
+
+    const CONFIG: &str = r#"
+[[product]]
+id = "funderly"
+name = "Funderly"
+paths = ["~/code/funderly"]
+
+[[product.teammate]]
+id = "sana"
+name = "Sana"
+role = "sales"
+
+[[mail]]
+address = "hello@funderly.app"
+provider = "gmail"
+"#;
+
+    /// The window waits on this; a store locked twice in one expression once froze it for good.
+    #[test]
+    fn a_snapshot_with_every_store_in_use_comes_back() {
+        let home = tempfile::tempdir().unwrap();
+        // The only test here that touches the data folder, so setting it for the process is safe.
+        std::env::set_var("PEEPS_HOME", home.path());
+        std::fs::write(paths::config_file(), CONFIG).unwrap();
+
+        let app = Arc::new(App::open(None).unwrap());
+        let now = Utc::now();
+        app.mail()
+            .draft(
+                &Draft {
+                    from: "hello@funderly.app".into(),
+                    to: "sara@example.com".into(),
+                    subject: "Welcome".into(),
+                    body: "Hi".into(),
+                    in_reply_to: None,
+                },
+                now,
+            )
+            .unwrap();
+        app.ledger()
+            .add(&numbers::manual_payment("funderly", "49", "USD", "", now).unwrap())
+            .unwrap();
+
+        let (done, waited) = mpsc::channel();
+        let worker = app.clone();
+        std::thread::spawn(move || {
+            let _ = done.send(worker.snapshot());
+        });
+        let snapshot = waited
+            .recv_timeout(Duration::from_secs(10))
+            .expect("the snapshot never came back; a lock is held twice");
+
+        assert_eq!(snapshot.mail.outbox.len(), 1);
+        assert_eq!(snapshot.numbers.products[0].week.payments, 1);
+        assert_eq!(snapshot.teammates[0].scope, "funderly/sana");
+        app.publish();
     }
 }

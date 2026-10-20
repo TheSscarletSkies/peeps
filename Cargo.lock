@@ -2784,6 +2784,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-notification",
  "tauri-plugin-single-instance",
+ "tempfile",
  "tokio",
 ]
 
