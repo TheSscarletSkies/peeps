@@ -13,6 +13,7 @@ import {
 } from "../lib/bridge";
 import type { Helper, Pet, Role, Teammate } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
+import { SuggestedTeam, useSuggestion } from "./SuggestedTeam";
 import { firstShift, kindFor, lastWord, openRoles } from "./team";
 
 interface Props {
@@ -26,8 +27,11 @@ interface Props {
 /** A product's team: who is on it, what each last reported, and room to add someone. */
 export function TeamPanel({ pet, team, roles, helper, onTyping }: Props) {
   const [open, setOpen] = useState<string | null>(null);
-  const [adding, setAdding] = useState(team.length === 0);
+  const [adding, setAdding] = useState(false);
+  const suggestion = useSuggestion(pet.id, team.length);
   const opened = team.find((teammate) => teammate.id === open);
+  // A product with no team yet gets the suggestion first; picking by hand is one tap away.
+  const suggesting = team.length === 0 && suggestion.length > 0 && !adding;
 
   if (opened)
     return (
@@ -78,7 +82,15 @@ export function TeamPanel({ pet, team, roles, helper, onTyping }: Props) {
           ))}
         </ul>
       )}
-      {adding ? (
+      {suggesting ? (
+        <SuggestedTeam
+          key={suggestion.join()}
+          pet={pet}
+          suggestion={suggestion}
+          roles={roles}
+          onPickOwn={() => setAdding(true)}
+        />
+      ) : adding || team.length === 0 ? (
         <AddTeammate
           pet={pet}
           roles={openRoles(roles, team)}

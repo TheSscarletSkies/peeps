@@ -647,3 +647,23 @@ export function runTeammate(product: string, id: string): Promise<void> {
     ? invoke("run_teammate", { product, id }).then(() => undefined)
     : Promise.resolve();
 }
+
+// The preview has no briefs to read, so it suggests from what each sample product is.
+const PREVIEW_SUGGESTIONS: Record<string, string[]> = {
+  funderly: ["sales", "growth"],
+  "enigma-archives": ["showrunner", "growth"],
+  "kaiveni-hiya": ["launch", "growth"],
+};
+
+/** Role ids peeps suggests for a product, best first, leaving out roles it already has. */
+export function suggestTeam(product: string): Promise<string[]> {
+  if (inApp()) return invoke<string[]>("suggest_team", { product });
+  const taken = preview.teammates
+    .filter((teammate) => teammate.productId === product)
+    .map((teammate) => teammate.role);
+  return Promise.resolve(
+    (PREVIEW_SUGGESTIONS[product] ?? ["growth", "analyst"]).filter(
+      (role) => !taken.includes(role),
+    ),
+  );
+}

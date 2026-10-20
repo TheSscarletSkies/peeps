@@ -56,6 +56,7 @@ pub fn run() {
             commands::read_playbook,
             commands::write_playbook,
             commands::run_teammate,
+            commands::suggest_team,
             commands::set_sync_folder,
             commands::add_product_path,
             commands::add_schedule,

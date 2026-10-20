@@ -119,6 +119,54 @@ pub fn role(id: &str) -> Option<&'static Role> {
     ROLES.iter().find(|role| role.id == id)
 }
 
+const SELLS: [&str; 11] = [
+    "sign-up",
+    "signup",
+    "sign up",
+    "trial",
+    "pricing",
+    "customer",
+    "paypal",
+    "payment",
+    "subscription",
+    "revenue",
+    "fundrais",
+];
+const TELLS: [&str; 10] = [
+    "episode", "story", "series", "chapter", "season", "tiktok", "reel", "shorts", "youtube",
+    "video",
+];
+const LAUNCHES: [&str; 6] = [
+    "launch",
+    "waitlist",
+    "pre-order",
+    "preorder",
+    "coming soon",
+    "beta",
+];
+
+/// Up to two roles a product most likely needs, from what peeps knows about it: its name, brief,
+/// checks and where its numbers come from. Roles it already has are left out.
+pub fn suggest(signals: &str, taken: &[&str]) -> Vec<&'static str> {
+    let text = signals.to_lowercase();
+    let score = |words: &[&str]| words.iter().filter(|word| text.contains(*word)).count();
+    let mut picks: Vec<(usize, [&'static str; 2])> = vec![
+        (score(&SELLS), ["sales", "growth"]),
+        (score(&TELLS), ["showrunner", "growth"]),
+        (score(&LAUNCHES), ["launch", "growth"]),
+    ];
+    // The strongest signal wins; a stable sort keeps sales ahead on a tie.
+    picks.sort_by_key(|pick| std::cmp::Reverse(pick.0));
+    let roles = match picks.first() {
+        Some((score, roles)) if *score > 0 => *roles,
+        _ => ["growth", "analyst"],
+    };
+    roles
+        .into_iter()
+        .filter(|role| !taken.contains(role))
+        .collect()
+}
+
 /// Kind of the schedule that wakes a teammate; its topic is the teammate's scope.
 pub const SHIFT: &str = "teammate";
 
@@ -259,6 +307,28 @@ mod tests {
         assert!(text.contains("Never send or publish"));
         assert!(text.ends_with("PRODUCT"));
         assert!(shift_prompt().contains("**One question**"));
+    }
+
+    #[test]
+    fn suggests_roles_from_what_the_product_is() {
+        assert_eq!(
+            suggest("Funderly. 7 sign-ups waiting; payments via PayPal", &[]),
+            ["sales", "growth"]
+        );
+        assert_eq!(
+            suggest(
+                "Enigma Archives: a mystery story told in episodes on TikTok",
+                &[]
+            ),
+            ["showrunner", "growth"]
+        );
+        assert_eq!(
+            suggest("Kaiveni Hiya. Launch on 1 December, waitlist open", &[]),
+            ["launch", "growth"]
+        );
+        assert_eq!(suggest("A new thing", &[]), ["growth", "analyst"]);
+        assert_eq!(suggest("Sign-ups and pricing", &["sales"]), ["growth"]);
+        assert!(suggest("trial customers", &["sales", "growth"]).is_empty());
     }
 
     #[test]

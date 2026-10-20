@@ -735,3 +735,43 @@ pub async fn run_teammate(app: State<'_, Arc<App>>, product: String, id: String)
     assistant::shift(app.inner(), &teammates::scope(&product, &id)).await;
     Ok(())
 }
+
+/// The roles peeps suggests for a product, from its name, brief, checks and numbers.
+#[tauri::command]
+pub fn suggest_team(app: State<'_, Arc<App>>, product: String) -> Result<Vec<String>> {
+    let config = app.config();
+    let found = config
+        .product(&product)
+        .ok_or_else(|| format!("unknown product `{product}`"))?;
+    let mut signals = vec![
+        found.name.clone(),
+        briefs::read(&paths::config_file(), &found.id, &found.name),
+    ];
+    for check in &found.checks {
+        signals.push(format!("{} {}", check.id, check.message));
+        if let peeps_core::checks::Source::Http(http) = &check.source {
+            signals.push(http.url.clone());
+        }
+    }
+    if found.youtube_channel.is_some() {
+        signals.push("youtube".into());
+    }
+    if config
+        .paypal
+        .as_ref()
+        .is_some_and(|p| p.product == found.id)
+    {
+        signals.push("paypal".into());
+    }
+    let since = Utc::now() - chrono::TimeDelta::days(30);
+    let month = app.ledger().summary(&found.id, since).map_err(message)?;
+    if month.payments > 0 {
+        signals.push("payment".into());
+    }
+    signals.extend(month.posts.keys().cloned());
+    let taken: Vec<&str> = found.teammates.iter().map(|t| t.role.as_str()).collect();
+    Ok(teammates::suggest(&signals.join("\n"), &taken)
+        .into_iter()
+        .map(str::to_owned)
+        .collect())
+}

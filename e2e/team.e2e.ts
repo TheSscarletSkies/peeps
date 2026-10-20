@@ -53,3 +53,50 @@ test("UC21: a new teammate starts from a role", async ({ page }) => {
   );
   await page.getByRole("tab", { name: "Team 2" }).isVisible();
 });
+
+test("UC21: a product with no team gets a suggested one", async ({ page }) => {
+  await page
+    .getByRole("button", { name: /^Kaiveni Hiya/ })
+    .first()
+    .click();
+  await page.getByRole("tab", { name: /^Team/ }).click();
+  const suggestion = page.getByLabel("Suggested team for Kaiveni Hiya");
+  await expect(suggestion).toContainText("Lina, launch marketer");
+  await expect(suggestion).toContainText("Gio, growth marketer");
+  await suggestion.getByLabel(/Gio, growth marketer/).uncheck();
+  await suggestion.getByRole("button", { name: "Add 1 teammate" }).click();
+  const team = page.getByRole("list", { name: "Kaiveni Hiya team" });
+  await expect(team).toContainText("Lina");
+  await expect(team).not.toContainText("Gio");
+});
+
+test("UC21: the Team page staffs every empty product at once", async ({
+  page,
+}) => {
+  await page.goto("/?view=home");
+  await page.evaluate(() => localStorage.setItem("peeps.tour", "done"));
+  await page.reload();
+  await page.getByRole("button", { name: /^Team/ }).click();
+  for (const [product, name] of [
+    ["Funderly", "Sana"],
+    ["Enigma Archives", "Remy"],
+  ]) {
+    const section = page.getByRole("region", {
+      name: `${product} team section`,
+    });
+    await section.getByRole("button", { name: new RegExp(`^${name}`) }).click();
+    await section.getByRole("button", { name: "Remove" }).click();
+  }
+  const suggested = page.getByRole("region", { name: "Suggested teams" });
+  await expect(suggested).toContainText("Sales co-chair and Growth marketer");
+  await expect(suggested).toContainText("Showrunner and Growth marketer");
+  await expect(suggested).toContainText("Launch marketer and Growth marketer");
+  await suggested.getByRole("button", { name: "Add all suggested" }).click();
+  await expect(suggested).toHaveCount(0);
+  await expect(
+    page.getByRole("list", { name: "Enigma Archives team" }),
+  ).toContainText("Remy");
+  await expect(
+    page.getByRole("list", { name: "Kaiveni Hiya team" }),
+  ).toContainText("Lina");
+});
