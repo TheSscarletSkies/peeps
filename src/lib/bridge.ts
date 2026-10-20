@@ -308,15 +308,44 @@ export function writeBrief(productId: string, text: string): Promise<void> {
 }
 
 export function addSchedule(schedule: NewSchedule): Promise<void> {
-  return inApp()
-    ? invoke("add_schedule", { schedule }).then(() => undefined)
-    : Promise.resolve();
+  if (inApp())
+    return invoke("add_schedule", { schedule }).then(() => undefined);
+  const added = {
+    id: (demoId += 1),
+    kind: schedule.kind,
+    topic: schedule.topic,
+    repeat: schedule.repeat,
+    time: `${schedule.time}:00`,
+    nextAt: new Date(`${schedule.start}T${schedule.time}`).toISOString(),
+  };
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    helper: {
+      ...snapshot.helper,
+      schedules: [...snapshot.helper.schedules, added],
+    },
+    teammates: snapshot.teammates.map((teammate) =>
+      schedule.kind === "teammate" && teammate.scope === schedule.topic
+        ? { ...teammate, schedule: added }
+        : teammate,
+    ),
+  }));
+  return Promise.resolve();
 }
 
 export function deleteSchedule(id: number): Promise<void> {
-  return inApp()
-    ? invoke("delete_schedule", { id }).then(() => undefined)
-    : Promise.resolve();
+  if (inApp()) return invoke("delete_schedule", { id }).then(() => undefined);
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    helper: {
+      ...snapshot.helper,
+      schedules: snapshot.helper.schedules.filter((item) => item.id !== id),
+    },
+    teammates: snapshot.teammates.map((teammate) =>
+      teammate.schedule?.id === id ? { ...teammate, schedule: null } : teammate,
+    ),
+  }));
+  return Promise.resolve();
 }
 
 export function setHelperAgent(
@@ -534,5 +563,87 @@ export function setYoutubeChannel(
 export function refreshNumbers(): Promise<void> {
   return inApp()
     ? invoke("refresh_numbers").then(() => undefined)
+    : Promise.resolve();
+}
+
+const previewPlaybooks = new Map<string, string>();
+
+/** Adds a teammate from a role; its rhythm starts on this computer. Returns its id. */
+export function addTeammate(
+  product: string,
+  role: string,
+  name: string,
+): Promise<string> {
+  if (inApp()) return invoke<string>("add_teammate", { product, role, name });
+  const start = preview.roles.find((candidate) => candidate.id === role);
+  if (!start) return Promise.reject(new Error(`unknown role ${role}`));
+  const display = name.trim() || start.name;
+  const id = display.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    teammates: [
+      ...snapshot.teammates,
+      {
+        productId: product,
+        id,
+        name: display,
+        role,
+        title: start.title,
+        scope: `${product}/${id}`,
+        schedule: {
+          id: (demoId += 1),
+          kind: "teammate",
+          topic: `${product}/${id}`,
+          repeat: start.repeat,
+          time: `${start.time}:00`,
+          nextAt: new Date(Date.now() + 86_400_000).toISOString(),
+        },
+        messages: [],
+        chatting: false,
+      },
+    ],
+  }));
+  return Promise.resolve(id);
+}
+
+export function removeTeammate(product: string, id: string): Promise<void> {
+  if (inApp())
+    return invoke("remove_teammate", { product, id }).then(() => undefined);
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    teammates: snapshot.teammates.filter(
+      (teammate) => !(teammate.productId === product && teammate.id === id),
+    ),
+  }));
+  return Promise.resolve();
+}
+
+export function readPlaybook(
+  product: string,
+  id: string,
+  fallback: string,
+): Promise<string> {
+  return inApp()
+    ? invoke<string>("read_playbook", { product, id })
+    : Promise.resolve(previewPlaybooks.get(`${product}/${id}`) ?? fallback);
+}
+
+export function writePlaybook(
+  product: string,
+  id: string,
+  text: string,
+): Promise<void> {
+  if (inApp())
+    return invoke("write_playbook", { product, id, text }).then(
+      () => undefined,
+    );
+  previewPlaybooks.set(`${product}/${id}`, text);
+  return Promise.resolve();
+}
+
+/** Starts a shift now; resolves once its report is in. */
+export function runTeammate(product: string, id: string): Promise<void> {
+  return inApp()
+    ? invoke("run_teammate", { product, id }).then(() => undefined)
     : Promise.resolve();
 }

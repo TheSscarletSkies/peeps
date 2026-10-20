@@ -10,7 +10,10 @@ import type {
   Pet,
   ProductChat,
   ProductNumbers,
+  Role,
+  Teammate,
 } from "../lib/types";
+import { TeamPanel } from "../team/TeamPanel";
 import { NumbersStrip } from "../numbers/NumbersStrip";
 import { Conversation } from "../helper/Chat";
 import { BriefEditor } from "./BriefEditor";
@@ -23,10 +26,12 @@ interface Props {
   /** Holds the model and effort the agent uses. */
   helper: Helper;
   numbers?: ProductNumbers;
+  team?: Teammate[];
+  roles?: Role[];
   onTyping: (typing: boolean) => void;
 }
 
-type Tab = "note" | "ask" | "brief";
+type Tab = "note" | "ask" | "team" | "brief";
 
 const STARTERS = [
   "What should I focus on this week?",
@@ -34,7 +39,15 @@ const STARTERS = [
   "Plan the next three posts",
 ];
 
-export function PetPanel({ pet, chat, helper, numbers, onTyping }: Props) {
+export function PetPanel({
+  pet,
+  chat,
+  helper,
+  numbers,
+  team = [],
+  roles = [],
+  onTyping,
+}: Props) {
   const [tab, setTab] = useState<Tab>("note");
   const [text, setText] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nextSession");
@@ -108,6 +121,7 @@ export function PetPanel({ pet, chat, helper, numbers, onTyping }: Props) {
           [
             ["note", "Note"],
             ["ask", "Ask"],
+            ["team", team.length > 0 ? `Team ${team.length}` : "Team"],
             ["brief", "Brief"],
           ] as const
         ).map(([id, label]) => (
@@ -186,6 +200,15 @@ export function PetPanel({ pet, chat, helper, numbers, onTyping }: Props) {
           starters={STARTERS}
           intro={`Think it through with ${pet.name}. It knows the brief and how things are going, can read the project, and turns what you agree on into to-dos.`}
           agent={helper}
+          onTyping={onTyping}
+        />
+      )}
+      {tab === "team" && (
+        <TeamPanel
+          pet={pet}
+          team={team}
+          roles={roles}
+          helper={helper}
           onTyping={onTyping}
         />
       )}

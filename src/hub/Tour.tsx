@@ -42,6 +42,12 @@ export const STEPS: TourStep[] = [
     text: "Add Gmail or iCloud with an app password. I draft, you edit and press Send, and I tell you who hasn't replied.",
   },
   {
+    target: "team",
+    page: "team",
+    title: "Your team",
+    text: "Give each product teammates, like a sales co-chair or a showrunner. They work on a rhythm from playbooks you write, and everything they draft waits for you.",
+  },
+  {
     target: "numbers",
     page: "numbers",
     title: "Money and posts",

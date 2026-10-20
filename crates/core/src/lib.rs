@@ -23,6 +23,7 @@ pub mod schedule;
 pub mod session;
 pub mod snapshot;
 pub mod sync;
+pub mod teammates;
 pub mod todos;
 pub mod tools;
 pub mod usage;

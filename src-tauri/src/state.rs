@@ -119,6 +119,9 @@ pub struct AppSnapshot {
     pub reminders: Reminders,
     pub sync: SyncStatus,
     pub product_chats: Vec<ProductChat>,
+    pub teammates: Vec<TeammateView>,
+    /// The roles a new teammate can start from.
+    pub roles: Vec<peeps_core::teammates::Role>,
     pub mail: MailView,
     pub numbers: NumbersView,
 }
@@ -174,6 +177,21 @@ pub const AWAITING_DAYS: i64 = 30;
 #[serde(rename_all = "camelCase")]
 pub struct ProductChat {
     pub product_id: String,
+    pub messages: Vec<peeps_core::chat::Message>,
+    pub chatting: bool,
+}
+
+/// A teammate with its rhythm and its conversation, which holds its shift reports.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TeammateView {
+    pub product_id: String,
+    pub id: String,
+    pub name: String,
+    pub role: String,
+    pub title: String,
+    pub scope: String,
+    pub schedule: Option<peeps_core::schedule::Schedule>,
     pub messages: Vec<peeps_core::chat::Message>,
     pub chatting: bool,
 }
@@ -432,6 +450,31 @@ impl App {
             })
             .collect();
         let schedules = self.schedules().all().unwrap_or_default();
+        let teammates = config
+            .products
+            .iter()
+            .flat_map(|product| {
+                product.teammates.iter().map(|teammate| {
+                    let scope = peeps_core::teammates::scope(&product.id, &teammate.id);
+                    TeammateView {
+                        product_id: product.id.clone(),
+                        id: teammate.id.clone(),
+                        name: teammate.name.clone(),
+                        role: teammate.role.clone(),
+                        title: peeps_core::teammates::role(&teammate.role)
+                            .map_or("Teammate", |role| role.title)
+                            .to_owned(),
+                        schedule: schedules
+                            .iter()
+                            .find(|s| s.kind == peeps_core::teammates::SHIFT && s.topic == scope)
+                            .cloned(),
+                        messages: self.chat().recent(&scope, RECENT_CHAT).unwrap_or_default(),
+                        chatting: chatting_scope.as_deref() == Some(scope.as_str()),
+                        scope,
+                    }
+                })
+            })
+            .collect();
         let world = self.world();
         let permission = world
             .permissions
@@ -488,6 +531,8 @@ impl App {
             reminders: config.reminders.clone(),
             sync: world.sync.clone(),
             product_chats,
+            teammates,
+            roles: peeps_core::teammates::ROLES.to_vec(),
             mail: MailView {
                 accounts: config
                     .mail
@@ -575,6 +620,7 @@ impl App {
                 // The agent answering a product's chat asks on that product's card.
                 let card = self
                     .chatting_scope()
+                    .map(|scope| peeps_core::teammates::product_of(&scope).to_owned())
                     .unwrap_or_else(|| HELPER_ID.to_owned());
                 Some(self.ask(&input, card).await)
             }

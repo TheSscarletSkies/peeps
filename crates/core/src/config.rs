@@ -176,6 +176,8 @@ pub struct Product {
     /// Its YouTube channel id (`UC…`); each upload is logged as a post.
     #[serde(default)]
     pub youtube_channel: Option<String>,
+    #[serde(default, rename = "teammate")]
+    pub teammates: Vec<crate::teammates::Teammate>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

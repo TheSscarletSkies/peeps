@@ -6,7 +6,7 @@ use std::time::Duration;
 use chrono::{Local, TimeDelta, Utc};
 use peeps_core::chat::{self, Message, Speaker};
 use peeps_core::drafts::{self, Draft};
-use peeps_core::{briefs, paths, quick};
+use peeps_core::{briefs, paths, quick, teammates};
 
 use crate::state::App;
 
@@ -68,8 +68,8 @@ pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message>
     if text.is_empty() {
         return Err("say something first".into());
     }
-    if scope != chat::HELPER && app.config().product(&scope).is_none() {
-        return Err(format!("unknown product `{scope}`"));
+    if !known_scope(&app, &scope) {
+        return Err(format!("unknown product or teammate `{scope}`"));
     }
     if let Some(reply) = quick_reminder(&app, &scope, &text)? {
         return Ok(reply);
@@ -90,6 +90,16 @@ pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message>
         .map_err(|error| error.to_string());
     app.publish();
     message
+}
+
+fn known_scope(app: &App, scope: &str) -> bool {
+    let config = app.config();
+    match teammates::parse_scope(scope) {
+        Some((product, teammate)) => config
+            .product(product)
+            .is_some_and(|p| p.teammates.iter().any(|t| t.id == teammate)),
+        None => scope == chat::HELPER || config.product(scope).is_some(),
+    }
 }
 
 /// "Remind me to …" is understood here and added straight away, without waking the agent.
@@ -147,9 +157,21 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
         Ok(hook) => chat::with_tools(&base, &hook),
         Err(_) => base,
     };
-    let (context, dirs) = match config.product(scope) {
+    let teammate = teammates::parse_scope(scope).and_then(|(product, id)| {
+        config
+            .product(product)
+            .and_then(|p| p.teammates.iter().find(|t| t.id == id))
+    });
+    let (context, dirs) = match config.product(teammates::product_of(scope)) {
         Some(product) => (
-            product_context(app, &product.id, &product.name),
+            match teammate {
+                Some(teammate) => teammates::context(
+                    teammate,
+                    &product_context(app, &product.id, &product.name),
+                    &teammates::read(&paths::config_file(), &product.id, teammate),
+                ),
+                None => product_context(app, &product.id, &product.name),
+            },
             product
                 .paths
                 .iter()
@@ -279,6 +301,32 @@ async fn review(app: &Arc<App>, product_id: &str) {
     }
 }
 
+/// Runs a teammate's shift in its own conversation and lets the user know its report is in.
+pub async fn shift(app: &Arc<App>, scope: &str) {
+    let Some((product, id)) = teammates::parse_scope(scope) else {
+        return;
+    };
+    let config = app.config();
+    let Some(product) = config.product(product) else {
+        return;
+    };
+    let Some(name) = product
+        .teammates
+        .iter()
+        .find(|t| t.id == id)
+        .map(|t| t.name.clone())
+    else {
+        return;
+    };
+    match send(app.clone(), scope.to_owned(), teammates::shift_prompt()).await {
+        Ok(_) => app.notify(
+            &format!("{name} finished a shift for {}", product.name),
+            "The report and anything to approve are on its Team tab.",
+        ),
+        Err(error) => app.notify(&format!("{name} couldn't work today"), &error),
+    }
+}
+
 /// Writes scheduled drafts when they come due and lets the user know.
 pub async fn run_schedules(app: Arc<App>) {
     let mut interval = tokio::time::interval(SCHEDULE_TICK);
@@ -295,6 +343,10 @@ pub async fn run_schedules(app: Arc<App>) {
             }
             if schedule.kind == drafts::REVIEW {
                 review(&app, &schedule.topic).await;
+                continue;
+            }
+            if schedule.kind == teammates::SHIFT {
+                shift(&app, &schedule.topic).await;
                 continue;
             }
             let label = drafts::label(&schedule.kind);

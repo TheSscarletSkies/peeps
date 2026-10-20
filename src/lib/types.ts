@@ -215,6 +215,33 @@ export interface Snapshot {
   productChats: ProductChat[];
   mail: MailView;
   numbers: NumbersView;
+  teammates: Teammate[];
+  roles: Role[];
+}
+
+/** A starting point for a new teammate. */
+export interface Role {
+  id: string;
+  name: string;
+  title: string;
+  summary: string;
+  repeat: Repeat;
+  time: string;
+  playbook: string;
+}
+
+export interface Teammate {
+  productId: string;
+  id: string;
+  name: string;
+  role: string;
+  title: string;
+  /** Its conversation, which is also its shift schedule's topic. */
+  scope: string;
+  /** Its rhythm; none while it is off. */
+  schedule: Schedule | null;
+  messages: ChatMessage[];
+  chatting: boolean;
 }
 
 export interface LedgerEntry {

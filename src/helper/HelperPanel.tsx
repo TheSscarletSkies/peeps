@@ -444,9 +444,9 @@ export function Write({
   const [time, setTime] = useState("09:00");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
-  // Weekly reviews live on their product's card, not with drafts.
+  // Reviews and teammates' shifts live on their product's card, not with drafts.
   const drafts = helper.schedules.filter(
-    (schedule) => schedule.kind !== "review",
+    (schedule) => schedule.kind !== "review" && schedule.kind !== "teammate",
   );
 
   const write = async () => {

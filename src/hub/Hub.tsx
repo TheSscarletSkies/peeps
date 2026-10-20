@@ -22,6 +22,7 @@ import {
   MailIcon,
   MoonIcon,
   NumbersIcon,
+  TeamIcon,
   ProductsIcon,
   RecapIcon,
   SoundIcon,
@@ -35,6 +36,7 @@ import { ProductCard } from "./ProductCard";
 import { DevicesPage } from "./DevicesPage";
 import { MailPage } from "./MailPage";
 import { NumbersPage } from "./NumbersPage";
+import { TeamPage } from "./TeamPage";
 import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
@@ -48,6 +50,7 @@ type Page =
   | "reminders"
   | "mail"
   | "numbers"
+  | "team"
   | "write"
   | "tokens"
   | "recap"
@@ -60,6 +63,7 @@ const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
   { id: "reminders", label: "Reminders", icon: <BellIcon /> },
   { id: "mail", label: "Mail", icon: <MailIcon /> },
+  { id: "team", label: "Team", icon: <TeamIcon /> },
   { id: "numbers", label: "Numbers", icon: <NumbersIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
   { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
@@ -205,6 +209,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               lead={`${helper.name} drafts, you approve. Nothing is sent without you.`}
             >
               <MailPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "team" && (
+            <Section
+              title="Team"
+              lead="Teammates for each product, working on a rhythm from playbooks you write."
+            >
+              <TeamPage snapshot={snapshot} />
             </Section>
           )}
           {page === "numbers" && (
@@ -373,6 +385,10 @@ function HomePage({
             numbers={snapshot.numbers.products.find(
               (numbers) => numbers.productId === opened.id,
             )}
+            team={snapshot.teammates.filter(
+              (teammate) => teammate.productId === opened.id,
+            )}
+            roles={snapshot.roles}
             onTyping={noop}
           />
         </section>

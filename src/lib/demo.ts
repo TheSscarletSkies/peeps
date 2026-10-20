@@ -343,6 +343,107 @@ export const demoSnapshot: Snapshot = {
     lastChecked: "2026-10-20T08:30:00Z",
     error: null,
   },
+  roles: [
+    {
+      id: "sales",
+      name: "Sana",
+      title: "Sales co-chair",
+      summary: "Follows up sign-ups and payers, drafts outreach, owns revenue.",
+      repeat: "weekdays",
+      time: "09:00",
+      playbook:
+        "## What I own\n\nRevenue. Every new sign-up gets a welcome, every trial gets a nudge before it ends, every payer gets a thank-you.\n\n## Each shift\n\n1. Check product_numbers and peeps_overview.\n2. Draft today's emails with draft_email.\n3. Follow up anyone quiet for 4 days.\n",
+    },
+    {
+      id: "growth",
+      name: "Gio",
+      title: "Growth marketer",
+      summary:
+        "Plans the week's content and channels, drafts posts in your voice.",
+      repeat: "weekly",
+      time: "10:00",
+      playbook:
+        "## What I own\n\nGetting the right people to notice the product.\n",
+    },
+    {
+      id: "showrunner",
+      name: "Remy",
+      title: "Showrunner",
+      summary:
+        "Plans episodes and writes scripts for TikTok, Reels and Shorts.",
+      repeat: "weekly",
+      time: "11:00",
+      playbook:
+        "## What I own\n\nThe story: what comes next, and how each episode hooks the viewer.\n",
+    },
+    {
+      id: "launch",
+      name: "Lina",
+      title: "Launch marketer",
+      summary: "Runs the countdown: daily launch tasks, posts and outreach.",
+      repeat: "daily",
+      time: "09:30",
+      playbook:
+        "## What I own\n\nThe launch, from now until launch day and the week after.\n",
+    },
+    {
+      id: "analyst",
+      name: "Ada",
+      title: "Numbers analyst",
+      summary:
+        "A weekly read of the numbers: what moved, why, and what to try.",
+      repeat: "weekly",
+      time: "16:00",
+      playbook: "## What I own\n\nKnowing what is working.\n",
+    },
+    {
+      id: "custom",
+      name: "Pip",
+      title: "Teammate",
+      summary: "Start blank and write the playbook yourself.",
+      repeat: "weekly",
+      time: "09:00",
+      playbook: "## What I own\n\n\n## Each shift\n\n1. \n",
+    },
+  ],
+  teammates: [
+    {
+      productId: "funderly",
+      id: "sana",
+      name: "Sana",
+      role: "sales",
+      title: "Sales co-chair",
+      scope: "funderly/sana",
+      schedule: {
+        id: 41,
+        kind: "teammate",
+        topic: "funderly/sana",
+        repeat: "weekdays",
+        time: "09:00:00",
+        nextAt: "2026-10-21T04:00:00Z",
+      },
+      messages: [
+        {
+          id: 51,
+          from: "helper",
+          text: "**Done**: drafted welcomes for 3 new sign-ups; a nudge for Tom, whose trial ends Friday.\n**Waiting for you**: 4 emails in Mail.\n**One question**: can I offer annual pricing to teams over 10?",
+          at: "2026-10-20T04:02:00Z",
+        },
+      ],
+      chatting: false,
+    },
+    {
+      productId: "enigma-archives",
+      id: "remy",
+      name: "Remy",
+      role: "showrunner",
+      title: "Showrunner",
+      scope: "enigma-archives/remy",
+      schedule: null,
+      messages: [],
+      chatting: false,
+    },
+  ],
   productChats: [
     {
       productId: "funderly",

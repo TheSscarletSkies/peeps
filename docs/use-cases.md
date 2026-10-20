@@ -77,6 +77,13 @@ Tested by `e2e/products.e2e.ts`, `crates/core/src/briefs.rs`, `crates/core/src/c
 
 Tested by `e2e/numbers.e2e.ts`, `src/numbers/format.test.ts`, `crates/core/src/numbers.rs`, `crates/core/src/paypal.rs`, `crates/core/src/youtube.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
 
+### UC21. A team for each product
+
+**When** they give Funderly a sales co-chair, Enigma Archives a showrunner and Kaiveni Hiya a launch marketer from the Team tab.
+**Then** each teammate starts from a role's playbook (what it owns, what to do each shift, its rules), which they can rewrite in plain words, and works on that role's rhythm, such as weekdays at 9, through their own Claude. A shift ends with a short report in the teammate's own conversation: what it did, what is waiting for them (emails in Mail, posts and scripts in Write, to-dos tagged with the product) and one question. A notification says the report is in. They can pause a teammate, run a shift now, or talk to it like any pet. Teammates never send or publish; everything they make waits for approval. Teammates and playbooks sync between computers, and each shift runs once, on the computer that set it up.
+
+Tested by `e2e/team.e2e.ts`, `src/team/team.test.ts`, `src/lib/rich.test.ts`, `crates/core/src/teammates.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
+
 ### UC18. A weekly review for each product
 
 **When** they switch on Weekly review on a product's Ask tab.

@@ -91,6 +91,15 @@ export const BellIcon = () => (
   </Icon>
 );
 
+export const TeamIcon = () => (
+  <Icon>
+    <circle cx="9" cy="9" r="3" />
+    <circle cx="16.5" cy="10" r="2.4" />
+    <path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" />
+    <path d="M15 14.2c2.6-.3 4.8 1.2 5.5 4.3" />
+  </Icon>
+);
+
 export const NumbersIcon = () => (
   <Icon>
     <path d="M4 18l5-6 4 3 7-8" />

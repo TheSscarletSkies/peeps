@@ -61,6 +61,11 @@ pub enum Call {
     ProductNumbers {
         product: String,
     },
+    SaveDraft {
+        kind: String,
+        topic: String,
+        text: String,
+    },
     LogPayment {
         product: String,
         amount: String,
@@ -191,6 +196,19 @@ pub fn definitions() -> Vec<Definition> {
             input_schema: json!({ "type": "object", "properties": {} }),
         },
         Definition {
+            name: "save_draft",
+            description: "Keeps a finished post, script or caption in the user's Write tab, ready to copy and post. Nothing is published.",
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "kind": { "type": "string", "description": "Where it goes, like linkedin, x, tiktok script, instagram caption or youtube short." },
+                    "topic": { "type": "string", "description": "A short title, with the product's name." },
+                    "text": { "type": "string", "description": "The full text, ready to use." }
+                },
+                "required": ["kind", "topic", "text"]
+            }),
+        },
+        Definition {
             name: "product_numbers",
             description: "A product's payments and posts over the last 7 and 30 days, from PayPal, YouTube and what the user logged, with the latest entries.",
             input_schema: json!({
@@ -227,6 +245,13 @@ pub fn definitions() -> Vec<Definition> {
             }),
         },
     ]
+}
+
+#[derive(Deserialize)]
+struct SaveDraftArgs {
+    kind: String,
+    topic: String,
+    text: String,
 }
 
 #[derive(Deserialize)]
@@ -391,6 +416,17 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
             }
         }
         "waiting_replies" => Call::WaitingReplies,
+        "save_draft" => {
+            let draft: SaveDraftArgs = serde_json::from_value(args).map_err(bad)?;
+            if draft.text.trim().is_empty() {
+                return Err("a draft needs some text".into());
+            }
+            Call::SaveDraft {
+                kind: draft.kind.trim().to_lowercase(),
+                topic: draft.topic,
+                text: draft.text,
+            }
+        }
         "product_numbers" => Call::ProductNumbers {
             product: serde_json::from_value::<Product>(args)
                 .map_err(bad)?
@@ -454,6 +490,10 @@ mod tests {
             ),
             ("waiting_replies", json!({})),
             ("product_numbers", json!({ "product": "funderly" })),
+            (
+                "save_draft",
+                json!({ "kind": "TikTok script", "topic": "Part 4", "text": "Hook…" }),
+            ),
             (
                 "log_payment",
                 json!({ "product": "funderly", "amount": "49" }),

@@ -119,6 +119,10 @@ export function CardBody({
             numbers={snapshot.numbers.products.find(
               (numbers) => numbers.productId === pet.id,
             )}
+            team={snapshot.teammates.filter(
+              (teammate) => teammate.productId === pet.id,
+            )}
+            roles={snapshot.roles}
             onTyping={noop}
           />
         </>

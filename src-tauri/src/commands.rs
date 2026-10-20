@@ -11,7 +11,7 @@ use peeps_core::protocol::Decision;
 use peeps_core::schedule::{NewSchedule, Schedule};
 use peeps_core::sync::{self, Joined};
 use peeps_core::todos::{self, Todo, TodoInput};
-use peeps_core::{briefs, hooks_install, mail, numbers, paths, paypal, youtube};
+use peeps_core::{briefs, hooks_install, mail, numbers, paths, paypal, teammates, youtube};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{Manager, State, WebviewWindow};
@@ -640,5 +640,98 @@ pub async fn set_youtube_channel(
 #[tauri::command]
 pub async fn refresh_numbers(app: State<'_, Arc<App>>) -> Result<()> {
     crate::numbers::refresh(app.inner().clone()).await;
+    Ok(())
+}
+
+/// Adds a teammate from a role and starts its rhythm on this computer, today if its time is
+/// still ahead, otherwise tomorrow.
+#[tauri::command]
+pub fn add_teammate(
+    app: State<'_, Arc<App>>,
+    product: String,
+    role: String,
+    name: String,
+) -> Result<String> {
+    let path = paths::config_file();
+    let (updated, id) = config_edit::add_teammate(&read_or_empty(&path)?, &product, &role, &name)
+        .map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    let starting = teammates::role(&role).ok_or_else(|| format!("unknown role `{role}`"))?;
+    let time = chrono::NaiveTime::parse_from_str(starting.time, "%H:%M").map_err(message)?;
+    let today = chrono::Local::now().date_naive();
+    let zone = *chrono::Local::now().offset();
+    for start in [today, today + chrono::TimeDelta::days(1)] {
+        let shift = NewSchedule {
+            kind: teammates::SHIFT.to_owned(),
+            topic: teammates::scope(&product, &id),
+            repeat: starting.repeat,
+            start,
+            time,
+        };
+        if app
+            .schedules()
+            .add(&shift, zone, Utc::now(), app.device())
+            .map_err(message)?
+            .is_some()
+        {
+            break;
+        }
+    }
+    app.publish();
+    Ok(id)
+}
+
+#[tauri::command]
+pub fn remove_teammate(app: State<'_, Arc<App>>, product: String, id: String) -> Result<()> {
+    let path = paths::config_file();
+    let updated =
+        config_edit::remove_teammate(&read_or_empty(&path)?, &product, &id).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    let scope = teammates::scope(&product, &id);
+    let shifts: Vec<i64> = app
+        .schedules()
+        .all()
+        .map_err(message)?
+        .into_iter()
+        .filter(|s| s.kind == teammates::SHIFT && s.topic == scope)
+        .map(|s| s.id)
+        .collect();
+    for shift in shifts {
+        app.schedules().delete(shift).map_err(message)?;
+    }
+    app.reload_config();
+    Ok(())
+}
+
+fn teammate(app: &App, product: &str, id: &str) -> Result<teammates::Teammate> {
+    app.config()
+        .product(product)
+        .and_then(|p| p.teammates.iter().find(|t| t.id == id).cloned())
+        .ok_or_else(|| format!("no teammate `{id}` on `{product}`"))
+}
+
+#[tauri::command]
+pub fn read_playbook(app: State<'_, Arc<App>>, product: String, id: String) -> Result<String> {
+    let teammate = teammate(&app, &product, &id)?;
+    Ok(teammates::read(&paths::config_file(), &product, &teammate))
+}
+
+#[tauri::command]
+pub fn write_playbook(
+    app: State<'_, Arc<App>>,
+    product: String,
+    id: String,
+    text: String,
+) -> Result<()> {
+    teammate(&app, &product, &id)?;
+    teammates::write(&paths::config_file(), &product, &id, &text).map_err(message)
+}
+
+/// Starts a shift now, outside the teammate's rhythm.
+#[tauri::command]
+pub async fn run_teammate(app: State<'_, Arc<App>>, product: String, id: String) -> Result<()> {
+    teammate(&app, &product, &id)?;
+    assistant::shift(app.inner(), &teammates::scope(&product, &id)).await;
     Ok(())
 }

@@ -338,6 +338,84 @@ pub fn set_reminders(text: &str, reminders: &Reminders) -> Result<String, EditEr
     Ok(updated)
 }
 
+fn product_table<'a>(doc: &'a mut DocumentMut, id: &str) -> Result<&'a mut Table, EditError> {
+    doc.get_mut("product")
+        .and_then(Item::as_array_of_tables_mut)
+        .and_then(|products| {
+            products
+                .iter_mut()
+                .find(|table| table.get("id").and_then(Item::as_str) == Some(id))
+        })
+        .ok_or_else(|| EditError::Unknown(id.to_owned()))
+}
+
+/// Adds a teammate to a product from one of the starting roles. Returns the text and its id.
+pub fn add_teammate(
+    text: &str,
+    product: &str,
+    role: &str,
+    name: &str,
+) -> Result<(String, String), EditError> {
+    let role = crate::teammates::role(role).ok_or_else(|| EditError::Unknown(role.to_owned()))?;
+    let name = if name.trim().is_empty() {
+        role.name
+    } else {
+        name.trim()
+    };
+    let base = crate::teammates::slug(name);
+    let base = if base.is_empty() {
+        role.id.to_owned()
+    } else {
+        base
+    };
+    let existing = Config::parse(text)?
+        .product(product)
+        .map(|p| p.teammates.clone())
+        .ok_or_else(|| EditError::Unknown(product.to_owned()))?;
+    let id = (1..)
+        .map(|n| {
+            if n == 1 {
+                base.clone()
+            } else {
+                format!("{base}-{n}")
+            }
+        })
+        .find(|candidate| existing.iter().all(|t| &t.id != candidate))
+        .unwrap_or(base);
+    let mut doc: DocumentMut = text.parse()?;
+    let mut table = Table::new();
+    table["id"] = value(&id);
+    table["name"] = value(name);
+    table["role"] = value(role.id);
+    product_table(&mut doc, product)?
+        .entry("teammate")
+        .or_insert(Item::ArrayOfTables(ArrayOfTables::new()))
+        .as_array_of_tables_mut()
+        .ok_or(EditError::Shape)?
+        .push(table);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok((updated, id))
+}
+
+pub fn remove_teammate(text: &str, product: &str, id: &str) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let table = product_table(&mut doc, product)?;
+    let teammates = table
+        .get_mut("teammate")
+        .and_then(Item::as_array_of_tables_mut)
+        .ok_or_else(|| EditError::Unknown(id.to_owned()))?;
+    let index = teammates
+        .iter()
+        .position(|t| t.get("id").and_then(Item::as_str) == Some(id))
+        .ok_or_else(|| EditError::Unknown(id.to_owned()))?;
+    teammates.remove(index);
+    if teammates.is_empty() {
+        table.remove("teammate");
+    }
+    Ok(doc.to_string())
+}
+
 /// Points PayPal payments at a product, or stops reading PayPal with `None`.
 pub fn set_paypal(
     text: &str,
@@ -657,5 +735,29 @@ mod tests {
             Config::parse(&cleared).unwrap().products[0].youtube_channel,
             None
         );
+    }
+
+    #[test]
+    fn teammates_join_and_leave_a_product() {
+        let (text, id) = add_product("", &shop()).unwrap();
+        let (text, sana) = add_teammate(&text, &id, "sales", "").unwrap();
+        assert_eq!(sana, "sana");
+        let (text, second) = add_teammate(&text, &id, "sales", "Sana").unwrap();
+        assert_eq!(second, "sana-2");
+        let (text, remy) = add_teammate(&text, &id, "showrunner", "Remy the Great").unwrap();
+        assert_eq!(remy, "remy-the-great");
+        let team = &Config::parse(&text).unwrap().products[0].teammates;
+        assert_eq!(team.len(), 3);
+        assert_eq!(team[2].name, "Remy the Great");
+        assert_eq!(team[2].role, "showrunner");
+        assert!(add_teammate(&text, &id, "ceo", "").is_err());
+        assert!(add_teammate(&text, "nope", "sales", "").is_err());
+
+        let fewer = remove_teammate(&text, &id, "sana-2").unwrap();
+        assert_eq!(
+            Config::parse(&fewer).unwrap().products[0].teammates.len(),
+            2
+        );
+        assert!(remove_teammate(&fewer, &id, "sana-2").is_err());
     }
 }

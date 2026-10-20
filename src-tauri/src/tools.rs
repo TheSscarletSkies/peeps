@@ -161,6 +161,14 @@ fn run(app: &App, call: Call) -> Result<String> {
                 })
                 .collect())
         }
+        Call::SaveDraft { kind, topic, text } => {
+            app.drafts()
+                .add(&kind, &topic, &text, Utc::now())
+                .map_err(|e| e.to_string())?;
+            Ok(format!(
+                "Saved “{topic}” in the Write tab for the user to copy."
+            ))
+        }
         Call::ProductNumbers { product: id } => {
             let name = product(&id)?.name.clone();
             let now = Utc::now();
@@ -254,6 +262,15 @@ fn overview(app: &App) -> String {
         out.push('\n');
         for need in &pet.needs {
             out.push_str(&format!("  - needs: {}\n", need.message));
+        }
+        let team: Vec<String> = snapshot
+            .teammates
+            .iter()
+            .filter(|teammate| teammate.product_id == pet.id)
+            .map(|teammate| format!("{} ({})", teammate.name, teammate.title))
+            .collect();
+        if !team.is_empty() {
+            out.push_str(&format!("  - team: {}\n", team.join(", ")));
         }
         if let Some(numbers) = snapshot
             .numbers

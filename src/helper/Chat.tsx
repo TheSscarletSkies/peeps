@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { decide, newChat, sendChat } from "../lib/bridge";
+import { RichText } from "../lib/RichText";
 import type { ChatMessage, Helper, Permission, PetKind } from "../lib/types";
 import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
@@ -157,7 +158,13 @@ export function Conversation({
                   size={26}
                 />
               )}
-              <p>{message.text}</p>
+              <p>
+                {message.from === "you" ? (
+                  message.text
+                ) : (
+                  <RichText text={message.text} />
+                )}
+              </p>
             </li>
           ))}
           {thinking && (
