@@ -12,6 +12,7 @@ pub mod notes;
 pub mod paths;
 pub mod protocol;
 pub mod reminders;
+pub mod schedule;
 pub mod session;
 pub mod snapshot;
 pub mod todos;
