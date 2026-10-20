@@ -59,9 +59,9 @@ Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
 
 ### UC8. Enjoy them
 
-Pets blink, glance around and wiggle on their own, cheer when an agent finishes, hatch when a product is added, squish when poked, get dizzy after three quick pokes, show love when fed or when a to-do is ticked, and wear a hat or scarf in season.
+Pets have stubby hands and feet: they wave when they need you, hold a little "help" sign when something broke, scribble with a pencil while working, sip from a cup when all is calm, reach up to catch a file dragged over them, cheer with both arms when an agent finishes, step as they walk along the notch and kick their feet when picked up. They blink, glance around and wiggle on their own, cheer when an agent finishes, hatch when a product is added, squish when poked, get dizzy after three quick pokes, show love when fed or when a to-do is ticked, and wear a hat or scarf in season.
 
-Tested by `src/life/*.test.ts`.
+Tested by `src/life/*.test.ts`, `src/pets/limbs.test.ts`.
 
 ### UC17. Think a product through with its pet
 

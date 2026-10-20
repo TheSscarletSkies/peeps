@@ -27,7 +27,7 @@ Watching costs nothing. Moods come from agent hooks, transcripts on disk and che
 - **Drop files on a pet.** A product gets them in its next note, the helper with your next message.
 - **A helper pet.** To-dos with `#tags`, repeats and streaks for habits, times and reminders, drafts in your voice written by your own agent, and a weekly token report.
 - **Weekly recap.** Your week as one shareable card: agent hours, tokens, busiest day, to-dos done and drafts written.
-- **Pets with a life.** Poke one and it squishes, poke it three times and it gets dizzy. Pets cheer when an agent finishes, hop when fed a note, hatch from the steamer when you add a product, and wear a witch hat before Halloween and a scarf in winter.
+- **Pets with a life.** Little hands and feet: they wave for attention, hold a pencil while working, a cup when calm and a "help" sign when something broke, and reach up to catch a dropped file. Poke one and it squishes, poke it three times and it gets dizzy. Pets cheer when an agent finishes, hop when fed a note, hatch from the steamer when you add a product, and wear a witch hat before Halloween and a scarf in winter.
 - **Light or dark, quiet or not.** Theme and an optional boop when a pet needs you live in the sidebar. Sound is off by default.
 
 ## Moods

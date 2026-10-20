@@ -2,6 +2,7 @@ import { useId } from "react";
 
 import type { Accessory } from "../life/season";
 import type { Mood, PetKind } from "../lib/types";
+import { limbsFor, type Hand, type Prop } from "./limbs";
 import shapes from "./shapes.json";
 import { flushed } from "./tint";
 import { BASE, variantFor } from "./variant";
@@ -376,6 +377,120 @@ function PropInFront({ mood }: { mood: Look }) {
   );
 }
 
+const LIMB_LINE = {
+  stroke: "#B5785A",
+  strokeOpacity: 0.35,
+  strokeWidth: 1.2,
+};
+
+/** Stubby feet that stay on the ground while the body hops, and step when the pet walks. */
+function Feet({ fill }: { fill: string }) {
+  return (
+    <g className="dumpling__feet">
+      {[46, 74].map((cx, index) => (
+        <ellipse
+          key={cx}
+          className={`dumpling__foot${index ? " dumpling__foot--late" : ""}`}
+          cx={cx}
+          cy={86.5}
+          rx={7}
+          ry={3.6}
+          fill={fill}
+          {...LIMB_LINE}
+        />
+      ))}
+    </g>
+  );
+}
+
+function HandShape({ hand, fill }: { hand: Hand; fill: string }) {
+  // Gestures swing from where the arm would meet the body, nearer the middle and lower down.
+  const pivotX = hand.x + (hand.x < 60 ? 8 : -8);
+  return (
+    <ellipse
+      className={`limb${hand.motion ? ` ${hand.motion}` : ""}`}
+      style={{ transformOrigin: `${pivotX}px ${hand.y + 10}px` }}
+      cx={hand.x}
+      cy={hand.y}
+      rx={4.8}
+      ry={4}
+      fill={fill}
+      {...LIMB_LINE}
+    />
+  );
+}
+
+/** What a pet holds: a pencil while working, a cup when calm, a sign when things broke, a heart. */
+function Held({ prop, right }: { prop: Prop; right: Hand }) {
+  switch (prop) {
+    case "pencil":
+      return (
+        // The motion and the placement sit on separate groups: a transform origin would also
+        // shift the placement.
+        <g
+          className={right.motion}
+          style={{ transformOrigin: `${right.x}px ${right.y}px` }}
+        >
+          <g transform={`translate(${right.x} ${right.y}) rotate(35)`}>
+            <rect x={-2} y={-14} width={4} height={15} rx={1} fill="#FFD66B" />
+            <rect x={-2} y={-16} width={4} height={3} rx={1} fill="#FF9AAA" />
+            <path d="M-2 1l2 4.5 2-4.5z" fill="#F6DCC8" />
+            <path d="M-0.7 4l0.7 1.5 0.7-1.5z" fill={EYE} />
+          </g>
+        </g>
+      );
+    case "cup":
+      return (
+        <g>
+          <path
+            d="M68 74h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"
+            fill="#FFFFFF"
+            {...LIMB_LINE}
+          />
+          <path
+            d="M69.5 76h9"
+            stroke="#C98A5E"
+            strokeWidth={1.6}
+            strokeLinecap="round"
+          />
+        </g>
+      );
+    case "sign":
+      return (
+        <g>
+          <rect
+            x={42}
+            y={77}
+            width={36}
+            height={15}
+            rx={3}
+            fill="#FFF6E8"
+            {...LIMB_LINE}
+          />
+          <text
+            x={60}
+            y={87.6}
+            textAnchor="middle"
+            fontSize={7.5}
+            fontWeight={800}
+            fontFamily="inherit"
+            fill={EYE}
+          >
+            help
+          </text>
+        </g>
+      );
+    case "heart":
+      return (
+        <path
+          className="limb-heart"
+          d="M60 89l-5.2-5c-2.8-2.8.9-6.8 3.9-4.4l1.3 1.1 1.3-1.1c3-2.4 6.7 1.6 3.9 4.4z"
+          fill="#FF7F95"
+        />
+      );
+  }
+}
+
 /** A product's pet. Its face, pose and effects follow the mood; it flushes and blushes with token burn. */
 function Outfit({ accessory, hatY }: { accessory: Accessory; hatY: number }) {
   if (accessory === "witchHat") {
@@ -423,6 +538,8 @@ export function Dumpling({
   const stretch = `translate(60 86) scale(${build.width} ${build.height}) translate(-60 -86)`;
   const spread = 1 + build.eyeSpread / 30;
   const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
+  const skin = flushed(color, heat);
+  const limbs = limbsFor(look, kind);
 
   return (
     <svg
@@ -453,6 +570,11 @@ export function Dumpling({
       </defs>
       <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
       <PropBehind mood={look} />
+      {!limbs.hidden && (
+        <g transform={stretch}>
+          <Feet fill={skin} />
+        </g>
+      )}
       <g
         transform={
           look === "stalled" ? `translate(0 ${-shape.napLift})` : undefined
@@ -460,7 +582,7 @@ export function Dumpling({
       >
         <g className="dumpling__body">
           <g transform={stretch}>
-            <path d={shape.body} fill={flushed(color, heat)} />
+            <path d={shape.body} fill={skin} />
             <path d={shape.body} fill={`url(#${id}shade)`} />
             <path d={shape.body} fill={`url(#${id}glow)`} />
             <ellipse
@@ -500,6 +622,13 @@ export function Dumpling({
             <Brows mood={look} />
             <Mouth mood={look} />
           </g>
+          {!limbs.hidden && (
+            <g transform={stretch}>
+              {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
+              <HandShape hand={limbs.left} fill={skin} />
+              <HandShape hand={limbs.right} fill={skin} />
+            </g>
+          )}
           {accessory && <Outfit accessory={accessory} hatY={shape.hatY} />}
         </g>
       </g>

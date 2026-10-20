@@ -1960,3 +1960,116 @@ body,
   grid-column: 1 / -1;
   grid-row: 2;
 }
+
+/* Hands and feet. Gestures turn around the shoulder each hand sets inline. */
+
+.limb {
+  transform-box: view-box;
+}
+
+.limb-wave {
+  animation: wave 0.9s ease-in-out infinite;
+}
+
+.limb-cheer {
+  animation: cheer 0.6s ease-in-out infinite;
+}
+
+.limb-reach {
+  animation: reach 0.45s ease-in-out infinite alternate;
+}
+
+.limb-flail {
+  animation: flail 0.6s ease-in-out infinite;
+}
+
+.limb-shake {
+  animation: jitter 0.25s linear infinite;
+}
+
+.limb-scribble {
+  transform-box: view-box;
+  animation: scribble 0.5s ease-in-out infinite;
+}
+
+.limb-heart {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bounce-soft 0.8s ease-in-out infinite;
+}
+
+.dumpling__foot {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.roamer--walking .dumpling__foot {
+  animation: step 0.36s ease-in-out infinite;
+}
+
+.roamer--walking .dumpling__foot--late,
+.roamer--held .dumpling__foot--late {
+  animation-delay: 0.18s;
+}
+
+/* Picked up, its feet kick. */
+.roamer--held .dumpling__foot {
+  animation: kick 0.36s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30% {
+    rotate: -28deg;
+  }
+  70% {
+    rotate: 14deg;
+  }
+}
+
+@keyframes cheer {
+  50% {
+    translate: 0 -3px;
+  }
+}
+
+@keyframes reach {
+  to {
+    translate: 0 -2.5px;
+  }
+}
+
+@keyframes flail {
+  25% {
+    rotate: -16deg;
+  }
+  75% {
+    rotate: 16deg;
+  }
+}
+
+@keyframes scribble {
+  25% {
+    translate: 1.5px -0.5px;
+  }
+  75% {
+    translate: -1.5px 0.5px;
+  }
+}
+
+@keyframes step {
+  50% {
+    translate: 0 -2.5px;
+    scale: 1 1.1;
+  }
+}
+
+@keyframes kick {
+  50% {
+    translate: 0 2px;
+    rotate: 12deg;
+  }
+}
