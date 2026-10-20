@@ -126,26 +126,6 @@ mod mac {
         }
     }
 
-    /// Puts the floating pet's window at a spot on screen, in logical pixels from the top left.
-    pub fn float(
-        window: &WebviewWindow,
-        x: f64,
-        y: f64,
-        width: f64,
-        height: f64,
-    ) -> tauri::Result<()> {
-        #[cfg(target_os = "macos")]
-        {
-            let target = window.clone();
-            window.run_on_main_thread(move || mac::place_at(&target, x, y, width, height))
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            window.set_size(tauri::LogicalSize::new(width, height))?;
-            window.set_position(tauri::LogicalPosition::new(x, y))
-        }
-    }
-
     pub fn notch() -> Notch {
         let Some(screen) = main_screen() else {
             return Notch::default();

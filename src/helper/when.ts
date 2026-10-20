@@ -1,4 +1,4 @@
-import type { CalendarEvent } from "../lib/types";
+import type { CalendarEvent, Schedule } from "../lib/types";
 
 const clock = new Intl.DateTimeFormat("en", {
   hour: "numeric",
@@ -33,4 +33,35 @@ export function eventCountdown(event: CalendarEvent, now: Date): string | null {
   if (minutes >= 60 && minutes < 6 * 60)
     return `in ${Math.round(minutes / 60)} h`;
   return null;
+}
+
+const dayName = new Intl.DateTimeFormat("en", { weekday: "short" });
+const dateLabel = new Intl.DateTimeFormat("en", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+/** "Every Mon, 9:00 AM", "Weekdays, 6:30 PM", or the one date it runs. */
+export function scheduleLabel(schedule: Schedule): string {
+  const next = new Date(schedule.nextAt);
+  const time = clock.format(next);
+  switch (schedule.repeat) {
+    case "daily":
+      return `Every day, ${time}`;
+    case "weekdays":
+      return `Weekdays, ${time}`;
+    case "weekly":
+      return `Every ${dayName.format(next)}, ${time}`;
+    case "monthly":
+      return `Monthly on the ${ordinal(next.getDate())}, ${time}`;
+    default:
+      return `${dateLabel.format(next)}, ${time}`;
+  }
+}
+
+function ordinal(day: number): string {
+  const tens = day % 100;
+  if (tens >= 11 && tens <= 13) return `${day}th`;
+  return `${day}${["th", "st", "nd", "rd"][day % 10] ?? "th"}`;
 }

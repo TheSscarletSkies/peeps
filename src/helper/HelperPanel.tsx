@@ -1,8 +1,10 @@
 import { useState } from "react";
 
 import {
+  addSchedule,
   addTodo,
   deleteDraft,
+  deleteSchedule,
   deleteTodo,
   editTodo,
   setTodoDone,
@@ -27,8 +29,10 @@ import {
   type TodoDraft,
 } from "./todoForm";
 import { Upcoming } from "./Upcoming";
+import { Chat } from "./Chat";
+import { scheduleLabel } from "./when";
 
-type Tab = "todo" | "write" | "tokens";
+type Tab = "ask" | "todo" | "write" | "tokens";
 
 interface Props {
   helper: Helper;
@@ -38,7 +42,7 @@ interface Props {
 }
 
 export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
-  const [tab, setTab] = useState<Tab>("todo");
+  const [tab, setTab] = useState<Tab>("ask");
 
   return (
     <section className="panel" aria-label={helper.name}>
@@ -46,10 +50,11 @@ export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
         <span className="panel__name">{helper.name}</span>
         <span className="panel__headline">{helper.headline}</span>
       </header>
-      <Upcoming events={helper.upcoming} limit={3} />
+      <Upcoming events={helper.upcoming} limit={2} />
       <div className="tabs" role="tablist" aria-label="Helper">
         {(
           [
+            ["ask", "Ask"],
             ["todo", "To-do"],
             ["write", "Write"],
             ["tokens", "Tokens"],
@@ -66,6 +71,7 @@ export function HelperPanel({ helper, pets, tips, onTyping }: Props) {
           </button>
         ))}
       </div>
+      {tab === "ask" && <Chat helper={helper} onTyping={onTyping} />}
       {tab === "todo" && <Todos helper={helper} onTyping={onTyping} />}
       {tab === "write" && <Write helper={helper} onTyping={onTyping} />}
       {tab === "tokens" && <Tokens helper={helper} pets={pets} tips={tips} />}
@@ -357,6 +363,16 @@ export function Todos({
   );
 }
 
+function today(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+function draftLabel(helper: Helper, kind: string): string {
+  return helper.draftKinds.find((option) => option.id === kind)?.label ?? kind;
+}
+
 export function Write({
   helper,
   onTyping,
@@ -366,13 +382,20 @@ export function Write({
 }) {
   const [kind, setKind] = useState(helper.draftKinds[0]?.id ?? "linkedin");
   const [topic, setTopic] = useState("");
+  const [when, setWhen] = useState<"now" | Repeat>("now");
+  const [start, setStart] = useState(today);
+  const [time, setTime] = useState("09:00");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
 
   const write = async () => {
     setError(null);
     try {
-      await writeDraft(kind, topic);
+      if (when === "now") {
+        await writeDraft(kind, topic);
+      } else {
+        await addSchedule({ kind, topic, repeat: when, start, time });
+      }
       setTopic("");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -408,14 +431,57 @@ export function Write({
               </option>
             ))}
           </select>
+          <label className="visually-hidden" htmlFor="draft-when">
+            When
+          </label>
+          <select
+            id="draft-when"
+            value={when}
+            onChange={(event) => setWhen(event.target.value as "now" | Repeat)}
+          >
+            <option value="now">Now</option>
+            {REPEATS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.id === "never" ? "Later, once" : option.label}
+              </option>
+            ))}
+          </select>
           <button
             className="button button--primary"
             type="submit"
-            disabled={!topic.trim() || helper.drafting}
+            disabled={!topic.trim() || (when === "now" && helper.drafting)}
           >
-            {helper.drafting ? "Writing…" : "Draft it"}
+            {when !== "now"
+              ? "Schedule"
+              : helper.drafting
+                ? "Writing…"
+                : "Draft it"}
           </button>
         </div>
+        {when !== "now" && (
+          <div className="feed">
+            <label className="visually-hidden" htmlFor="draft-start">
+              Starting
+            </label>
+            <input
+              id="draft-start"
+              className="feed__date"
+              type="date"
+              value={start}
+              onChange={(event) => setStart(event.target.value)}
+            />
+            <label className="visually-hidden" htmlFor="draft-time">
+              At
+            </label>
+            <input
+              id="draft-time"
+              className="feed__time"
+              type="time"
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+            />
+          </div>
+        )}
         <label className="visually-hidden" htmlFor="draft-topic">
           What to write about
         </label>
@@ -430,6 +496,25 @@ export function Write({
         />
       </form>
       {error && <p className="tray__error">{error}</p>}
+      {helper.schedules.length > 0 && (
+        <ul className="schedules" aria-label="Scheduled drafts">
+          {helper.schedules.map((schedule) => (
+            <li key={schedule.id}>
+              <span className="schedules__when">{scheduleLabel(schedule)}</span>
+              <span className="schedules__what">
+                {draftLabel(helper, schedule.kind)}: {schedule.topic}
+              </span>
+              <button
+                className="todos__remove"
+                aria-label={`Stop scheduling ${schedule.topic}`}
+                onClick={() => void deleteSchedule(schedule.id)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <ul className="drafts">
         {helper.drafts.map((draft) => (
           <li key={draft.id}>

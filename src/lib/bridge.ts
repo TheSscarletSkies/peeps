@@ -3,10 +3,12 @@ import { listen } from "@tauri-apps/api/event";
 
 import { demoSnapshot } from "./demo";
 import type {
+  ChatMessage,
   Decision,
   Delivery,
   Draft,
   NewProduct,
+  NewSchedule,
   Notch,
   Note,
   Reminders,
@@ -226,5 +228,40 @@ export function removeCalendar(name: string): Promise<void> {
 export function setReminders(reminders: Reminders): Promise<void> {
   return inApp()
     ? invoke("set_reminders", { ...reminders }).then(() => undefined)
+    : Promise.resolve();
+}
+
+let demoId = 1000;
+
+/** Sends a message to the helper. The browser preview answers with a stand-in reply. */
+export function sendChat(text: string): Promise<ChatMessage> {
+  if (inApp()) return invoke<ChatMessage>("send_chat", { text });
+  return new Promise((resolve) =>
+    setTimeout(
+      () =>
+        resolve({
+          id: (demoId += 1),
+          from: "helper",
+          text: `In the app I'd ask your agent about “${text}”.`,
+          at: new Date().toISOString(),
+        }),
+      900,
+    ),
+  );
+}
+
+export function newChat(): Promise<void> {
+  return inApp() ? invoke("new_chat").then(() => undefined) : Promise.resolve();
+}
+
+export function addSchedule(schedule: NewSchedule): Promise<void> {
+  return inApp()
+    ? invoke("add_schedule", { schedule }).then(() => undefined)
+    : Promise.resolve();
+}
+
+export function deleteSchedule(id: number): Promise<void> {
+  return inApp()
+    ? invoke("delete_schedule", { id }).then(() => undefined)
     : Promise.resolve();
 }

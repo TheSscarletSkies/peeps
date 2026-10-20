@@ -127,6 +127,36 @@ export interface Helper {
   draftsThisWeek: number;
   /** The next few calendar events, soonest first. */
   upcoming: CalendarEvent[];
+  chat: ChatMessage[];
+  /** True while the agent is answering. */
+  chatting: boolean;
+  schedules: Schedule[];
+  /** The helper's own agent asking to use a tool. */
+  permission: Permission | null;
+}
+
+export interface ChatMessage {
+  id: number;
+  from: "you" | "helper";
+  text: string;
+  at: string;
+}
+
+export interface NewSchedule {
+  kind: string;
+  topic: string;
+  repeat: Repeat;
+  start: string;
+  time: string;
+}
+
+export interface Schedule {
+  id: number;
+  kind: string;
+  topic: string;
+  repeat: Repeat;
+  time: string;
+  nextAt: string;
 }
 
 export interface CalendarEvent {

@@ -843,3 +843,16 @@ li[data-done] .started__check {
   align-items: flex-start;
   gap: 8px;
 }
+
+.ask {
+  max-width: 720px;
+}
+
+.ask .chat__list {
+  max-height: 52vh;
+}
+
+.hub .chat__message p,
+.hub .schedules li {
+  background: var(--field);
+}

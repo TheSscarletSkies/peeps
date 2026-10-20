@@ -146,6 +146,32 @@ export const demoSnapshot: Snapshot = {
     },
     todosDoneThisWeek: 9,
     draftsThisWeek: 3,
+    chat: [
+      {
+        id: 1,
+        from: "you",
+        text: "What's on today?",
+        at: "2026-10-20T07:58:00Z",
+      },
+      {
+        id: 2,
+        from: "helper",
+        text: "Marketing class at 6 pm in Room 4, and Funderly has 7 sign-ups waiting on a reply. Want me to draft that reply?",
+        at: "2026-10-20T07:58:20Z",
+      },
+    ],
+    chatting: false,
+    schedules: [
+      {
+        id: 1,
+        kind: "linkedin",
+        topic: "What I shipped this week",
+        repeat: "weekly",
+        time: "09:00:00",
+        nextAt: "2026-10-26T04:00:00Z",
+      },
+    ],
+    permission: null,
     upcoming: [
       {
         key: "college:class",

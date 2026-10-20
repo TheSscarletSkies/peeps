@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
+import { Chat } from "../helper/Chat";
 import { Upcoming } from "../helper/Upcoming";
 import { setTodoDone } from "../lib/bridge";
 import { Boundary } from "../lib/Boundary";
@@ -13,6 +14,7 @@ import { Setup } from "../setup/Setup";
 import { GettingStarted } from "./GettingStarted";
 import { greeting } from "./greeting";
 import {
+  AskIcon,
   BellIcon,
   HomeIcon,
   MoonIcon,
@@ -31,10 +33,18 @@ import { savedTheme, saveTheme, type Theme } from "./theme";
 import "./hub.css";
 
 type Page =
-  "home" | "todo" | "reminders" | "write" | "tokens" | "recap" | "products";
+  | "home"
+  | "ask"
+  | "todo"
+  | "reminders"
+  | "write"
+  | "tokens"
+  | "recap"
+  | "products";
 
 const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "home", label: "Home", icon: <HomeIcon /> },
+  { id: "ask", label: "Ask", icon: <AskIcon /> },
   { id: "todo", label: "To-do", icon: <TodoIcon /> },
   { id: "reminders", label: "Reminders", icon: <BellIcon /> },
   { id: "write", label: "Write", icon: <WriteIcon /> },
@@ -136,6 +146,16 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             <Section title="To-do" lead="Deadlines, study blocks and chores.">
               <div className="card">
                 <Todos helper={helper} onTyping={noop} />
+              </div>
+            </Section>
+          )}
+          {page === "ask" && (
+            <Section
+              title={`Ask ${helper.name}`}
+              lead="Talks to your own Claude, with your connectors. Anything it wants to do, it asks first."
+            >
+              <div className="card ask">
+                <Chat helper={helper} onTyping={noop} />
               </div>
             </Section>
           )}

@@ -90,3 +90,9 @@ export const BellIcon = () => (
     <path d="M10 20.5a2 2 0 0 0 4 0" />
   </Icon>
 );
+
+export const AskIcon = () => (
+  <Icon>
+    <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0.5A2.5 2.5 0 0 1 5 13.5z" />
+  </Icon>
+);

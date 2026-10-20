@@ -629,6 +629,16 @@ body,
   gap: 8px;
 }
 
+.write__row select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.write .feed > input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .drafts li {
   display: flex;
   flex-direction: column;
@@ -1452,4 +1462,151 @@ body,
   color: var(--accent);
   font-size: 12px;
   font-weight: 800;
+}
+
+/* Chat with the helper */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chat__message {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.chat__message p {
+  max-width: 82%;
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat__message[data-from="helper"] p {
+  border-bottom-left-radius: 6px;
+}
+
+.chat__message[data-from="you"] {
+  justify-content: flex-end;
+}
+
+.chat__message[data-from="you"] p {
+  border-bottom-right-radius: 6px;
+  background: color-mix(in srgb, var(--pet, #ffc9a8) 26%, var(--surface));
+}
+
+.chat__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.chat__dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: dot 1s ease-in-out infinite;
+}
+
+.chat__dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat__dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.chat__starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat__empty p {
+  margin: 0 0 8px;
+}
+
+.chat__compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.chat__compose textarea {
+  flex: 1;
+  min-height: var(--h-control);
+  max-height: 120px;
+  resize: none;
+  field-sizing: content;
+}
+
+.chat__new {
+  align-self: flex-end;
+}
+
+@keyframes dot {
+  0%,
+  60%,
+  100% {
+    translate: 0 0;
+    opacity: 0.5;
+  }
+  30% {
+    translate: 0 -4px;
+    opacity: 1;
+  }
+}
+
+/* Scheduled drafts */
+
+.schedules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedules li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 12px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.schedules__when {
+  flex-shrink: 0;
+  color: #9fd9b4;
+  font-weight: 800;
+}
+
+.schedules__what {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
