@@ -59,15 +59,36 @@ pub fn parse_reply(stdout: &str) -> Result<Reply, String> {
     }
 }
 
-/// The command for one turn: Claude Code resumes the conversation and gets the helper's context.
-pub fn command(base: &[String], session: Option<&str>, context: &str) -> Vec<String> {
-    let mut command = base.to_vec();
-    let is_claude = base.first().is_some_and(|program| {
+fn is_claude(base: &[String]) -> bool {
+    base.first().is_some_and(|program| {
         Path::new(program)
             .file_stem()
             .is_some_and(|stem| stem == "claude")
-    });
-    if is_claude {
+    })
+}
+
+/// Adds the chosen model and effort right after the program, so a trailing `{prompt}` stays last.
+/// Other agents have their own flags and are left as configured.
+pub fn with_agent(base: &[String], model: Option<&str>, effort: Option<&str>) -> Vec<String> {
+    let mut command = base.to_vec();
+    if !is_claude(base) {
+        return command;
+    }
+    let mut flags = Vec::new();
+    if let Some(model) = model {
+        flags.extend(["--model".to_owned(), model.to_owned()]);
+    }
+    if let Some(effort) = effort {
+        flags.extend(["--effort".to_owned(), effort.to_owned()]);
+    }
+    command.splice(1..1, flags);
+    command
+}
+
+/// The command for one turn: Claude Code resumes the conversation and gets the helper's context.
+pub fn command(base: &[String], session: Option<&str>, context: &str) -> Vec<String> {
+    let mut command = base.to_vec();
+    if is_claude(base) {
         if let Some(session) = session {
             command.push("--resume".to_owned());
             command.push(session.to_owned());
@@ -241,6 +262,18 @@ mod tests {
         );
         let other = args(&["codex", "exec"]);
         assert_eq!(command(&other, Some("abc"), "ctx"), other);
+    }
+
+    #[test]
+    fn model_and_effort_go_before_the_prompt() {
+        let drafts = args(&["claude", "-p", "{prompt}"]);
+        assert_eq!(
+            with_agent(&drafts, Some("opus"), Some("high")),
+            args(&["claude", "--model", "opus", "--effort", "high", "-p", "{prompt}"])
+        );
+        assert_eq!(with_agent(&drafts, None, None), drafts);
+        let other = args(&["codex", "exec"]);
+        assert_eq!(with_agent(&other, Some("opus"), None), other);
     }
 
     #[test]

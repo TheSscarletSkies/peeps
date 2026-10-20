@@ -277,3 +277,12 @@ export function deleteSchedule(id: number): Promise<void> {
     ? invoke("delete_schedule", { id }).then(() => undefined)
     : Promise.resolve();
 }
+
+export function setHelperAgent(
+  model: string | null,
+  effort: string | null,
+): Promise<void> {
+  return inApp()
+    ? invoke("set_helper_agent", { model, effort }).then(() => undefined)
+    : Promise.resolve();
+}

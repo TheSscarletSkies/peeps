@@ -68,7 +68,7 @@ Tested by `src/life/*.test.ts`.
 ### UC9. Ask the helper anything
 
 **When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
-**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny.
+**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The first time, the helper asks which model and effort to use (Haiku, Sonnet or Opus; low, medium or high); a chip above the message box changes it later, and drafts use the same choice.
 
 Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
 

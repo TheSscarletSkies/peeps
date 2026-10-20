@@ -31,6 +31,7 @@ pub fn run() {
             commands::delete_draft,
             commands::send_chat,
             commands::new_chat,
+            commands::set_helper_agent,
             commands::add_schedule,
             commands::delete_schedule,
             commands::hooks_status,

@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
   await page.getByRole("button", { name: /^Helper/ }).click();
 });
 
@@ -10,6 +12,26 @@ test("UC9: the helper answers a message", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Thinking")).toBeVisible();
   await expect(page.getByText("In the app I'd ask your agent")).toBeVisible();
+});
+
+test("UC9: the helper asks once which model and effort to use", async ({
+  page,
+}) => {
+  const picker = page.getByRole("region", { name: "Choose a model" });
+  await expect(picker).toBeVisible();
+  await picker.getByRole("radio", { name: /Opus/ }).click();
+  await picker.getByRole("radio", { name: "High" }).click();
+  await picker.getByRole("button", { name: "Use Opus" }).click();
+  await expect(picker).toHaveCount(0);
+  await page.reload();
+  await page.getByRole("button", { name: /^Helper/ }).click();
+  await expect(
+    page.getByRole("region", { name: "Choose a model" }),
+  ).toHaveCount(0);
+  await page.getByTitle("Change model and effort").click();
+  await expect(
+    page.getByRole("region", { name: "Choose a model" }),
+  ).toBeVisible();
 });
 
 test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {

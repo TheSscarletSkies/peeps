@@ -133,6 +133,9 @@ export interface Helper {
   schedules: Schedule[];
   /** The helper's own agent asking to use a tool. */
   permission: Permission | null;
+  /** The model and effort the user picked; null means the agent's own default. */
+  model: string | null;
+  effort: string | null;
 }
 
 export interface ChatMessage {

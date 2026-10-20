@@ -5,6 +5,7 @@ import type { ChatMessage, Helper } from "../lib/types";
 import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { Dumpling } from "../pets/Dumpling";
+import { agentLabel, AgentPicker, wasAsked } from "./AgentPicker";
 
 const STARTERS = [
   "What's on today?",
@@ -24,6 +25,9 @@ export function Chat({
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const [waiting, setWaiting] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
+  const [picking, setPicking] = useState(
+    () => helper.model === null && helper.effort === null && !wasAsked(),
+  );
   useGivenFiles("helper", (paths) =>
     setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
   );
@@ -150,6 +154,18 @@ export function Chat({
             </button>
           </div>
         </div>
+      )}
+
+      {picking ? (
+        <AgentPicker helper={helper} onDone={() => setPicking(false)} />
+      ) : (
+        <button
+          className="chip chat__agent"
+          onClick={() => setPicking(true)}
+          title="Change model and effort"
+        >
+          {agentLabel(helper)}
+        </button>
       )}
 
       <form

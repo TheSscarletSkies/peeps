@@ -39,6 +39,9 @@ pub struct HelperView {
     pub schedules: Vec<Schedule>,
     /// The helper's own agent asking to use a tool.
     pub permission: Option<PermissionView>,
+    /// The model and effort the user picked, if any.
+    pub model: Option<String>,
+    pub effort: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -172,6 +175,8 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         chatting: inputs.chatting,
         schedules: inputs.schedules,
         permission: inputs.permission,
+        model: inputs.config.model.clone(),
+        effort: inputs.config.effort.clone(),
     }
 }
 

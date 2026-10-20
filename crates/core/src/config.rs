@@ -99,6 +99,10 @@ pub struct Helper {
     /// same conversation and is told about your day.
     pub chat_command: Vec<String>,
     pub chat_timeout_seconds: u64,
+    /// The model the helper's agent uses, such as `sonnet` or `opus`. Unset until the user picks.
+    pub model: Option<String>,
+    /// How hard the agent thinks: `low`, `medium` or `high`. Unset until the user picks.
+    pub effort: Option<String>,
 }
 
 impl Default for Helper {
@@ -119,6 +123,8 @@ impl Default for Helper {
                 .map(String::from)
                 .to_vec(),
             chat_timeout_seconds: 600,
+            model: None,
+            effort: None,
         }
     }
 }

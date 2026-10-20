@@ -33,7 +33,11 @@ pub async fn draft(app: Arc<App>, kind: String, topic: String) -> Result<Draft> 
         .map(|path| std::fs::read_to_string(paths::expand_home(path)))
         .transpose()
         .map_err(|error| format!("could not read the voice guide: {error}"));
-    let command = helper.command.clone();
+    let command = chat::with_agent(
+        &helper.command,
+        helper.model.as_deref(),
+        helper.effort.as_deref(),
+    );
     let timeout = Duration::from_secs(helper.timeout_seconds);
 
     let result = match voice {
@@ -89,11 +93,12 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
 
     let config = app.config();
     let session = app.chat().session().map_err(|error| error.to_string())?;
-    let command = chat::command(
+    let base = chat::with_agent(
         &config.helper.chat_command,
-        session.as_deref(),
-        &context(app),
+        config.helper.model.as_deref(),
+        config.helper.effort.as_deref(),
     );
+    let command = chat::command(&base, session.as_deref(), &context(app));
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;

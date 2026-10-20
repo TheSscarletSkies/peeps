@@ -140,6 +140,22 @@ pub async fn send_chat(app: State<'_, Arc<App>>, text: String) -> Result<Message
     assistant::send(app.inner().clone(), text).await
 }
 
+/// Saves which model and effort the helper's agent uses.
+#[tauri::command]
+pub fn set_helper_agent(
+    app: State<'_, Arc<App>>,
+    model: Option<String>,
+    effort: Option<String>,
+) -> Result<()> {
+    let path = paths::config_file();
+    let updated =
+        config_edit::set_helper_agent(&read_or_empty(&path)?, model.as_deref(), effort.as_deref())
+            .map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 /// Starts a fresh conversation with the helper.
 #[tauri::command]
 pub fn new_chat(app: State<'_, Arc<App>>) -> Result<()> {

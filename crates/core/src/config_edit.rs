@@ -130,6 +130,31 @@ fn color_or_default(color: &str) -> String {
     }
 }
 
+/// Sets the helper's model and effort; `None` clears them so the agent's own defaults apply.
+pub fn set_helper_agent(
+    text: &str,
+    model: Option<&str>,
+    effort: Option<&str>,
+) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let helper = doc
+        .entry("helper")
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .ok_or(EditError::Shape)?;
+    for (key, choice) in [("model", model), ("effort", effort)] {
+        match choice.map(str::trim).filter(|value| !value.is_empty()) {
+            Some(value) => helper[key] = value.into(),
+            None => {
+                helper.remove(key);
+            }
+        }
+    }
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// The keychain entry that holds a calendar's private link.
 pub fn calendar_secret(name: &str) -> String {
     format!("calendar-{}", slug(name))
@@ -356,5 +381,22 @@ mod tests {
         assert!(parsed.rules[1].mute);
         let again = set_reminders(&text, &Reminders::default()).unwrap();
         assert!(Config::parse(&again).unwrap().reminders.rules.is_empty());
+    }
+
+    #[test]
+    fn helper_model_and_effort_can_be_set_and_cleared() {
+        let text =
+            set_helper_agent("[helper]\nname = \"Bao\"\n", Some("opus"), Some("high")).unwrap();
+        let helper = Config::parse(&text).unwrap().helper;
+        assert_eq!(helper.name, "Bao");
+        assert_eq!(helper.model.as_deref(), Some("opus"));
+        assert_eq!(helper.effort.as_deref(), Some("high"));
+        let cleared = set_helper_agent(&text, None, Some(" ")).unwrap();
+        let helper = Config::parse(&cleared).unwrap().helper;
+        assert_eq!(helper.model, None);
+        assert_eq!(helper.effort, None);
+        assert!(set_helper_agent("", Some("sonnet"), None)
+            .unwrap()
+            .contains("[helper]"));
     }
 }

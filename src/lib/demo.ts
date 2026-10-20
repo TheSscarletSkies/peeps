@@ -172,6 +172,8 @@ export const demoSnapshot: Snapshot = {
       },
     ],
     permission: null,
+    model: null,
+    effort: null,
     upcoming: [
       {
         key: "college:class",
