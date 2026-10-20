@@ -3,13 +3,18 @@ import { useEffect, useState } from "react";
 import type { PetSize } from "./roam";
 
 /** How the notch looks: which pets hide and how big they are. Kept per computer. */
+/** Where pets live: the notch or top of the screen, or floating anywhere. Auto floats when there is no notch. */
+export type Place = "auto" | "notch" | "float";
+
 export interface Prefs {
   hidden: string[];
   size: PetSize;
+  place: Place;
 }
 
 const KEY = "peeps.notch";
-const DEFAULTS: Prefs = { hidden: [], size: "medium" };
+const DEFAULTS: Prefs = { hidden: [], size: "medium", place: "auto" };
+const PLACES: Place[] = ["auto", "notch", "float"];
 const SIZES: PetSize[] = ["small", "medium", "large"];
 
 export function parsePrefs(text: string | null): Prefs {
@@ -22,6 +27,9 @@ export function parsePrefs(text: string | null): Prefs {
       size: SIZES.includes(value.size as PetSize)
         ? (value.size as PetSize)
         : DEFAULTS.size,
+      place: PLACES.includes(value.place as Place)
+        ? (value.place as Place)
+        : DEFAULTS.place,
     };
   } catch {
     return DEFAULTS;

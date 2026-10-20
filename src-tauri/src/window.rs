@@ -35,6 +35,20 @@ pub fn dock(window: &WebviewWindow, width: f64, height: f64) -> tauri::Result<()
     }
 }
 
+/// Puts the floating pet's window at a spot on screen, in logical pixels from the top left.
+pub fn float(window: &WebviewWindow, x: f64, y: f64, width: f64, height: f64) -> tauri::Result<()> {
+    #[cfg(target_os = "macos")]
+    {
+        let target = window.clone();
+        window.run_on_main_thread(move || mac::place_at(&target, x, y, width, height))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        window.set_size(tauri::LogicalSize::new(width, height))?;
+        window.set_position(tauri::LogicalPosition::new(x, y))
+    }
+}
+
 pub fn notch() -> Notch {
     #[cfg(target_os = "macos")]
     {
@@ -112,6 +126,26 @@ mod mac {
         }
     }
 
+    /// Puts the floating pet's window at a spot on screen, in logical pixels from the top left.
+    pub fn float(
+        window: &WebviewWindow,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    ) -> tauri::Result<()> {
+        #[cfg(target_os = "macos")]
+        {
+            let target = window.clone();
+            window.run_on_main_thread(move || mac::place_at(&target, x, y, width, height))
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            window.set_size(tauri::LogicalSize::new(width, height))?;
+            window.set_position(tauri::LogicalPosition::new(x, y))
+        }
+    }
+
     pub fn notch() -> Notch {
         let Some(screen) = main_screen() else {
             return Notch::default();
@@ -141,6 +175,16 @@ mod mac {
     }
 
     pub fn place(window: &WebviewWindow, width: f64, height: f64) {
+        let Some(screen) = main_screen() else {
+            return;
+        };
+        let frame: NSRect = unsafe { msg_send![screen, frame] };
+        let x = (frame.size.width - width) / 2.0;
+        place_at(window, x, 0.0, width, height);
+    }
+
+    /// `x` and `y` count from the top left of the main screen, as the web page sees it.
+    pub fn place_at(window: &WebviewWindow, x: f64, y: f64, width: f64, height: f64) {
         let (Some(screen), Ok(handle)) = (main_screen(), window.ns_window()) else {
             return;
         };
@@ -149,8 +193,8 @@ mod mac {
             let frame: NSRect = msg_send![screen, frame];
             let rect = NSRect {
                 origin: NSPoint {
-                    x: frame.origin.x + (frame.size.width - width) / 2.0,
-                    y: frame.origin.y + frame.size.height - height,
+                    x: frame.origin.x + x,
+                    y: frame.origin.y + frame.size.height - y - height,
                 },
                 size: NSSize { width, height },
             };

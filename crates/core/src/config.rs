@@ -58,7 +58,8 @@ fn yes() -> bool {
 #[serde(default, deny_unknown_fields, rename_all(serialize = "camelCase"))]
 pub struct Reminders {
     pub default_minutes: i64,
-    #[serde(rename = "rule")]
+    /// `[[reminders.rule]]` in the file, `rules` to the interface.
+    #[serde(rename(deserialize = "rule"))]
     pub rules: Vec<ReminderRule>,
 }
 
@@ -340,5 +341,16 @@ mod tests {
         for name in ["minimal.toml", "founder.toml"] {
             Config::load(&root.join(name)).unwrap_or_else(|e| panic!("{name}: {e}"));
         }
+    }
+
+    #[test]
+    fn reminders_reach_the_interface_as_rules() {
+        let config = Config::parse(
+            "[reminders]\ndefault_minutes = 10\n[[reminders.rule]]\ncontains = \"class\"\nminutes = 30\n",
+        )
+        .unwrap();
+        let json = serde_json::to_value(&config.reminders).unwrap();
+        assert_eq!(json["defaultMinutes"], 10);
+        assert_eq!(json["rules"][0]["contains"], "class");
     }
 }

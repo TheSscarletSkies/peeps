@@ -150,11 +150,39 @@ export function setTraySize(width: number, height: number): Promise<void> {
   return Promise.resolve();
 }
 
-/** The browser preview pretends to be a MacBook with a notch. */
+/** Moves the floating pet's window; the browser preview moves the page content instead. */
+export function floatTray(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): Promise<void> {
+  if (inApp()) {
+    return invoke("float_tray", { x, y, width, height }).then(() => undefined);
+  }
+  const root = document.getElementById("root");
+  if (root) {
+    Object.assign(root.style, {
+      position: "fixed",
+      left: `${x}px`,
+      top: `${y}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      margin: "0",
+    });
+  }
+  return Promise.resolve();
+}
+
+/** The browser preview pretends to be a MacBook with a notch, or a plain screen with `?notch=none`. */
 export function notch(): Promise<Notch> {
   return inApp()
     ? invoke<Notch>("notch")
-    : Promise.resolve({ width: 190, height: 34 });
+    : Promise.resolve(
+        new URLSearchParams(window.location.search).get("notch") === "none"
+          ? { width: 0, height: 0 }
+          : { width: 190, height: 34 },
+      );
 }
 
 export function editTodo(id: number, input: TodoInput): Promise<void> {

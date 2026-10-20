@@ -690,9 +690,9 @@ body,
 
 /* Form controls. Every text field, date, dropdown and text area shares one look. */
 
-:is(.notch, .hub) input:not([type="checkbox"]),
-:is(.notch, .hub) select,
-:is(.notch, .hub) textarea {
+:is(.notch, .float, .hub) input:not([type="checkbox"]),
+:is(.notch, .float, .hub) select,
+:is(.notch, .float, .hub) textarea {
   box-sizing: border-box;
   height: var(--h-control);
   min-width: 0;
@@ -707,7 +707,7 @@ body,
   transition: border-color 0.15s;
 }
 
-:is(.notch, .hub) textarea {
+:is(.notch, .float, .hub) textarea {
   height: auto;
   padding: 10px 16px;
   border-radius: var(--r-box);
@@ -715,7 +715,7 @@ body,
   resize: none;
 }
 
-:is(.notch, .hub) select {
+:is(.notch, .float, .hub) select {
   padding-right: 34px;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted) 50%),
@@ -727,29 +727,30 @@ body,
   background-repeat: no-repeat;
 }
 
-:is(.notch, .hub) input[type="date"] {
+:is(.notch, .float, .hub) input[type="date"] {
   flex: 0 0 auto;
   color-scheme: dark;
 }
 
-:is(.notch, .hub) input[type="date"]::-webkit-calendar-picker-indicator {
+:is(.notch, .float, .hub)
+  input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.55;
   cursor: pointer;
 }
 
-:is(.notch, .hub) ::placeholder {
+:is(.notch, .float, .hub) ::placeholder {
   color: var(--muted);
   opacity: 1;
 }
 
-:is(.notch, .hub) input:not([type="checkbox"]):focus,
-:is(.notch, .hub) select:focus,
-:is(.notch, .hub) textarea:focus {
+:is(.notch, .float, .hub) input:not([type="checkbox"]):focus,
+:is(.notch, .float, .hub) select:focus,
+:is(.notch, .float, .hub) textarea:focus {
   outline: none;
   border-color: var(--focus);
 }
 
-:is(.notch, .hub) input[type="checkbox"] {
+:is(.notch, .float, .hub) input[type="checkbox"] {
   appearance: none;
   flex-shrink: 0;
   width: 20px;
@@ -764,14 +765,14 @@ body,
     border-color 0.15s;
 }
 
-:is(.notch, .hub) input[type="checkbox"]:checked {
+:is(.notch, .float, .hub) input[type="checkbox"]:checked {
   border-color: var(--check);
   background: var(--check)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-4.9' fill='none' stroke='%230e2418' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
     center / 12px no-repeat;
 }
 
-:is(.notch, .hub) input[type="checkbox"]:hover {
+:is(.notch, .float, .hub) input[type="checkbox"]:hover {
   border-color: var(--check);
 }
 
@@ -826,12 +827,12 @@ body,
   padding: 0 16px;
 }
 
-:is(.notch, .hub) :is(button, input, select, textarea):focus-visible {
+:is(.notch, .float, .hub) :is(button, input, select, textarea):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
-:is(.notch, .hub) :is(input, select, textarea):focus-visible {
+:is(.notch, .float, .hub) :is(input, select, textarea):focus-visible {
   outline: none;
 }
 
@@ -874,6 +875,10 @@ body,
 }
 
 .notch__setup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   height: 100%;
   border: 0;
@@ -1039,19 +1044,19 @@ body,
   margin-bottom: -30px;
 }
 
-.notch__card .tray__link {
+:is(.notch__card, .float__panel) .tray__link {
   align-self: center;
 }
 
-.notch__card .feed {
+:is(.notch__card, .float__panel) .feed {
   flex-wrap: wrap;
 }
 
-.notch__card .feed input:not([type="date"], [type="time"]) {
+:is(.notch__card, .float__panel) .feed input:not([type="date"], [type="time"]) {
   flex: 1 1 100%;
 }
 
-.notch__card .feed select {
+:is(.notch__card, .float__panel) .feed select {
   flex: 1;
 }
 
@@ -1088,6 +1093,120 @@ body,
     opacity: 0;
     transform: translateY(-8px);
   }
+}
+
+/* Floating: the helper sits anywhere on screen; its panel opens beside it. */
+
+.float {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.float__pet {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 60%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.35) 45%,
+    transparent 70%
+  );
+  cursor: grab;
+  touch-action: none;
+}
+
+.float[data-side="right"] .float__pet {
+  left: 0;
+}
+
+.float[data-side="left"] .float__pet {
+  right: 0;
+}
+
+.float__pet:active {
+  cursor: grabbing;
+}
+
+.float__badge {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background: #ff8c78;
+  color: #2b1210;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 18px;
+  animation: nudge 3.2s ease-in-out infinite;
+}
+
+.float__panel {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border-radius: var(--r-card);
+  background: #0b0b0c;
+  box-shadow: inset 0 0 0 1px #232326;
+  animation: drop 0.2s ease-out;
+}
+
+.float[data-side="right"] .float__panel {
+  right: 0;
+}
+
+.float[data-side="left"] .float__panel {
+  left: 0;
+}
+
+.float__pets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.float__chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--h-small);
+  padding: 0 10px 0 2px;
+  border: 1px solid var(--field-line);
+  border-radius: var(--r-control);
+  background: var(--field);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.float__chip[aria-selected="true"] {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.float__chip[data-urgent] {
+  border-color: color-mix(in srgb, #ffd66b 60%, var(--field-line));
+}
+
+.float__chip--all {
+  padding: 0 10px;
 }
 
 /* Pet life: reactions, celebrations, hatching and idle moments. */

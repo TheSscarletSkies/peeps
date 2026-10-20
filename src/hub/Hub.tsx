@@ -3,12 +3,14 @@ import { useState, type ReactNode } from "react";
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
 import { Upcoming } from "../helper/Upcoming";
 import { setTodoDone } from "../lib/bridge";
+import { Boundary } from "../lib/Boundary";
 import type { Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import { boop, setSoundEnabled, soundEnabled } from "../life/sound";
 import { usePetEvents } from "../life/usePetEvents";
 import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
+import { GettingStarted } from "./GettingStarted";
 import { greeting } from "./greeting";
 import {
   BellIcon,
@@ -125,60 +127,65 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
       </aside>
 
       <main className="hub__main">
-        {snapshot.configError && (
-          <p className="hub__error">Config problem: {snapshot.configError}</p>
-        )}
-        {page === "home" && <HomePage snapshot={snapshot} />}
-        {page === "todo" && (
-          <Section title="To-do" lead="Deadlines, study blocks and chores.">
-            <div className="card">
-              <Todos helper={helper} onTyping={noop} />
-            </div>
-          </Section>
-        )}
-        {page === "reminders" && (
-          <Section
-            title="Reminders"
-            lead="Your calendars and when each kind of event should nudge you."
-          >
-            <RemindersPage snapshot={snapshot} />
-          </Section>
-        )}
-        {page === "write" && (
-          <Section
-            title="Write"
-            lead="Drafts in your voice, written by your own agent when you ask."
-          >
-            <div className="card">
-              <Write helper={helper} onTyping={noop} />
-            </div>
-          </Section>
-        )}
-        {page === "tokens" && (
-          <Section title="Tokens" lead="What each product used this week.">
-            <div className="card">
-              <Tokens
-                helper={helper}
-                pets={snapshot.pets}
-                tips={snapshot.tips}
+        <Boundary key={page}>
+          {snapshot.configError && (
+            <p className="hub__error">Config problem: {snapshot.configError}</p>
+          )}
+          {page === "home" && <HomePage snapshot={snapshot} onGo={setPage} />}
+          {page === "todo" && (
+            <Section title="To-do" lead="Deadlines, study blocks and chores.">
+              <div className="card">
+                <Todos helper={helper} onTyping={noop} />
+              </div>
+            </Section>
+          )}
+          {page === "reminders" && (
+            <Section
+              title="Reminders"
+              lead="Your calendars and when each kind of event should nudge you."
+            >
+              <RemindersPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "write" && (
+            <Section
+              title="Write"
+              lead="Drafts in your voice, written by your own agent when you ask."
+            >
+              <div className="card">
+                <Write helper={helper} onTyping={noop} />
+              </div>
+            </Section>
+          )}
+          {page === "tokens" && (
+            <Section title="Tokens" lead="What each product used this week.">
+              <div className="card">
+                <Tokens
+                  helper={helper}
+                  pets={snapshot.pets}
+                  tips={snapshot.tips}
+                />
+              </div>
+            </Section>
+          )}
+          {page === "recap" && (
+            <Section
+              title="Recap"
+              lead="Your week in one card, ready to share."
+            >
+              <RecapPage snapshot={snapshot} />
+            </Section>
+          )}
+          {page === "products" && (
+            <Section title="Products" lead="Each product gets a pet.">
+              <Setup
+                snapshot={snapshot}
+                onDone={() => setPage("home")}
+                onTyping={noop}
               />
-            </div>
-          </Section>
-        )}
-        {page === "recap" && (
-          <Section title="Recap" lead="Your week in one card, ready to share.">
-            <RecapPage snapshot={snapshot} />
-          </Section>
-        )}
-        {page === "products" && (
-          <Section title="Products" lead="Each product gets a pet.">
-            <Setup
-              snapshot={snapshot}
-              onDone={() => setPage("home")}
-              onTyping={noop}
-            />
-          </Section>
-        )}
+            </Section>
+          )}
+        </Boundary>
       </main>
     </div>
   );
@@ -204,7 +211,13 @@ function Section({
   );
 }
 
-function HomePage({ snapshot }: { snapshot: Snapshot }) {
+function HomePage({
+  snapshot,
+  onGo,
+}: {
+  snapshot: Snapshot;
+  onGo: (page: Page) => void;
+}) {
   const { pets, helper } = snapshot;
   const { celebrating, arriving } = usePetEvents(pets);
   const urgent = pets.filter((pet) => URGENT.has(pet.mood));
@@ -212,9 +225,11 @@ function HomePage({ snapshot }: { snapshot: Snapshot }) {
     (todo) => todo.dueState === "overdue" || todo.dueState === "today",
   );
   const summary = [
-    urgent.length > 0
-      ? `${urgent.map((pet) => pet.name).join(" and ")} ${urgent.length === 1 ? "needs" : "need"} you.`
-      : "Everyone is fine.",
+    pets.length === 0
+      ? "Add a product and it hatches as a pet."
+      : urgent.length > 0
+        ? `${urgent.map((pet) => pet.name).join(" and ")} ${urgent.length === 1 ? "needs" : "need"} you.`
+        : "Everyone is fine.",
     today.length > 0
       ? `${today.length} ${today.length === 1 ? "thing is" : "things are"} due today.`
       : "",
@@ -255,6 +270,8 @@ function HomePage({ snapshot }: { snapshot: Snapshot }) {
           <div className="hero__basket" />
         </div>
       </section>
+
+      <GettingStarted snapshot={snapshot} onGo={onGo} />
 
       <div className="home">
         <section className="home__pets" aria-label="Your products">

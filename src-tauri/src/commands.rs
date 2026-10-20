@@ -229,6 +229,11 @@ pub fn set_tray_size(window: WebviewWindow, width: f64, height: f64) -> Result<(
 }
 
 #[tauri::command]
+pub fn float_tray(window: WebviewWindow, x: f64, y: f64, width: f64, height: f64) -> Result<()> {
+    window::float(&window, x, y, width, height).map_err(message)
+}
+
+#[tauri::command]
 pub fn notch() -> window::Notch {
     window::notch()
 }

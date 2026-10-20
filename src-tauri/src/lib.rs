@@ -34,6 +34,7 @@ pub fn run() {
             commands::set_secret,
             commands::set_tray_size,
             commands::notch,
+            commands::float_tray,
             commands::open_home,
             commands::save_image,
             commands::add_calendar,
