@@ -1,9 +1,17 @@
 name: CI
 
+# Builds cost minutes on a private repo, so pushes run only the quick Linux checks, skip
+# doc-only changes, and replace a run still going. Mac and Windows run by hand.
 on:
   push:
     branches: [main]
+    paths-ignore: ["**.md", "docs/**", "design/**"]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   rust:
@@ -25,6 +33,7 @@ jobs:
       - run: cargo test --workspace
 
   macos:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -44,6 +53,7 @@ jobs:
           fi
 
   windows:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
