@@ -752,3 +752,34 @@ export function onNudge(handler: (nudge: Nudge) => void): Promise<() => void> {
     : 0;
   return Promise.resolve(() => window.clearTimeout(timer));
 }
+
+export function startFocus(minutes: number, task: string): Promise<void> {
+  if (inApp())
+    return invoke("start_focus", { minutes, task: task || null }).then(
+      () => undefined,
+    );
+  const now = Date.now();
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    focus: {
+      phase: "focus",
+      startedAt: new Date(now).toISOString(),
+      endsAt: new Date(now + minutes * 60_000).toISOString(),
+      focusMinutes: minutes,
+      task: task.trim() || null,
+    },
+  }));
+  return Promise.resolve();
+}
+
+export function stopFocus(): Promise<void> {
+  if (inApp()) return invoke("stop_focus").then(() => undefined);
+  updatePreview((snapshot) => ({ ...snapshot, focus: null }));
+  return Promise.resolve();
+}
+
+export function setOneThing(on: boolean): Promise<void> {
+  if (inApp()) return invoke("set_one_thing", { on }).then(() => undefined);
+  updatePreview((snapshot) => ({ ...snapshot, oneThing: on }));
+  return Promise.resolve();
+}

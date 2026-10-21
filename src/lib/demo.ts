@@ -412,6 +412,8 @@ export const demoSnapshot: Snapshot = {
     },
   ],
   knowsYou: false,
+  focus: null,
+  oneThing: false,
   teammates: [
     {
       productId: "funderly",

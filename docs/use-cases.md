@@ -27,6 +27,20 @@ Tested by `e2e/helper.e2e.ts`, `e2e/nudge.e2e.ts`, `crates/core/src/todos.rs`, `
 
 Tested by `e2e/helper.e2e.ts`, `e2e/hub.e2e.ts`, `src/nudges/presets.test.ts`.
 
+### UC23. Focus for a while
+
+**When** they want 25 minutes on one thing.
+**Then** they type what it is (or not), pick 15, 25 or 50 minutes and press Focus. A ring counts down on Today and in the peep's card, and the peep works alongside with a pencil. When time is up it pops up for a break ("25 minutes on essay, nice. Stretch for 5."), and again when the break is over.
+
+Tested by `e2e/hub.e2e.ts`, `src/focus/clock.test.ts`, `crates/core/src/focus.rs`.
+
+### UC24. One thing at a time
+
+**When** they switch it on in Nudges and then keep hopping between Chrome, Notion and Slack.
+**Then** after 15 switches across three or more apps within 5 minutes, the peep says "First Chrome, then Notion", like a friend would, at most every 20 minutes. Only the name of the app in front is read, every few seconds, and it never leaves the computer. It is off until they switch it on.
+
+Tested by `e2e/hub.e2e.ts`, `crates/core/src/hopping.rs`.
+
 ### UC11. Never miss a class
 
 **When** they add their college Google calendar in Settings and a rule "titles with _class_ remind 30 min before".

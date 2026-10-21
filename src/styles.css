@@ -2698,3 +2698,55 @@ body,
   font-size: 12px;
   font-weight: 600;
 }
+
+/* Focus: one row, a ring that fills as time passes. */
+.focus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-box);
+  background: color-mix(in srgb, var(--pet, var(--accent)) 12%, var(--surface));
+}
+
+.focus input {
+  flex: 1;
+  min-width: 0;
+}
+
+.focus__ring svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+  transform: rotate(-90deg);
+}
+
+.focus__ring circle {
+  fill: none;
+  stroke-width: 4;
+  stroke: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.focus__ring circle + circle {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s linear;
+}
+
+.focus[data-phase="break"] .focus__ring circle + circle {
+  stroke: #8fd9b0;
+}
+
+.focus__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.focus__text strong {
+  color: var(--text);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}

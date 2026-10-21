@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { addTodo, deleteTodo } from "../lib/bridge";
+import { addTodo, deleteTodo, setOneThing } from "../lib/bridge";
 import type { Helper } from "../lib/types";
 import { REPEATS, whenLabel } from "../helper/todoForm";
 import { ownReminders, presetTodo, PRESETS, type Preset } from "./presets";
@@ -8,9 +8,11 @@ import { ownReminders, presetTodo, PRESETS, type Preset } from "./presets";
 /** Gentle nudges through the day, each one switch, and the reminders the user set up. */
 export function Nudges({
   helper,
+  oneThing,
   onAdd,
 }: {
   helper: Helper;
+  oneThing: boolean;
   /** Where to set up a reminder of your own; the to-do form has every repeat and time. */
   onAdd?: () => void;
 }) {
@@ -51,6 +53,22 @@ export function Nudges({
             </li>
           );
         })}
+        <li className="review-toggle">
+          <span>
+            <strong>One thing at a time</strong>
+            When you keep hopping between apps, {helper.name} suggests what
+            first. It only sees app names, on this computer.
+          </span>
+          <button
+            className={oneThing ? "chip chip--on" : "chip"}
+            role="switch"
+            aria-checked={oneThing}
+            aria-label="One thing at a time"
+            onClick={() => void setOneThing(!oneThing)}
+          >
+            {oneThing ? "On" : "Off"}
+          </button>
+        </li>
       </ul>
       <h3 className="nudges__head">Your reminders</h3>
       {own.length === 0 ? (

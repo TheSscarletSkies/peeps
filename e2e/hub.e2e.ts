@@ -114,3 +114,23 @@ test("UC1: ticking a to-do on Today feeds the pet", async ({ page }) => {
     page.locator(".hero .dumpling--love, .hero .pet-say").first(),
   ).toBeVisible();
 });
+
+test("UC23: a focus session counts down", async ({ page }) => {
+  const bar = page.getByRole("form", { name: "Focus" });
+  await bar.getByLabel("What are you focusing on?").fill("essay");
+  await bar.getByRole("radio", { name: "50" }).click();
+  await bar.getByRole("button", { name: "Focus" }).click();
+  const session = page.getByRole("region", { name: "Focus session" });
+  await expect(session).toContainText("Focusing on essay");
+  await expect(session.getByRole("timer")).toHaveText(/^(50:00|49:5\d)$/);
+  await session.getByRole("button", { name: "Stop" }).click();
+  await expect(session).toHaveCount(0);
+});
+
+test("UC24: one thing at a time is off until switched on", async ({ page }) => {
+  await page.getByRole("button", { name: "Nudges" }).click();
+  const guard = page.getByRole("switch", { name: "One thing at a time" });
+  await expect(guard).toHaveAttribute("aria-checked", "false");
+  await guard.click();
+  await expect(guard).toHaveAttribute("aria-checked", "true");
+});

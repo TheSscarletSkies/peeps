@@ -1,6 +1,9 @@
 mod assistant;
 mod bridge;
 mod commands;
+mod focus;
+mod frontmost;
+mod hopping;
 mod mailbox;
 mod numbers;
 mod remind;
@@ -35,6 +38,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::snapshot,
             commands::decide,
+            commands::start_focus,
+            commands::stop_focus,
+            commands::set_one_thing,
             commands::add_note,
             commands::add_product,
             commands::remove_product,
@@ -116,6 +122,8 @@ pub fn run() {
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));
             tauri::async_runtime::spawn(remind::setup_nudge(app.clone()));
+            tauri::async_runtime::spawn(focus::run(app.clone()));
+            tauri::async_runtime::spawn(hopping::run(app.clone()));
             tauri::async_runtime::spawn(sync::run(app.clone()));
             tauri::async_runtime::spawn(mailbox::run(app.clone()));
             tauri::async_runtime::spawn(numbers::run(app.clone()));

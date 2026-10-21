@@ -13,9 +13,12 @@ import {
 import { announceFed } from "../life/events";
 import { LivePet } from "../life/LivePet";
 import { Select } from "../lib/Select";
+import { FocusBar } from "../focus/FocusBar";
+import { moodWith } from "../focus/clock";
 import { Nudges } from "../nudges/Nudges";
 import type {
   DueState,
+  Focus,
   Helper,
   OpenTodo,
   Pet,
@@ -42,11 +45,19 @@ type Tab = "chat" | "today" | "nudges";
 
 interface Props {
   helper: Helper;
+  focus: Focus | null;
+  oneThing: boolean;
   knowsYou?: boolean;
   onTyping: (typing: boolean) => void;
 }
 
-export function HelperPanel({ helper, knowsYou, onTyping }: Props) {
+export function HelperPanel({
+  helper,
+  focus,
+  oneThing,
+  knowsYou,
+  onTyping,
+}: Props) {
   const [tab, setTab] = useState<Tab>("chat");
   const tabs: [Tab, string][] = [
     ["chat", "Chat"],
@@ -61,7 +72,7 @@ export function HelperPanel({ helper, knowsYou, onTyping }: Props) {
           dropId="helper"
           kind={helper.kind}
           color={helper.color}
-          mood={helper.mood}
+          mood={moodWith(helper.mood, focus)}
           heat={0}
           size={52}
           chatty
@@ -87,10 +98,15 @@ export function HelperPanel({ helper, knowsYou, onTyping }: Props) {
       {tab === "chat" && (
         <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
       )}
+      {tab === "today" && <FocusBar focus={focus} />}
       {tab === "today" && <Upcoming events={helper.upcoming} limit={3} />}
       {tab === "today" && <Todos helper={helper} onTyping={onTyping} />}
       {tab === "nudges" && (
-        <Nudges helper={helper} onAdd={() => setTab("today")} />
+        <Nudges
+          helper={helper}
+          oneThing={oneThing}
+          onAdd={() => setTab("today")}
+        />
       )}
     </section>
   );

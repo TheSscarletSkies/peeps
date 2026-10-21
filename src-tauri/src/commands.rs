@@ -858,3 +858,23 @@ pub fn install_claude() -> Result<()> {
         .map(|_| ())
         .map_err(|error| format!("couldn't open a terminal: {error}"))
 }
+
+#[tauri::command]
+pub fn start_focus(app: State<'_, Arc<App>>, minutes: i64, task: Option<String>) {
+    let session = peeps_core::focus::Session::new(chrono::Utc::now(), minutes, task);
+    *app.focus() = Some(session);
+    app.publish();
+}
+
+#[tauri::command]
+pub fn stop_focus(app: State<'_, Arc<App>>) {
+    *app.focus() = None;
+    app.publish();
+}
+
+#[tauri::command]
+pub fn set_one_thing(app: State<'_, Arc<App>>, on: bool) -> Result<()> {
+    app.set_one_thing(on).map_err(|error| error.to_string())?;
+    app.publish();
+    Ok(())
+}

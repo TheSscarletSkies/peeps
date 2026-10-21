@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { moodWith } from "../focus/clock";
 import { HelperPanel } from "../helper/HelperPanel";
 import { openHome } from "../lib/bridge";
 import type { Mood, Nudge, Snapshot } from "../lib/types";
@@ -58,11 +59,12 @@ export interface Resident {
 /** The one companion, able to draw itself at any size. Project pets stay out of the way. */
 export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
   const { helper } = snapshot;
+  const mood = moodWith(helper.mood, snapshot.focus);
   return [
     {
       id: HELPER,
       name: helper.name,
-      mood: helper.mood,
+      mood,
       // It interrupts for a permission or a reminder, never for its own to-dos.
       urgent: helper.mood === "needsYou" || waving,
       pet: (size: number) => (
@@ -71,7 +73,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           waving={waving}
           kind={helper.kind}
           color={helper.color}
-          mood={helper.mood}
+          mood={mood}
           heat={0}
           size={size}
         />
@@ -110,6 +112,8 @@ export function CardBody({
       ) : (
         <HelperPanel
           helper={snapshot.helper}
+          focus={snapshot.focus}
+          oneThing={snapshot.oneThing}
           knowsYou={snapshot.knowsYou}
           onTyping={noop}
         />

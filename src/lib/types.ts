@@ -221,6 +221,10 @@ export interface Snapshot {
   roles: Role[];
   /** Whether the user has told peeps anything about themselves yet. */
   knowsYou: boolean;
+  /** A focus session or its break, while one is going. */
+  focus: Focus | null;
+  /** Nudges after a lot of hopping between apps; only app names are seen. */
+  oneThing: boolean;
 }
 
 /** A starting point for a new teammate. */
@@ -362,4 +366,12 @@ export interface Nudge {
   body: string;
   /** The to-do it is about, so Done can tick it off. */
   todoId: number | null;
+}
+
+export interface Focus {
+  phase: "focus" | "break";
+  startedAt: string;
+  endsAt: string;
+  focusMinutes: number;
+  task: string | null;
 }

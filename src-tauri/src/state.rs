@@ -123,6 +123,9 @@ pub struct AppSnapshot {
     pub teammates: Vec<TeammateView>,
     /// Whether the user has told peeps anything about themselves yet.
     pub knows_you: bool,
+    pub focus: Option<peeps_core::focus::FocusView>,
+    /// Whether "one thing at a time" watches for app hopping. Off unless switched on.
+    pub one_thing: bool,
     /// The roles a new teammate can start from.
     pub roles: Vec<peeps_core::teammates::Role>,
     pub mail: MailView,
@@ -251,6 +254,7 @@ pub struct App {
     ledger: Mutex<Ledger>,
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
+    focus: Mutex<Option<peeps_core::focus::Session>>,
     /// None only in tests, which have no window to update.
     handle: Option<AppHandle>,
 }
@@ -283,6 +287,7 @@ impl App {
             ledger: Mutex::new(Ledger::open(&paths::database_file())?),
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
+            focus: Mutex::new(None),
             handle,
         })
     }
@@ -328,6 +333,22 @@ impl App {
 
     pub fn notes(&self) -> MutexGuard<'_, NoteStore> {
         self.notes.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Kept as a file beside the data, per computer: watching apps is a choice for each machine.
+    pub fn one_thing(&self) -> bool {
+        std::fs::read_to_string(paths::data_dir().join("one-thing")).is_ok_and(|s| s.trim() == "on")
+    }
+
+    pub fn set_one_thing(&self, on: bool) -> std::io::Result<()> {
+        std::fs::write(
+            paths::data_dir().join("one-thing"),
+            if on { "on" } else { "off" },
+        )
+    }
+
+    pub fn focus(&self) -> MutexGuard<'_, Option<peeps_core::focus::Session>> {
+        self.focus.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     pub fn todos(&self) -> MutexGuard<'_, TodoStore> {
@@ -540,6 +561,7 @@ impl App {
                 .collect()
         };
         let config_error = self.config_error();
+        let focus = self.focus().as_ref().and_then(|session| session.view(now));
         let knows_you =
             !peeps_core::profile::is_empty(&peeps_core::profile::read(&paths::config_file()));
         let world = self.world();
@@ -602,6 +624,8 @@ impl App {
             teammates,
             roles: peeps_core::teammates::ROLES.to_vec(),
             knows_you,
+            focus,
+            one_thing: self.one_thing(),
             mail: MailView {
                 accounts: config
                     .mail

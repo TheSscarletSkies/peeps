@@ -1,5 +1,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 
+import { FocusBar } from "../focus/FocusBar";
+import { moodWith } from "../focus/clock";
 import { Todos } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
 import { Chat } from "../helper/Chat";
@@ -148,7 +150,11 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               lead={`Little reminders through the day. ${helper.name} pops up and says it, like a friend would.`}
             >
               <div className="card">
-                <Nudges helper={helper} onAdd={() => setPage("today")} />
+                <Nudges
+                  helper={helper}
+                  oneThing={snapshot.oneThing}
+                  onAdd={() => setPage("today")}
+                />
               </div>
             </Section>
           )}
@@ -230,7 +236,7 @@ function TodayPage({
               dropId="helper"
               kind={helper.kind}
               color={helper.color}
-              mood={helper.mood}
+              mood={moodWith(helper.mood, snapshot.focus)}
               heat={0}
               size={96}
               chatty
@@ -239,6 +245,8 @@ function TodayPage({
           <div className="hero__basket" />
         </div>
       </section>
+
+      <FocusBar focus={snapshot.focus} />
 
       <GettingStarted snapshot={snapshot} onGo={onGo} />
 

@@ -43,6 +43,26 @@ jobs:
             exit 1
           fi
 
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: mkdir -p dist
+        shell: bash
+      - run: node scripts/build-hook.mjs
+      - name: Clippy
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! cargo clippy -p peeps-desktop --all-targets -- -D warnings 2> clippy.log; then
+            python3 -c "t=open('clippy.log').read().splitlines()[-60:]; print('::error title=clippy::' + '%0A'.join(l.replace('%','%25') for l in t))"
+            exit 1
+          fi
+
   web:
     runs-on: ubuntu-latest
     steps:

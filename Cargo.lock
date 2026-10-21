@@ -2786,6 +2786,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tempfile",
  "tokio",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
