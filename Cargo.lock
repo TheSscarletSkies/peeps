@@ -2747,12 +2747,14 @@ dependencies = [
 name = "peeps-core"
 version = "0.1.1"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "chrono-tz",
  "dirs 5.0.1",
  "imap",
  "interprocess",
  "lettre",
+ "ring",
  "rrule",
  "rusqlite",
  "serde",

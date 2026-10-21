@@ -225,6 +225,8 @@ export interface Snapshot {
   focus: Focus | null;
   /** Nudges after a lot of hopping between apps; only app names are seen. */
   oneThing: boolean;
+  /** Null until the user picks a name and gets a code. */
+  friends: Friends | null;
 }
 
 /** A starting point for a new teammate. */
@@ -374,4 +376,25 @@ export interface Focus {
   endsAt: string;
   focusMinutes: number;
   task: string | null;
+}
+
+export type Reaction = "heart" | "poke" | "bonk" | "tea";
+
+export interface FriendView {
+  code: string;
+  name: string;
+  presence: "focusing" | "around" | "away";
+  focusUntil: string | null;
+}
+
+export interface Friends {
+  code: string;
+  name: string;
+  friends: FriendView[];
+}
+
+export interface ReactionEvent {
+  from: string;
+  reaction: Reaction;
+  line: string;
 }

@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { Mood, PetKind } from "../lib/types";
+import { ReactionArt } from "../friends/ReactionArt";
+import type { Mood, PetKind, Reaction } from "../lib/types";
 import { Dumpling, type Expression } from "../pets/Dumpling";
 import { useDropHover } from "./drops";
-import { onFed, onPat } from "./events";
+import { onFed, onPat, onReactionShown } from "./events";
 import { poke } from "./pokes";
 import { seasonalAccessory, type Accessory } from "./season";
 
 const DIZZY_MS = 3000;
 const LOVE_MS = 1600;
 const SQUISH_MS = 320;
+const REACTION_MS = 2200;
 
 interface Props {
   id?: string;
@@ -58,6 +60,7 @@ export function LivePet({
   const [love, setLove] = useState(false);
   const [squish, setSquish] = useState(false);
   const pokes = useRef<number[]>([]);
+  const [reaction, setReaction] = useState<Reaction | null>(null);
   const timers = useRef<number[]>([]);
 
   const later = (fn: () => void, ms: number) => {
@@ -117,17 +120,40 @@ export function LivePet({
     [id, dropId],
   );
 
-  const expression: Expression | undefined = eager
-    ? "eager"
-    : waving
-      ? "wave"
-      : dizzy
-        ? "dizzy"
-        : celebrating
-          ? "celebrate"
-          : love
-            ? "love"
-            : undefined;
+  useEffect(
+    () =>
+      onReactionShown((petId, kind) => {
+        if (petId !== (dropId ?? id)) return;
+        setReaction(kind);
+        setSquish(true);
+        later(() => setSquish(false), SQUISH_MS);
+        later(() => setReaction(null), REACTION_MS);
+      }),
+    [id, dropId],
+  );
+
+  const reacting: Expression | undefined =
+    reaction === "bonk"
+      ? "dizzy"
+      : reaction === "poke"
+        ? "wave"
+        : reaction
+          ? "love"
+          : undefined;
+
+  const expression: Expression | undefined = reacting
+    ? reacting
+    : eager
+      ? "eager"
+      : waving
+        ? "wave"
+        : dizzy
+          ? "dizzy"
+          : celebrating
+            ? "celebrate"
+            : love
+              ? "love"
+              : undefined;
 
   const motion = [squish && "motion-squish", arriving && "motion-hatch"]
     .filter(Boolean)
@@ -139,6 +165,7 @@ export function LivePet({
       onClick={onPoke}
       title={chatty ? "Pat me" : undefined}
     >
+      {reaction && <ReactionArt key={reaction} kind={reaction} />}
       {saying && (
         <span className="pet-say" aria-hidden="true">
           {saying}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { notch as loadNotch } from "../lib/bridge";
 import type { Notch, Snapshot } from "../lib/types";
+import { useReactions } from "../friends/useReactions";
 import { useNudge } from "../life/nudges";
 import { usePrefs } from "../life/prefs";
 import { FloatTray } from "./FloatTray";
@@ -12,7 +13,9 @@ import { residentsOf } from "./shared";
 export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const [notch, setNotch] = useState<Notch | null>(null);
   const [prefs] = usePrefs();
-  const reminder = useNudge();
+  const nudge = useNudge();
+  const reaction = useReactions();
+  const reminder = { ...nudge, reaction };
 
   useEffect(() => {
     void loadNotch().then(setNotch);

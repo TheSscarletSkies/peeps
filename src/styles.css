@@ -2750,3 +2750,288 @@ body,
   font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
+
+/* A friend's reaction, drawn over the pet in the same 120 by 100 space. */
+.live-pet {
+  position: relative;
+}
+
+.reaction {
+  position: absolute;
+  inset: -10% -10% auto;
+  width: 120%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reaction__rise {
+  animation: reaction-rise 2.1s ease-out forwards;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes reaction-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px) scale(1.15);
+  }
+}
+
+.reaction__jab {
+  animation: reaction-jab 1.4s ease-in-out forwards;
+}
+
+@keyframes reaction-jab {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(26px, -18px);
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  25%,
+  55% {
+    transform: translate(0, 0);
+  }
+  40%,
+  70% {
+    transform: translate(12px, -8px);
+  }
+}
+
+.reaction__swing {
+  transform-box: view-box;
+  transform-origin: 60px -40px;
+  animation: reaction-swing 1.2s cubic-bezier(0.5, 0, 0.3, 1.4) forwards;
+}
+
+@keyframes reaction-swing {
+  0% {
+    opacity: 0;
+    transform: rotate(-40deg) translateY(-20px);
+  }
+  35% {
+    opacity: 1;
+    transform: rotate(0deg) translateY(0);
+  }
+  45% {
+    transform: rotate(0deg) translateY(-6px);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(10deg) translateY(-24px);
+  }
+}
+
+.reaction__stars {
+  opacity: 0;
+  animation: reaction-stars 1.6s 0.4s ease-out forwards;
+}
+
+@keyframes reaction-stars {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.reaction__pop {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: reaction-pop 2.1s ease-out forwards;
+}
+
+@keyframes reaction-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  30% {
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.reaction__steam {
+  animation: reaction-steam 1s ease-in-out infinite alternate;
+}
+
+@keyframes reaction-steam {
+  from {
+    opacity: 0.3;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction * {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Friends: who is focusing, and a row of little things to send. */
+.friends {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.friends__code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-box);
+  background: color-mix(in srgb, var(--pet, var(--accent)) 12%, var(--surface));
+}
+
+.friends__code > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.friends__code strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.friends__code code {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.friends__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friends__list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+}
+
+.friends__list li[data-presence="away"] {
+  opacity: 0.7;
+}
+
+.friends__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.friends__who strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+li[data-presence="focusing"] .friends__who {
+  color: var(--accent);
+}
+
+.friends__send {
+  display: flex;
+  gap: 2px;
+}
+
+.friends__react {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: color-mix(in srgb, var(--text) 75%, transparent);
+  cursor: pointer;
+}
+
+.friends__react svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+
+.friends__react:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.friends__remove {
+  opacity: 0.5;
+}
+
+/* Friends focusing at the same time sit at the floating pet's feet. */
+.float__friends {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.float__friends > span + span {
+  margin-left: -6px;
+}
+
+.hub .focus {
+  margin: 16px 0;
+}

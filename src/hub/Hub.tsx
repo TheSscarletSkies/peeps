@@ -1,6 +1,8 @@
 import { useCallback, useState, type ReactNode } from "react";
 
 import { FocusBar } from "../focus/FocusBar";
+import { FriendsPanel } from "../friends/FriendsPanel";
+import { useReactions } from "../friends/useReactions";
 import { moodWith } from "../focus/clock";
 import { Todos } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
@@ -21,6 +23,7 @@ import {
   BellIcon,
   HomeIcon,
   MoonIcon,
+  FriendsIcon,
   SettingsIcon,
   SoundIcon,
   SunIcon,
@@ -32,12 +35,13 @@ import { Tour, tourSeen } from "./Tour";
 import logo from "../assets/logo.png";
 import "./hub.css";
 
-type Page = "today" | "chat" | "nudges" | "settings";
+type Page = "today" | "chat" | "nudges" | "friends" | "settings";
 
 const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
   { id: "today", label: "Today", icon: <HomeIcon /> },
   { id: "chat", label: "Chat", icon: <AskIcon /> },
   { id: "nudges", label: "Nudges", icon: <BellIcon /> },
+  { id: "friends", label: "Friends", icon: <FriendsIcon /> },
   { id: "settings", label: "Settings", icon: <SettingsIcon /> },
 ];
 
@@ -51,6 +55,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
   const [prefs, setPrefs] = usePrefs();
   const goTo = useCallback((next: string) => setPage(next as Page), []);
   const { helper } = snapshot;
+  useReactions();
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -154,6 +159,19 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                   helper={helper}
                   oneThing={snapshot.oneThing}
                   onAdd={() => setPage("today")}
+                />
+              </div>
+            </Section>
+          )}
+          {page === "friends" && (
+            <Section
+              title="Friends"
+              lead="See when friends are focusing, and send them a little something."
+            >
+              <div className="card">
+                <FriendsPanel
+                  friends={snapshot.friends}
+                  helperName={helper.name}
                 />
               </div>
             </Section>

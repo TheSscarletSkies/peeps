@@ -126,6 +126,8 @@ pub struct AppSnapshot {
     pub focus: Option<peeps_core::focus::FocusView>,
     /// Whether "one thing at a time" watches for app hopping. Off unless switched on.
     pub one_thing: bool,
+    /// None until the user picks a name and gets a code.
+    pub friends: Option<crate::friends::FriendsView>,
     /// The roles a new teammate can start from.
     pub roles: Vec<peeps_core::teammates::Role>,
     pub mail: MailView,
@@ -255,6 +257,7 @@ pub struct App {
     waiters: Mutex<HashMap<u64, oneshot::Sender<Decision>>>,
     next_request: AtomicU64,
     focus: Mutex<Option<peeps_core::focus::Session>>,
+    pub friends: crate::friends::Friends,
     /// None only in tests, which have no window to update.
     handle: Option<AppHandle>,
 }
@@ -288,6 +291,7 @@ impl App {
             waiters: Mutex::default(),
             next_request: AtomicU64::new(1),
             focus: Mutex::new(None),
+            friends: crate::friends::Friends::load(),
             handle,
         })
     }
@@ -448,6 +452,15 @@ impl App {
         });
         if let Err(error) = handle.emit(NUDGE_EVENT, payload) {
             eprintln!("peeps: could not show a reminder on the pets: {error}");
+        }
+    }
+
+    pub fn emit<T: Serialize + Clone>(&self, event: &str, payload: T) {
+        let Some(handle) = &self.handle else {
+            return;
+        };
+        if let Err(error) = handle.emit(event, payload) {
+            eprintln!("peeps: could not tell the window about {event}: {error}");
         }
     }
 
@@ -626,6 +639,7 @@ impl App {
             knows_you,
             focus,
             one_thing: self.one_thing(),
+            friends: self.friends.view(now),
             mail: MailView {
                 accounts: config
                     .mail

@@ -102,3 +102,37 @@ test("UC8: pat the pet at the top of its card and it answers", async ({
   await expect(page.locator(".pet-say")).toBeVisible();
   await expect(page.locator(".panel__head--pet .dumpling--love")).toBeVisible();
 });
+
+test("UC25: friends show what they're up to and can be sent a bonk", async ({
+  page,
+}) => {
+  await page.getByRole("tab", { name: "Friends" }).click();
+  await expect(page.locator(".friends__code code")).toHaveText("7KQ2M-XH4PD");
+  const friends = page.getByRole("list", { name: "Friends" });
+  await expect(friends).toContainText(/Sara\s*Focusing · \d+ min left/);
+  await friends
+    .getByRole("button", { name: "Bonk with a rolling pin to Sara" })
+    .click();
+  await expect(page.getByRole("status")).toHaveText("Sent to Sara");
+  await page.getByLabel("Friend's code").fill("nope");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.locator(".tray__error")).toContainText(
+    "doesn't look like a peeps code",
+  );
+  await page.getByLabel("Friend's code").fill("q7w2e-r4t5y");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(friends).toContainText("A friend");
+});
+
+test("UC25: a friend's bonk lands on your peep", async ({ page }) => {
+  await page.goto("/?notch=none&reaction=bonk");
+  await expect(page.locator(".float__pet .reaction--bonk")).toBeVisible();
+  await expect(page.locator(".float__pet .dumpling--dizzy")).toBeVisible();
+});
+
+test("UC25: friends focusing keep you company", async ({ page }) => {
+  await page.goto("/?notch=none");
+  await expect(
+    page.getByRole("button", { name: /Focusing too: Sara/ }),
+  ).toBeVisible();
+});

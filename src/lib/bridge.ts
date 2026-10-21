@@ -22,6 +22,8 @@ import type {
   Snapshot,
   Todo,
   TodoInput,
+  Reaction,
+  ReactionEvent,
 } from "./types";
 
 export const inApp = (): boolean => "__TAURI_INTERNALS__" in window;
@@ -782,4 +784,85 @@ export function setOneThing(on: boolean): Promise<void> {
   if (inApp()) return invoke("set_one_thing", { on }).then(() => undefined);
   updatePreview((snapshot) => ({ ...snapshot, oneThing: on }));
   return Promise.resolve();
+}
+
+export function startFriends(name: string): Promise<void> {
+  if (inApp()) return invoke("start_friends", { name }).then(() => undefined);
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    friends: {
+      code: "7KQ2M-XH4PD",
+      name,
+      friends: snapshot.friends?.friends ?? [],
+    },
+  }));
+  return Promise.resolve();
+}
+
+export function addFriend(code: string): Promise<void> {
+  if (inApp()) return invoke("add_friend", { code }).then(() => undefined);
+  const clean = code.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  if (clean.length !== 10)
+    return Promise.reject(
+      "That doesn't look like a peeps code. It's 10 letters and numbers.",
+    );
+  updatePreview((snapshot) =>
+    snapshot.friends
+      ? {
+          ...snapshot,
+          friends: {
+            ...snapshot.friends,
+            friends: [
+              ...snapshot.friends.friends,
+              {
+                code: `${clean.slice(0, 5)}-${clean.slice(5)}`,
+                name: "A friend",
+                presence: "away",
+                focusUntil: null,
+              },
+            ],
+          },
+        }
+      : snapshot,
+  );
+  return Promise.resolve();
+}
+
+export function removeFriend(code: string): Promise<void> {
+  if (inApp()) return invoke("remove_friend", { code }).then(() => undefined);
+  updatePreview((snapshot) =>
+    snapshot.friends
+      ? {
+          ...snapshot,
+          friends: {
+            ...snapshot.friends,
+            friends: snapshot.friends.friends.filter((f) => f.code !== code),
+          },
+        }
+      : snapshot,
+  );
+  return Promise.resolve();
+}
+
+export function react(code: string, reaction: Reaction): Promise<void> {
+  return inApp()
+    ? invoke("react", { code, reaction }).then(() => undefined)
+    : Promise.resolve();
+}
+
+/** Hearts and bonks from friends. The preview fakes one with `?reaction=bonk`. */
+export function onReaction(
+  handler: (event: ReactionEvent) => void,
+): Promise<() => void> {
+  if (inApp())
+    return listen<ReactionEvent>("reaction", (event) => handler(event.payload));
+  const kind = new URLSearchParams(window.location.search).get("reaction");
+  const timer =
+    kind === "heart" || kind === "poke" || kind === "bonk" || kind === "tea"
+      ? window.setTimeout(
+          () => handler({ from: "Sara", reaction: kind, line: "" }),
+          600,
+        )
+      : 0;
+  return Promise.resolve(() => window.clearTimeout(timer));
 }

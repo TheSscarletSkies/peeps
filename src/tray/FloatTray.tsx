@@ -16,6 +16,7 @@ import { usePrefs } from "../life/prefs";
 import {
   ALL,
   CardBody,
+  FRIEND,
   HELPER,
   NUDGE,
   Roster,
@@ -105,6 +106,9 @@ export function FloatTray({
   });
 
   const helper = residents.find((resident) => resident.id === HELPER);
+  const company = residents.filter((resident) =>
+    resident.id.startsWith(FRIEND),
+  );
   const waiting = residents.filter((resident) => resident.urgent).length;
   const rect = openRect(spot, panelHeight, area, box);
   const toggleCard = () => setOpenId((now) => (now === null ? HELPER : null));
@@ -203,6 +207,18 @@ export function FloatTray({
         {helper?.pet(FLOAT_PET[prefs.size])}
         {waiting > 0 && <span className="float__badge">{waiting}</span>}
       </button>
+      {!open && company.length > 0 && (
+        <button
+          className="float__friends"
+          aria-label={`Focusing too: ${company.map((r) => r.name).join(", ")}`}
+          title={`Focusing too: ${company.map((r) => r.name).join(", ")}`}
+          onClick={() => setOpenId(company[0]?.id ?? HELPER)}
+        >
+          {company.map((resident) => (
+            <span key={resident.id}>{resident.pet(22)}</span>
+          ))}
+        </button>
+      )}
       {!open && (
         <button
           className="float__open"

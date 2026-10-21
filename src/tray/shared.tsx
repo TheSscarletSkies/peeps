@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
 import { moodWith } from "../focus/clock";
+import { friendLook } from "../friends/look";
+import { Dumpling } from "../pets/Dumpling";
 import { HelperPanel } from "../helper/HelperPanel";
 import { openHome } from "../lib/bridge";
-import type { Mood, Nudge, Snapshot } from "../lib/types";
+import type { Mood, Nudge, ReactionEvent, Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import type { Place } from "../life/prefs";
 import type { PetSize } from "../life/roam";
@@ -28,6 +30,8 @@ export const MOOD_LABEL: Record<Mood, string> = {
   chill: "Chill",
 };
 export const HELPER = "helper";
+/** Friends' peeps go by `friend:` and their code. */
+export const FRIEND = "friend:";
 export const ALL = "all";
 /** The card a reminder opens, with the helper saying it. */
 export const NUDGE = "nudge";
@@ -36,6 +40,8 @@ export interface Reminder {
   nudge: Nudge | null;
   dismiss: () => void;
   later: () => void;
+  /** A friend's heart or bonk just now. */
+  reaction?: ReactionEvent | null;
 }
 const SIZE_LABEL: Record<PetSize, string> = {
   small: "S",
@@ -79,6 +85,29 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
         />
       ),
     },
+    // Friends who are focusing right now keep you company.
+    ...(snapshot.friends?.friends ?? [])
+      .filter((friend) => friend.presence === "focusing")
+      .slice(0, 3)
+      .map((friend) => {
+        const look = friendLook(friend.code);
+        return {
+          id: `${FRIEND}${friend.code}`,
+          name: friend.name,
+          mood: "working" as Mood,
+          urgent: false,
+          pet: (size: number) => (
+            <Dumpling
+              kind={look.kind}
+              seed={friend.code}
+              color={look.color}
+              mood="working"
+              heat={0}
+              size={size}
+            />
+          ),
+        };
+      }),
   ];
 }
 
@@ -111,9 +140,13 @@ export function CardBody({
         roster
       ) : (
         <HelperPanel
+          key={openId.startsWith(FRIEND) ? "friends" : "helper"}
+          initialTab={openId.startsWith(FRIEND) ? "friends" : "chat"}
           helper={snapshot.helper}
           focus={snapshot.focus}
           oneThing={snapshot.oneThing}
+          friends={snapshot.friends}
+          reaction={reminder?.reaction}
           knowsYou={snapshot.knowsYou}
           onTyping={noop}
         />

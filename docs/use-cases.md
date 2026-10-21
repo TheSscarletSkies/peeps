@@ -91,6 +91,15 @@ Tested by `e2e/notch.e2e.ts`, `e2e/float.e2e.ts`, `src/life/float.test.ts`, `src
 
 Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
 
+## Friends
+
+### UC25. Friends who focus together
+
+**When** they pick a name on Friends and send their code (like `7KQ2M-XH4PD`) to a friend, who adds it.
+**Then** each appears on the other's Friends list straight away, with whether they are focusing ("Focusing · 18 min left"), around or away. A friend who is focusing sits at the floating peep's feet, or walks along the notch. Each friend can be sent a steamy heart, a poke with chopsticks, a bonk with a little rolling pin (their peep goes dizzy) or a tea break; it lands on their peep with a notification. Messages go through ntfy.sh, a free relay, sealed with a key made from the code, so the relay only sees random channel names and noise. Only the name they picked and whether they're focusing are shared.
+
+Tested by `e2e/helper.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/friends.rs`.
+
 ## Getting going
 
 ### UC14. Set up in a minute

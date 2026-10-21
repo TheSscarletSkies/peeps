@@ -414,6 +414,25 @@ export const demoSnapshot: Snapshot = {
   knowsYou: false,
   focus: null,
   oneThing: false,
+  friends: {
+    code: "7KQ2M-XH4PD",
+    name: "Mariyam",
+    friends: [
+      {
+        code: "S4RAH-B9K2T",
+        name: "Sara",
+        presence: "focusing",
+        focusUntil: new Date(Date.now() + 18 * 60_000).toISOString(),
+      },
+      {
+        code: "AL1Q7-M3NVW",
+        name: "Ali",
+        presence: "around",
+        focusUntil: null,
+      },
+      { code: "Z0EEP-QW8RT", name: "Zoe", presence: "away", focusUntil: null },
+    ],
+  },
   teammates: [
     {
       productId: "funderly",

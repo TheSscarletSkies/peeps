@@ -14,14 +14,17 @@ import { announceFed } from "../life/events";
 import { LivePet } from "../life/LivePet";
 import { Select } from "../lib/Select";
 import { FocusBar } from "../focus/FocusBar";
+import { FriendsPanel } from "../friends/FriendsPanel";
 import { moodWith } from "../focus/clock";
 import { Nudges } from "../nudges/Nudges";
 import type {
   DueState,
   Focus,
+  Friends,
   Helper,
   OpenTodo,
   Pet,
+  ReactionEvent,
   Repeat,
   Tip,
 } from "../lib/types";
@@ -41,28 +44,36 @@ import { Upcoming } from "./Upcoming";
 import { Chat } from "./Chat";
 import { scheduleLabel } from "./when";
 
-type Tab = "chat" | "today" | "nudges";
+type Tab = "chat" | "today" | "nudges" | "friends";
 
 interface Props {
+  initialTab?: Tab;
   helper: Helper;
   focus: Focus | null;
   oneThing: boolean;
+  friends: Friends | null;
+  /** A friend's reaction a moment ago, said under the pet. */
+  reaction?: ReactionEvent | null;
   knowsYou?: boolean;
   onTyping: (typing: boolean) => void;
 }
 
 export function HelperPanel({
+  initialTab = "chat",
   helper,
   focus,
   oneThing,
+  friends,
+  reaction,
   knowsYou,
   onTyping,
 }: Props) {
-  const [tab, setTab] = useState<Tab>("chat");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const tabs: [Tab, string][] = [
     ["chat", "Chat"],
     ["today", "Today"],
     ["nudges", "Nudges"],
+    ["friends", "Friends"],
   ];
 
   return (
@@ -79,7 +90,9 @@ export function HelperPanel({
         />
         <span className="panel__who">
           <span className="panel__name">{helper.name}</span>
-          <span className="panel__headline">{helper.headline}</span>
+          <span className="panel__headline" aria-live="polite">
+            {reaction?.line || helper.headline}
+          </span>
         </span>
       </header>
       <div className="tabs" role="tablist" aria-label="Helper">
@@ -101,6 +114,9 @@ export function HelperPanel({
       {tab === "today" && <FocusBar focus={focus} />}
       {tab === "today" && <Upcoming events={helper.upcoming} limit={3} />}
       {tab === "today" && <Todos helper={helper} onTyping={onTyping} />}
+      {tab === "friends" && (
+        <FriendsPanel friends={friends} helperName={helper.name} />
+      )}
       {tab === "nudges" && (
         <Nudges
           helper={helper}

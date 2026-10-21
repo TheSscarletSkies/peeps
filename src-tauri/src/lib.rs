@@ -2,6 +2,7 @@ mod assistant;
 mod bridge;
 mod commands;
 mod focus;
+mod friends;
 mod frontmost;
 mod hopping;
 mod mailbox;
@@ -41,6 +42,10 @@ pub fn run() {
             commands::start_focus,
             commands::stop_focus,
             commands::set_one_thing,
+            commands::start_friends,
+            commands::add_friend,
+            commands::remove_friend,
+            commands::react,
             commands::add_note,
             commands::add_product,
             commands::remove_product,
@@ -124,6 +129,9 @@ pub fn run() {
             tauri::async_runtime::spawn(remind::setup_nudge(app.clone()));
             tauri::async_runtime::spawn(focus::run(app.clone()));
             tauri::async_runtime::spawn(hopping::run(app.clone()));
+            tauri::async_runtime::spawn(friends::heartbeat(app.clone()));
+            let listener = app.clone();
+            std::thread::spawn(move || friends::listen(listener));
             tauri::async_runtime::spawn(sync::run(app.clone()));
             tauri::async_runtime::spawn(mailbox::run(app.clone()));
             tauri::async_runtime::spawn(numbers::run(app.clone()));

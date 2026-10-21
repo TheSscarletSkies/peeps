@@ -17,6 +17,7 @@ peeps is a desktop companion for Mac and Windows. It sits at the top of your scr
 - **Nudges.** Stand up and stretch, drink water, rest your eyes: each one switch. Your own reminders sit beside them. When one is due, your peep waves and says it in a bubble, with Done and Later.
 - **Focus.** Pick 15, 25 or 50 minutes; your peep works alongside, then calls a break.
 - **One thing at a time.** Optional: when you keep hopping between apps, your peep suggests what to do first. It only sees app names, on your computer.
+- **Friends.** Swap codes with friends to see when they're focusing and send a steamy heart, a chopstick poke, a rolling-pin bonk or a tea break. It goes through the free ntfy.sh relay, sealed so the relay can't read it.
 - **Play.** Click your peep for a pat; click it a lot and it gets dizzy. Double-click or right-click it, or use the little bubble, to talk. Drop a file on it and it joins your next message.
 - **Small, medium or large.** Make it the size you like, at the top of the screen or floating anywhere.
 - **Calendars.** Paste the private iCal link from Google, Outlook or iCloud and peeps reminds you before classes and calls. Links live in your keychain.
@@ -81,12 +82,12 @@ npm run e2e            # each use case in docs/use-cases.md, in a real browser
 
 ## Roadmap
 
-- Friends: connect with a code, see when they're focusing, send hearts and bonks
+- Focus together: start a session with a friend
 - iPhone companion
 
 ## Privacy
 
-No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are your calendar links and the chats you start, which go through your own Claude.
+No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are your calendar links, the chats you start (through your own Claude) and, if you add friends, sealed messages through ntfy.sh.
 
 ## License
 

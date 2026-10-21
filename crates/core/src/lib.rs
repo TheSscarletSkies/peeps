@@ -7,6 +7,7 @@ pub mod config;
 pub mod config_edit;
 pub mod drafts;
 pub mod focus;
+pub mod friends;
 pub mod helper;
 pub mod hooks_install;
 pub mod hopping;

@@ -134,3 +134,11 @@ export const SettingsIcon = () => (
     <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" />
   </Icon>
 );
+
+export const FriendsIcon = () => (
+  <Icon>
+    <circle cx="9" cy="10" r="4" />
+    <circle cx="16.5" cy="12" r="3" />
+    <path d="M3 20c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15 16c2.6 0 4.4 1.2 5 3.5" />
+  </Icon>
+);

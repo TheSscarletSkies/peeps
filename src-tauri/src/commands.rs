@@ -878,3 +878,40 @@ pub fn set_one_thing(app: State<'_, Arc<App>>, on: bool) -> Result<()> {
     app.publish();
     Ok(())
 }
+
+#[tauri::command]
+pub fn start_friends(app: State<'_, Arc<App>>, name: String) -> Result<()> {
+    app.friends.start(&name)?;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn add_friend(app: State<'_, Arc<App>>, code: String) -> Result<()> {
+    let app = Arc::clone(&app);
+    let shared = Arc::clone(&app);
+    tauri::async_runtime::spawn_blocking(move || shared.friends.add(&code))
+        .await
+        .map_err(|error| error.to_string())??;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn remove_friend(app: State<'_, Arc<App>>, code: String) -> Result<()> {
+    app.friends.remove(&code)?;
+    app.publish();
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn react(
+    app: State<'_, Arc<App>>,
+    code: String,
+    reaction: peeps_core::friends::Reaction,
+) -> Result<()> {
+    let app = Arc::clone(&app);
+    tauri::async_runtime::spawn_blocking(move || app.friends.react(&code, reaction))
+        .await
+        .map_err(|error| error.to_string())?
+}

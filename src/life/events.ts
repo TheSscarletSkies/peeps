@@ -1,3 +1,5 @@
+import type { Reaction } from "../lib/types";
+
 const FED = "peeps:fed";
 
 /** Lets the pet that was just fed a note show some love. */
@@ -24,4 +26,26 @@ export function onPat(handler: (petId: string) => void): () => void {
     handler((event as CustomEvent<string>).detail);
   window.addEventListener(PATTED, listener);
   return () => window.removeEventListener(PATTED, listener);
+}
+
+const REACTED = "peeps:reacted";
+
+/** A friend's heart or bonk, for the pet to show. */
+export function announceReaction(petId: string, reaction: Reaction): void {
+  window.dispatchEvent(
+    new CustomEvent(REACTED, { detail: { petId, reaction } }),
+  );
+}
+
+export function onReactionShown(
+  handler: (petId: string, reaction: Reaction) => void,
+): () => void {
+  const listener = (event: Event) => {
+    const { petId, reaction } = (
+      event as CustomEvent<{ petId: string; reaction: Reaction }>
+    ).detail;
+    handler(petId, reaction);
+  };
+  window.addEventListener(REACTED, listener);
+  return () => window.removeEventListener(REACTED, listener);
 }
