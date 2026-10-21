@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   addProduct,
@@ -165,22 +165,14 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
                 size={28}
               />
               <span>{pet.name}</span>
-              <button
-                className="button button--small"
-                title="On a second computer, point this pet at the project's folder here"
-                onClick={async () => {
+              <ProductMenu
+                name={pet.name}
+                onFolder={async () => {
                   const folder = await pickFolder();
                   if (folder) await run(() => addProductPath(pet.id, folder));
                 }}
-              >
-                + This computer's folder
-              </button>
-              <button
-                className="button button--small"
-                onClick={() => run(() => removeProduct(pet.id))}
-              >
-                Remove
-              </button>
+                onRemove={() => run(() => removeProduct(pet.id))}
+              />
             </li>
           ))}
         </ul>
@@ -301,4 +293,91 @@ function AddProduct({ onAdd, onTyping }: AddProductProps) {
 function folderName(path: string): string {
   const parts = path.split(/[\\/]/).filter(Boolean);
   return parts[parts.length - 1] ?? path;
+}
+
+/** A product's less common actions, out of the way until asked for. Removing asks first. */
+function ProductMenu({
+  name,
+  onFolder,
+  onRemove,
+}: {
+  name: string;
+  onFolder: () => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const menu = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (!menu.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setConfirming(false);
+      }
+    };
+    window.addEventListener("pointerdown", away);
+    return () => window.removeEventListener("pointerdown", away);
+  }, [open]);
+
+  return (
+    <span className="row-menu" ref={menu}>
+      <button
+        className="row-menu__button"
+        aria-label={`More for ${name}`}
+        aria-expanded={open}
+        onClick={() => {
+          setOpen(!open);
+          setConfirming(false);
+        }}
+      >
+        ⋯
+      </button>
+      {open && (
+        <span className="row-menu__list" role="menu">
+          {confirming ? (
+            <>
+              <span className="row-menu__ask">
+                Remove {name}? Its pet goes; your project stays.
+              </span>
+              <button
+                role="menuitem"
+                className="row-menu__danger"
+                onClick={() => {
+                  setOpen(false);
+                  onRemove();
+                }}
+              >
+                Remove {name}
+              </button>
+              <button role="menuitem" onClick={() => setConfirming(false)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                role="menuitem"
+                title="On a second computer, point this pet at the project's folder here"
+                onClick={() => {
+                  setOpen(false);
+                  onFolder();
+                }}
+              >
+                Add this computer's folder
+              </button>
+              <button
+                role="menuitem"
+                className="row-menu__danger"
+                onClick={() => setConfirming(true)}
+              >
+                Remove…
+              </button>
+            </>
+          )}
+        </span>
+      )}
+    </span>
+  );
 }

@@ -411,7 +411,7 @@ body,
   font-size: 14px;
 }
 
-.setup__products li span {
+.setup__products li > span:not(.row-menu) {
   flex: 1;
 }
 
@@ -2535,4 +2535,72 @@ body,
 
 :is(.notch__card, .float__panel) .write__row .chip {
   flex: 1 0 100%;
+}
+
+/* A row's quieter actions behind a ⋯ button. */
+.row-menu {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+}
+
+.row-menu__button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.row-menu__button:hover,
+.row-menu__button[aria-expanded="true"] {
+  background: var(--field);
+  color: var(--text);
+}
+
+.row-menu__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: var(--r-box);
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 12px 32px rgba(0, 0, 0, 0.35);
+  animation: drop 0.14s ease-out;
+}
+
+.row-menu__list button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row-menu__list button:hover {
+  background: var(--field);
+}
+
+.row-menu__list .row-menu__danger {
+  color: var(--bad);
+}
+
+.row-menu__ask {
+  padding: 8px 12px 4px;
+  color: var(--muted);
+  font-size: 13px;
 }

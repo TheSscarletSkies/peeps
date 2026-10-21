@@ -79,7 +79,6 @@ export function HelperPanel({
         <span className="panel__name">{helper.name}</span>
         <span className="panel__headline">{helper.headline}</span>
       </header>
-      <Upcoming events={helper.upcoming} limit={2} />
       <div className="tabs" role="tablist" aria-label="Helper">
         {tabs.map(([id, label]) => (
           <button
@@ -93,6 +92,7 @@ export function HelperPanel({
           </button>
         ))}
       </div>
+      {tab === "ask" && <Upcoming events={helper.upcoming} limit={2} />}
       {tab === "ask" && (
         <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
       )}
