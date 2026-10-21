@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useState, type ReactNode } from "react";
 
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
@@ -58,19 +58,29 @@ type Page =
   | "products"
   | "devices";
 
-const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
-  { id: "home", label: "Home", icon: <HomeIcon /> },
-  { id: "ask", label: "Ask", icon: <AskIcon /> },
-  { id: "todo", label: "To-do", icon: <TodoIcon /> },
-  { id: "reminders", label: "Reminders", icon: <BellIcon /> },
-  { id: "mail", label: "Mail", icon: <MailIcon /> },
-  { id: "team", label: "Team", icon: <TeamIcon /> },
-  { id: "numbers", label: "Numbers", icon: <NumbersIcon /> },
-  { id: "write", label: "Write", icon: <WriteIcon /> },
-  { id: "tokens", label: "Tokens", icon: <TokensIcon /> },
-  { id: "recap", label: "Recap", icon: <RecapIcon /> },
-  { id: "products", label: "Products", icon: <ProductsIcon /> },
-  { id: "devices", label: "Devices", icon: <DevicesIcon /> },
+const PAGES: { id: Page; label: string; icon: ReactNode; group: string }[] = [
+  { id: "home", label: "Home", icon: <HomeIcon />, group: "Every day" },
+  { id: "ask", label: "Ask", icon: <AskIcon />, group: "Every day" },
+  { id: "todo", label: "To-do", icon: <TodoIcon />, group: "Every day" },
+  {
+    id: "reminders",
+    label: "Reminders",
+    icon: <BellIcon />,
+    group: "Every day",
+  },
+  { id: "mail", label: "Mail", icon: <MailIcon />, group: "Work" },
+  { id: "team", label: "Team", icon: <TeamIcon />, group: "Work" },
+  { id: "numbers", label: "Numbers", icon: <NumbersIcon />, group: "Work" },
+  { id: "write", label: "Write", icon: <WriteIcon />, group: "Work" },
+  { id: "tokens", label: "Tokens", icon: <TokensIcon />, group: "Look back" },
+  { id: "recap", label: "Recap", icon: <RecapIcon />, group: "Look back" },
+  {
+    id: "products",
+    label: "Products",
+    icon: <ProductsIcon />,
+    group: "Set up",
+  },
+  { id: "devices", label: "Devices", icon: <DevicesIcon />, group: "Set up" },
 ];
 
 const URGENT = new Set([
@@ -112,25 +122,29 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           <span>peeps</span>
         </div>
         <nav aria-label="Sections">
-          {PAGES.map((item) => (
-            <button
-              key={item.id}
-              className={page === item.id ? "nav nav--on" : "nav"}
-              data-tour={item.id}
-              aria-current={page === item.id ? "page" : undefined}
-              onClick={() => setPage(item.id)}
-            >
-              {item.icon}
-              {item.label}
-              {item.id === "todo" && helper.todos.length > 0 && (
-                <span className="nav__count">{helper.todos.length}</span>
+          {PAGES.map((item, index) => (
+            <Fragment key={item.id}>
+              {item.group !== PAGES[index - 1]?.group && (
+                <span className="nav__group">{item.group}</span>
               )}
-              {item.id === "mail" && snapshot.mail.outbox.length > 0 && (
-                <span className="nav__count">
-                  {snapshot.mail.outbox.length}
-                </span>
-              )}
-            </button>
+              <button
+                className={page === item.id ? "nav nav--on" : "nav"}
+                data-tour={item.id}
+                aria-current={page === item.id ? "page" : undefined}
+                onClick={() => setPage(item.id)}
+              >
+                {item.icon}
+                {item.label}
+                {item.id === "todo" && helper.todos.length > 0 && (
+                  <span className="nav__count">{helper.todos.length}</span>
+                )}
+                {item.id === "mail" && snapshot.mail.outbox.length > 0 && (
+                  <span className="nav__count">
+                    {snapshot.mail.outbox.length}
+                  </span>
+                )}
+              </button>
+            </Fragment>
           ))}
         </nav>
         <div className="hub__toggles" data-tour="toggles">

@@ -26,8 +26,9 @@
 .hub__side {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 40px 14px 16px;
+  gap: 14px;
+  min-height: 0;
+  padding: 36px 14px 16px;
 }
 
 .hub__brand {
@@ -42,15 +43,19 @@
 
 .hub__side nav {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .nav {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 12px;
-  height: var(--h-control);
+  height: 36px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--r-control);
@@ -391,6 +396,11 @@
 
 /* Section pages */
 
+/* Every page shares one reading width, so moving between them doesn't jump. */
+.section {
+  max-width: 860px;
+}
+
 .section__head {
   margin: 12px 0 18px;
 }
@@ -464,15 +474,15 @@
   background:
     radial-gradient(
       90% 60% at 100% 0%,
-      rgba(255, 186, 140, 0.28) 0%,
+      rgba(255, 181, 156, 0.3) 0%,
       transparent 70%
     ),
     radial-gradient(
       80% 50% at 0% 100%,
-      rgba(196, 220, 255, 0.16) 0%,
+      rgba(196, 170, 255, 0.22) 0%,
       transparent 70%
     ),
-    #171513;
+    #141417;
   color: #f6f1ea;
   font-family: "Nunito", system-ui, sans-serif;
 }
@@ -672,7 +682,6 @@
 .reminders {
   display: grid;
   gap: 16px;
-  max-width: 720px;
 }
 
 .reminders .card {
@@ -854,15 +863,10 @@ li[data-done] .started__check {
   gap: 8px;
 }
 
-.ask {
-  max-width: 720px;
-}
-
 .ask .chat__list {
   max-height: 52vh;
 }
 
-.hub .chat__message p,
 .hub .schedules li {
   background: var(--field);
 }
@@ -1083,4 +1087,19 @@ li[data-done] .started__check {
 
 .home__empty > div {
   flex: 1;
+}
+
+/* Small labels that split the sidebar into what you use daily, for work, to look back and once. */
+.nav__group {
+  margin: 12px 12px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.nav__group:first-child {
+  margin-top: 0;
 }
