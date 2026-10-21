@@ -7,3 +7,4 @@
 /src-tauri/binaries
 test-results/
 playwright-report/
+smoke.png

@@ -179,6 +179,7 @@ npm run tauri dev      # the full app
 cargo test --workspace
 npm test
 npm run e2e            # each use case in docs/use-cases.md, in a real browser
+npm run smoke          # the built app opens its window (Linux, needs tauri-driver)
 ```
 
 ## Roadmap
