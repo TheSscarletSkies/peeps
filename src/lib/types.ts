@@ -100,6 +100,8 @@ export interface Todo {
 export interface OpenTodo extends Todo {
   dueState: DueState;
   liveStreak: number;
+  /** Ticked off today; a daily repeat stays ticked until tomorrow. */
+  doneToday: boolean;
 }
 
 export interface Draft {
@@ -352,4 +354,12 @@ export interface Notch {
   /** Zero when the screen has no camera notch. */
   width: number;
   height: number;
+}
+
+/** A reminder the pets say out loud when it comes due. */
+export interface Nudge {
+  title: string;
+  body: string;
+  /** The to-do it is about, so Done can tick it off. */
+  todoId: number | null;
 }

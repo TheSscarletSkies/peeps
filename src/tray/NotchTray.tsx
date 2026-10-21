@@ -14,7 +14,15 @@ import {
   walkMs,
   type Lane,
 } from "../life/roam";
-import { ALL, AllIcon, CardBody, Roster, type Resident } from "./shared";
+import {
+  ALL,
+  AllIcon,
+  CardBody,
+  NUDGE,
+  Roster,
+  type Reminder,
+  type Resident,
+} from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
 import { giveFiles, useFileDrop } from "../life/drops";
 import { announceFed } from "../life/events";
@@ -26,17 +34,24 @@ export function NotchTray({
   snapshot,
   notch,
   residents,
+  reminder,
 }: {
   snapshot: Snapshot;
   notch: Notch;
   residents: Resident[];
+  reminder: Reminder;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [prefs, setPrefs] = usePrefs();
   const card = useRef<HTMLDivElement>(null);
   const open = openId !== null;
   const cardHeight = useHeight(card, open);
-  useCloseOnLeave(() => setOpenId(null));
+  useCloseOnLeave(() => setOpenId((now) => (now === NUDGE ? now : null)));
+  // A reminder drops its card down on its own; it goes away with Done or Later.
+  useEffect(() => {
+    if (reminder.nudge) setOpenId(NUDGE);
+    else setOpenId((now) => (now === NUDGE ? null : now));
+  }, [reminder.nudge]);
   useFileDrop((id, paths) => {
     giveFiles(id, paths);
     announceFed(id);
@@ -115,6 +130,7 @@ export function NotchTray({
           <CardBody
             openId={openId}
             snapshot={snapshot}
+            reminder={reminder}
             roster={
               <Roster
                 residents={residents}

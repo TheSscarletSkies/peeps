@@ -52,6 +52,8 @@ pub struct TodoView {
     pub due_state: Due,
     /// The streak while it is unbroken, zero once a repeat is missed.
     pub live_streak: i64,
+    /// Ticked off today; a daily repeat shows as done until tomorrow.
+    pub done_today: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -90,6 +92,8 @@ pub struct HelperInputs<'a> {
     pub todos_done_this_week: usize,
     pub drafts_this_week: usize,
     pub today: NaiveDate,
+    /// Ids of to-dos ticked off since the start of today.
+    pub done_today: Vec<i64>,
     pub upcoming: Vec<Event>,
     pub now: DateTime<Utc>,
     pub chat: Vec<Message>,
@@ -108,6 +112,7 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         .map(|todo| TodoView {
             due_state: todo.due_state(inputs.today),
             live_streak: todo.live_streak(inputs.today),
+            done_today: inputs.done_today.contains(&todo.id),
             todo,
         })
         .collect();
@@ -269,6 +274,7 @@ mod tests {
             todos_done_this_week: 0,
             drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
+            done_today: Vec::new(),
             upcoming: Vec::new(),
             now: Utc::now(),
             chat: Vec::new(),
@@ -316,6 +322,7 @@ mod tests {
             todos_done_this_week: 0,
             drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
+            done_today: Vec::new(),
             upcoming: Vec::new(),
             now: Utc::now(),
             chat: Vec::new(),
@@ -411,6 +418,7 @@ mod tests {
             todos_done_this_week: 0,
             drafts_this_week: 0,
             today: now.date_naive(),
+            done_today: Vec::new(),
             upcoming: vec![class],
             now,
             chat: Vec::new(),

@@ -17,6 +17,7 @@ const LOOKS: Look[] = [
   "celebrate",
   "love",
   "eager",
+  "wave",
 ];
 const KINDS: PetKind[] = ["bao", "gyoza", "wonton"];
 
@@ -36,6 +37,7 @@ describe("limbsFor", () => {
 
   it("gives each moment its own gesture", () => {
     expect(limbsFor("needsYou", "bao").right.motion).toBe("limb-wave");
+    expect(limbsFor("wave", "gyoza").hidden).toBeUndefined();
     expect(limbsFor("celebrate", "bao").left.motion).toBe("limb-cheer");
     expect(limbsFor("eager", "gyoza").left.y).toBeLessThan(50);
     expect(limbsFor("working", "bao").prop).toBe("pencil");

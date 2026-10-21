@@ -4,7 +4,7 @@ import type { Accessory } from "../life/season";
 import type { Mood, PetKind } from "../lib/types";
 import { limbsFor, type Hand, type Prop } from "./limbs";
 import shapes from "./shapes.json";
-import { flushed } from "./tint";
+import { edge, flushed, mix, vivid } from "./tint";
 import { BASE, variantFor } from "./variant";
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
 }
 
 /** Dizzy after a poke spree, celebrating finished work, in love after a pat or a note. */
-export type Expression = "dizzy" | "celebrate" | "love" | "eager";
+export type Expression = "dizzy" | "celebrate" | "love" | "eager" | "wave";
 type Look = Mood | Expression;
 
 interface Shape {
@@ -174,6 +174,7 @@ function Mouth({ mood }: { mood: Look }) {
       );
     case "celebrate":
     case "love":
+    case "wave":
       return (
         <>
           <path d="M57 70h6q-.5 4.2-3 4.2t-3-4.2z" fill={EYE} />
@@ -412,8 +413,8 @@ function HandShape({ hand, fill }: { hand: Hand; fill: string }) {
       style={{ transformOrigin: `${pivotX}px ${hand.y + 10}px` }}
       cx={hand.x}
       cy={hand.y}
-      rx={4.8}
-      ry={4}
+      rx={5.6}
+      ry={4.8}
       fill={fill}
       {...LIMB_LINE}
     />
@@ -522,7 +523,7 @@ export function Dumpling({
   const stretch = `translate(60 86) scale(${build.width} ${build.height}) translate(-60 -86)`;
   const spread = 1 + build.eyeSpread / 30;
   const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
-  const skin = flushed(color, heat);
+  const skin = vivid(flushed(color, heat));
   const limbs = limbsFor(look, kind);
 
   return (
@@ -566,13 +567,14 @@ export function Dumpling({
       >
         <g className="dumpling__body">
           <g transform={stretch}>
-            {/* A soft outline keeps the pastel shape clear on white pages as well as dark ones. */}
+            {/* An edge in the pet's own colour keeps the shape clear on white pages without the
+                hard look of a dark line. */}
             <path
               d={shape.body}
               fill={skin}
-              stroke="#9C6A4E"
-              strokeOpacity={0.55}
-              strokeWidth={2.4}
+              stroke={edge(color)}
+              strokeOpacity={0.35}
+              strokeWidth={1.6}
               strokeLinejoin="round"
             />
             <path d={shape.body} fill={`url(#${id}shade)`} />
@@ -617,8 +619,15 @@ export function Dumpling({
           {!limbs.hidden && (
             <g transform={stretch}>
               {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
-              <HandShape hand={limbs.left} fill={skin} />
-              <HandShape hand={limbs.right} fill={skin} />
+              {/* A shade deeper than the body, so a hand reads even when it overlaps it. */}
+              <HandShape
+                hand={limbs.left}
+                fill={mix(skin, edge(color), 0.16)}
+              />
+              <HandShape
+                hand={limbs.right}
+                fill={mix(skin, edge(color), 0.16)}
+              />
             </g>
           )}
           {accessory && <Outfit accessory={accessory} hatY={shape.hatY} />}

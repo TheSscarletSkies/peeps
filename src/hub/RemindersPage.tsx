@@ -4,6 +4,7 @@ import { REMINDERS } from "../helper/todoForm";
 import { Upcoming } from "../helper/Upcoming";
 import { addCalendar, removeCalendar, setReminders } from "../lib/bridge";
 import { Info } from "../lib/Info";
+import { Select } from "../lib/Select";
 import type { ReminderRule, Snapshot } from "../lib/types";
 
 const LEADS = REMINDERS.filter((option) => option.minutes !== null);
@@ -38,20 +39,18 @@ function LeadSelect({
   allowDefault?: boolean;
 }) {
   return (
-    <select
+    <Select
       id={id}
       value={value === null ? "" : String(value)}
-      onChange={(event) =>
-        onChange(event.target.value === "" ? null : Number(event.target.value))
-      }
-    >
-      {allowDefault && <option value="">Default lead</option>}
-      {LEADS.map((option) => (
-        <option key={option.label} value={String(option.minutes)}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      onChange={(next) => onChange(next === "" ? null : Number(next))}
+      options={[
+        ...(allowDefault ? [{ value: "", label: "Default lead" }] : []),
+        ...LEADS.map((option) => ({
+          value: String(option.minutes),
+          label: option.label,
+        })),
+      ]}
+    />
   );
 }
 
@@ -245,25 +244,25 @@ export function RemindersPage({ snapshot }: { snapshot: Snapshot }) {
             <label className="visually-hidden" htmlFor={`rule-lead-${index}`}>
               Remind
             </label>
-            <select
+            <Select
               id={`rule-lead-${index}`}
               value={rule.mute ? "mute" : String(rule.minutes)}
-              onChange={(event) =>
+              onChange={(next) =>
                 changeRule(
                   index,
-                  event.target.value === "mute"
+                  next === "mute"
                     ? { mute: true }
-                    : { mute: false, minutes: Number(event.target.value) },
+                    : { mute: false, minutes: Number(next) },
                 )
               }
-            >
-              {LEADS.map((option) => (
-                <option key={option.label} value={String(option.minutes)}>
-                  {option.label}
-                </option>
-              ))}
-              <option value="mute">Never remind</option>
-            </select>
+              options={[
+                ...LEADS.map((option) => ({
+                  value: String(option.minutes),
+                  label: option.label,
+                })),
+                { value: "mute", label: "Never remind" },
+              ]}
+            />
             <button
               className="todos__remove"
               aria-label={`Remove rule for ${rule.contains || "new rule"}`}

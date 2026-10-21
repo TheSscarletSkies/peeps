@@ -66,7 +66,7 @@ export const demoSnapshot: Snapshot = {
   helper: {
     name: "Helper",
     kind: "bao",
-    color: "#DDF5E7",
+    color: "#FFD9C4",
     mood: "needsYou",
     headline: "1 to-do overdue",
     todos: [
@@ -80,6 +80,7 @@ export const demoSnapshot: Snapshot = {
         until: null,
         streak: 0,
         liveStreak: 0,
+        doneToday: false,
 
         due: "2026-10-17",
         createdAt: "2026-10-12T09:00:00Z",
@@ -96,6 +97,7 @@ export const demoSnapshot: Snapshot = {
         until: null,
         streak: 0,
         liveStreak: 0,
+        doneToday: false,
 
         due: "2026-10-19",
         createdAt: "2026-10-15T09:00:00Z",
@@ -113,6 +115,7 @@ export const demoSnapshot: Snapshot = {
         until: null,
         streak: 0,
         liveStreak: 0,
+        doneToday: false,
         createdAt: "2026-10-15T09:00:00Z",
         doneAt: null,
         dueState: "soon",
@@ -128,6 +131,7 @@ export const demoSnapshot: Snapshot = {
         until: "21:00:00",
         streak: 3,
         liveStreak: 3,
+        doneToday: false,
         createdAt: "2026-10-12T09:00:00Z",
         doneAt: null,
         dueState: "today",
@@ -143,6 +147,7 @@ export const demoSnapshot: Snapshot = {
         until: null,
         streak: 6,
         liveStreak: 6,
+        doneToday: true,
         createdAt: "2026-10-12T09:00:00Z",
         doneAt: null,
         dueState: "today",

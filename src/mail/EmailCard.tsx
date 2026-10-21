@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { composeEmail, discardEmail, sendEmail } from "../lib/bridge";
+import { Select } from "../lib/Select";
 import type { Email, EmailDraft, MailAccount } from "../lib/types";
 import { blocker, draftOf } from "./mail";
 
@@ -70,22 +71,22 @@ export function EmailCard({ email, accounts, onDone }: Props) {
     >
       <div className="email__line">
         <label htmlFor={`${key}-from`}>From</label>
-        <select
+        <Select
           id={`${key}-from`}
           value={draft.from}
-          onChange={(event) => set({ from: event.target.value })}
-        >
-          {!accounts.some((a) => a.address === draft.from) && (
-            <option value={draft.from}>{draft.from || "Choose…"}</option>
-          )}
-          {accounts.map((account) => (
-            <option key={account.address} value={account.address}>
-              {account.name
+          onChange={(next) => set({ from: next })}
+          options={[
+            ...(accounts.some((a) => a.address === draft.from)
+              ? []
+              : [{ value: draft.from, label: draft.from || "Choose…" }]),
+            ...accounts.map((account) => ({
+              value: account.address,
+              label: account.name
                 ? `${account.name} <${account.address}>`
-                : account.address}
-            </option>
-          ))}
-        </select>
+                : account.address,
+            })),
+          ]}
+        />
       </div>
       <div className="email__line">
         <label htmlFor={`${key}-to`}>To</label>

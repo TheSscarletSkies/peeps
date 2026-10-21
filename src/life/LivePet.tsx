@@ -22,6 +22,8 @@ interface Props {
   arriving?: boolean;
   /** Which drop target this pet answers to, when it is not its own id. */
   dropId?: string;
+  /** Waving to get attention, as when it has a reminder to say. */
+  waving?: boolean;
 }
 
 /** `?season=scarf` or `?season=witchHat` previews an outfit out of season. */
@@ -42,6 +44,7 @@ export function LivePet({
   celebrating = false,
   arriving = false,
   dropId,
+  waving = false,
 }: Props) {
   const eager = useDropHover(dropId ?? id);
   const [dizzy, setDizzy] = useState(false);
@@ -88,13 +91,15 @@ export function LivePet({
 
   const expression: Expression | undefined = eager
     ? "eager"
-    : dizzy
-      ? "dizzy"
-      : celebrating
-        ? "celebrate"
-        : love
-          ? "love"
-          : undefined;
+    : waving
+      ? "wave"
+      : dizzy
+        ? "dizzy"
+        : celebrating
+          ? "celebrate"
+          : love
+            ? "love"
+            : undefined;
 
   const motion = [squish && "motion-squish", arriving && "motion-hatch"]
     .filter(Boolean)

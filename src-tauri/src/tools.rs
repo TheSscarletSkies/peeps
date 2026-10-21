@@ -40,7 +40,12 @@ fn run(app: &App, call: Call) -> Result<String> {
         Call::CompleteTodo { id } => {
             let done = app
                 .todos()
-                .complete(id, Utc::now(), Local::now().date_naive())
+                .complete_once(
+                    id,
+                    Utc::now(),
+                    Local::now().date_naive(),
+                    crate::state::start_of_today(),
+                )
                 .map_err(|e| e.to_string())?;
             Ok(if done {
                 format!("Ticked off to-do {id}.")

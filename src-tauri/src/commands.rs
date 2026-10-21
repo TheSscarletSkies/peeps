@@ -106,7 +106,12 @@ pub fn set_todo_done(app: State<'_, Arc<App>>, id: i64, done: bool) -> Result<()
     let store = app.todos();
     if done {
         store
-            .complete(id, now, chrono::Local::now().date_naive())
+            .complete_once(
+                id,
+                now,
+                chrono::Local::now().date_naive(),
+                crate::state::start_of_today(),
+            )
             .map_err(message)?;
     } else {
         store.reopen(id).map_err(message)?;

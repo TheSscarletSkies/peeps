@@ -33,6 +33,7 @@ pub const HELPER_ID: &str = "helper";
 const STARTER_CONFIG: &str = "# peeps: add products from the app, or by hand.\n\
 # Every option is described in the README; examples/ has full setups.\n";
 pub const SNAPSHOT_EVENT: &str = "snapshot";
+const NUDGE_EVENT: &str = "nudge";
 
 #[derive(Default)]
 pub struct World {
@@ -196,6 +197,15 @@ pub struct TeammateView {
     pub schedule: Option<peeps_core::schedule::Schedule>,
     pub messages: Vec<peeps_core::chat::Message>,
     pub chatting: bool,
+}
+
+/// Midnight this morning in the user's time zone.
+pub fn start_of_today() -> DateTime<Utc> {
+    Local::now()
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .and_then(|midnight| midnight.and_local_timezone(Local).earliest())
+        .map_or_else(Utc::now, |midnight| midnight.with_timezone(&Utc))
 }
 
 /// How far ahead the helper lists events.
@@ -405,6 +415,21 @@ impl App {
         events
     }
 
+    /// Lets the pets say a reminder out loud, with a way to tick off the to-do it is about.
+    pub fn nudge(&self, reminder: &peeps_core::reminders::Reminder) {
+        let Some(handle) = &self.handle else {
+            return;
+        };
+        let payload = serde_json::json!({
+            "title": reminder.title,
+            "body": reminder.body,
+            "todoId": reminder.todo_id(),
+        });
+        if let Err(error) = handle.emit(NUDGE_EVENT, payload) {
+            eprintln!("peeps: could not show a reminder on the pets: {error}");
+        }
+    }
+
     pub fn notify(&self, title: &str, body: &str) {
         use tauri_plugin_notification::NotificationExt;
         let Some(handle) = &self.handle else {
@@ -437,6 +462,10 @@ impl App {
                 todos.recently_done(RECENT_DONE).unwrap_or_default(),
             )
         };
+        let done_today = self
+            .todos()
+            .done_ids_since(start_of_today())
+            .unwrap_or_default();
         let week_ago = Utc::now() - chrono::TimeDelta::days(7);
         let todos_done_this_week = self.todos().done_since(week_ago).unwrap_or_default();
         let drafts = self.drafts().recent(RECENT_DRAFTS).unwrap_or_default();
@@ -534,6 +563,7 @@ impl App {
                 todos_done_this_week,
                 drafts_this_week,
                 today: Local::now().date_naive(),
+                done_today,
                 upcoming,
                 now,
                 chat,

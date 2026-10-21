@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { choose } from "./choose";
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
@@ -36,7 +38,7 @@ test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {
   await expect(page.getByLabel("Reminder")).toHaveCount(0);
   await page.getByLabel("Due date").last().fill("2026-11-01");
   await expect(page.getByLabel("Reminder")).toBeVisible();
-  await page.getByLabel("Repeat").last().selectOption("monthly");
+  await choose(page.getByLabel("Repeat").last(), "Monthly");
   await expect(page.getByRole("button", { name: "Add" })).toBeEnabled();
 
   await page
@@ -48,9 +50,9 @@ test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {
 
 test("UC10: nudges through the day get a from–to window", async ({ page }) => {
   await page.getByRole("tab", { name: "To-do" }).click();
-  await expect(page.getByText("Every 2 h · 3 today")).toBeVisible();
+  await expect(page.getByText(/Every 2 h · 3 of \d+ today/)).toBeVisible();
   await page.getByLabel("To-do").last().fill("Stretch");
-  await page.getByLabel("Repeat").last().selectOption("every2h");
+  await choose(page.getByLabel("Repeat").last(), "Every 2 hours");
   await expect(page.getByLabel("Due date")).toHaveCount(0);
   await expect(page.getByLabel("From")).toHaveValue("09:00");
   await expect(page.getByLabel("Until")).toHaveValue("21:00");
@@ -61,8 +63,16 @@ test("UC12: a draft can be scheduled to repeat", async ({ page }) => {
   await expect(
     page.getByRole("list", { name: "Scheduled drafts" }),
   ).toContainText("What I shipped this week");
-  await page.getByLabel("When").selectOption("weekly");
+  await choose(page.getByLabel("When"), "Weekly");
   await expect(page.getByLabel("Starting")).toBeVisible();
   await page.getByLabel("What to write about").fill("A week of peeps");
   await expect(page.getByRole("button", { name: "Schedule" })).toBeEnabled();
+});
+
+test("UC10: a daily habit done today waits for tomorrow", async ({ page }) => {
+  await page.getByRole("tab", { name: "To-do" }).click();
+  const stretch = page.getByLabel("Done: Stretch");
+  await expect(stretch).toBeChecked();
+  await expect(stretch).toBeDisabled();
+  await expect(page.getByText(/Done today · 6 in a row/)).toBeVisible();
 });

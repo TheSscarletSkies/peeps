@@ -11,13 +11,13 @@
   --line: #232326;
   --text: #f4f2ee;
   --muted: #a8a6a1;
-  --accent: #ffd66b;
+  --accent: #ffb59c;
   --field: #202024;
   --field-line: #2e2e33;
   --focus: rgba(244, 242, 238, 0.55);
   --check: #9ee6b8;
   --check-line: #55555b;
-  --accent-ink: #1a1406;
+  --accent-ink: #3a1a10;
   --good: #9fd9b4;
   --bad: #ffb3a7;
   font-family: "Nunito", ui-rounded, system-ui, sans-serif;
@@ -46,7 +46,7 @@ body,
 .tray__error,
 .tray__tip,
 .tray__error {
-  color: #ffa8aa;
+  color: var(--bad);
 }
 
 .button:focus-visible {
@@ -347,6 +347,17 @@ body,
   gap: 12px;
 }
 
+.setup__row > .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.setup__row > .tray__error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .setup__step {
   display: flex;
   flex-direction: column;
@@ -369,7 +380,7 @@ body,
 .setup__ok {
   font-size: 13px;
   font-weight: 800;
-  color: #9ee6b8;
+  color: var(--good);
 }
 
 .setup__products {
@@ -581,7 +592,7 @@ body,
   flex-wrap: nowrap;
 }
 
-.todo-form .feed > :is(input, select) {
+.todo-form .feed > :is(input, select, .select) {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -632,7 +643,7 @@ body,
   gap: 8px;
 }
 
-.write__row select {
+.write__row :is(select, .select) {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -843,7 +854,7 @@ body,
 
 .feed input[type="text"],
 .feed input:not([type]),
-.write select {
+.write :is(select, .select) {
   flex: 1;
 }
 
@@ -1121,7 +1132,7 @@ body,
   flex: 1 1 100%;
 }
 
-:is(.notch__card, .float__panel) .feed select {
+:is(.notch__card, .float__panel) .feed :is(select, .select) {
   flex: 1;
 }
 
@@ -1183,9 +1194,10 @@ body,
 }
 
 /* Desktops are busy and often dark: a richer colour and a soft shadow keep the pastel pet readable. */
+/* A soft, warm shadow so the pet sits on any page, light or dark, without a dark halo. */
 .float__pet .dumpling {
-  filter: saturate(1.4) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45))
-    drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 6px 10px rgba(90, 45, 30, 0.22))
+    drop-shadow(0 1px 2px rgba(90, 45, 30, 0.18));
 }
 
 .float[data-side="right"] .float__pet {
@@ -1888,7 +1900,7 @@ body,
   color: var(--muted);
 }
 
-.email__line > :is(input, select) {
+.email__line > :is(input, select, .select) {
   flex: 1;
 }
 
@@ -2259,4 +2271,170 @@ body,
 
 :is(.roamer--walking, .roamer--held, .float__pet:active) .dumpling__feet--idle {
   opacity: 1;
+}
+
+.todos li[data-due="done"] .todos__title {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+.todos li[data-due="done"] .todos__repeat {
+  color: var(--good);
+}
+
+/* A reminder said out loud: the helper waving beside a speech bubble. */
+
+.nudge {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 2px 2px;
+}
+
+.nudge > .live-pet {
+  flex-shrink: 0;
+}
+
+.nudge__bubble {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 18px 18px 18px 6px;
+  /* A light pastel bubble with dark ink stands out on the dark card, like a sticker. */
+  background: color-mix(in srgb, var(--pet, var(--accent)) 55%, #fffaf6);
+  color: #2a1d16;
+  animation: bubble-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+  transform-origin: 0 100%;
+}
+
+.nudge__bubble::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.nudge__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.nudge__body {
+  margin: 0;
+  font-size: 12px;
+  color: #6b5a50;
+}
+
+.nudge__actions .button:not(.button--primary) {
+  background: rgba(255, 255, 255, 0.7);
+  color: #2a1d16;
+}
+
+.nudge__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+/* Dropdowns drawn by peeps: the button looks like the other fields, the list like a card. */
+
+.select {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+:is(.notch, .float, .hub) .select__button {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--h-control);
+  padding: 0 34px 0 16px;
+  overflow: hidden;
+  border: 1px solid var(--field-line);
+  border-radius: var(--r-control);
+  background-color: var(--field);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(-45deg, transparent 50%, var(--muted) 50%);
+  background-position:
+    right 18px center,
+    right 13px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+:is(.notch, .float, .hub) .select__button[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.select__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 240px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border-radius: var(--r-box);
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 12px 32px rgba(0, 0, 0, 0.35);
+  list-style: none;
+  animation: drop 0.14s ease-out;
+}
+
+.select__list--up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.select__list li {
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.select__list li[data-active] {
+  background: var(--field);
+}
+
+.select__list li[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 22%, var(--field));
+  font-weight: 700;
+}
+
+/* A reminder takes the whole panel; the pet tabs come back once it is done. */
+.float__pets[data-hidden] {
+  display: none;
 }

@@ -15,6 +15,18 @@ pub struct Reminder {
     pub at: DateTime<Utc>,
 }
 
+impl Reminder {
+    /// The to-do this reminds about, so it can be ticked off from the reminder itself.
+    pub fn todo_id(&self) -> Option<i64> {
+        self.key
+            .strip_prefix("todo:")?
+            .split(':')
+            .next()?
+            .parse()
+            .ok()
+    }
+}
+
 /// All-day events, like exams, remind on the morning they happen.
 const MORNING_HOURS: i64 = 9;
 
@@ -263,5 +275,17 @@ mod tests {
         assert_eq!(span(60), "1 hour");
         assert_eq!(span(120), "2 hours");
         assert_eq!(span(1440), "1 day");
+    }
+
+    #[test]
+    fn reminders_know_their_to_do() {
+        let reminder = |key: &str| Reminder {
+            key: key.into(),
+            title: String::new(),
+            body: String::new(),
+            at: Utc::now(),
+        };
+        assert_eq!(reminder("todo:12:1760000000").todo_id(), Some(12));
+        assert_eq!(reminder("event:college:class").todo_id(), None);
     }
 }

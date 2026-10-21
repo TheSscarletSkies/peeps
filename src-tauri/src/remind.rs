@@ -36,6 +36,7 @@ pub async fn run(app: Arc<App>) {
         let due = reminders::due(&all, after, now);
         for reminder in &due {
             app.notify(&reminder.title, &reminder.body);
+            app.nudge(reminder);
         }
         if !due.is_empty() {
             app.publish();

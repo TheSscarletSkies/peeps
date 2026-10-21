@@ -7,6 +7,7 @@ import {
   type NewMailAccount,
 } from "../lib/bridge";
 import { Info } from "../lib/Info";
+import { Select } from "../lib/Select";
 import type { MailProvider, Snapshot } from "../lib/types";
 import { EmailCard } from "../mail/EmailCard";
 import { daysAgo, followUpPrompt } from "../mail/mail";
@@ -216,19 +217,15 @@ export function MailPage({ snapshot }: { snapshot: Snapshot }) {
             <label className="visually-hidden" htmlFor="mail-provider">
               Provider
             </label>
-            <select
+            <Select
               id="mail-provider"
               value={form.provider}
-              onChange={(event) =>
-                set({ provider: event.target.value as MailProvider })
-              }
-            >
-              {PROVIDERS.map((provider) => (
-                <option key={provider.id} value={provider.id}>
-                  {provider.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set({ provider: next as MailProvider })}
+              options={PROVIDERS.map((provider) => ({
+                value: provider.id,
+                label: provider.label,
+              }))}
+            />
           </div>
           <label className="visually-hidden" htmlFor="mail-name">
             Name people see

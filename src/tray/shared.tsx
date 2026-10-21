@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { HelperPanel } from "../helper/HelperPanel";
 import { MOOD_LABEL } from "../hub/ProductCard";
 import { openHome } from "../lib/bridge";
-import type { Mood, Snapshot } from "../lib/types";
+import type { Mood, Nudge, Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import type { Place } from "../life/prefs";
 import type { PetSize } from "../life/roam";
+import { NudgeCard } from "./NudgeCard";
 import { PetPanel } from "./PetPanel";
 
 export const URGENT: Mood[] = [
@@ -18,6 +19,14 @@ export const URGENT: Mood[] = [
 ];
 export const HELPER = "helper";
 export const ALL = "all";
+/** The card a reminder opens, with the helper saying it. */
+export const NUDGE = "nudge";
+
+export interface Reminder {
+  nudge: Nudge | null;
+  dismiss: () => void;
+  later: () => void;
+}
 const SIZE_LABEL: Record<PetSize, string> = {
   small: "S",
   medium: "M",
@@ -42,6 +51,7 @@ export function residentsOf(
   snapshot: Snapshot,
   celebrating: Set<string>,
   arriving: Set<string>,
+  waving = false,
 ): Resident[] {
   const { pets, helper, mail } = snapshot;
   const emails = mail.outbox.length;
@@ -70,10 +80,11 @@ export function residentsOf(
       mood: helper.mood,
       // The helper interrupts for a permission, an event about to start or an email to approve,
       // never for its own to-dos.
-      urgent: helper.mood === "needsYou" || emails > 0,
+      urgent: helper.mood === "needsYou" || emails > 0 || waving,
       pet: (size: number) => (
         <LivePet
           dropId={HELPER}
+          waving={waving}
           kind={helper.kind}
           color={helper.color}
           mood={helper.mood}
@@ -92,12 +103,23 @@ export function CardBody({
   openId,
   snapshot,
   roster,
+  reminder,
 }: {
   openId: string;
   snapshot: Snapshot;
   roster: ReactNode;
+  reminder?: Reminder;
 }) {
   const pet = snapshot.pets.find((candidate) => candidate.id === openId);
+  if (openId === NUDGE && reminder?.nudge)
+    return (
+      <NudgeCard
+        nudge={reminder.nudge}
+        helper={snapshot.helper}
+        onDone={reminder.dismiss}
+        onLater={reminder.later}
+      />
+    );
   return (
     <>
       {openId === ALL ? (

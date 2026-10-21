@@ -4,6 +4,7 @@ import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { announceFed } from "../life/events";
 import { addNote, decide } from "../lib/bridge";
+import { Select } from "../lib/Select";
 import type {
   Delivery,
   Helper,
@@ -161,14 +162,18 @@ export function PetPanel({
               onFocus={() => onTyping(true)}
               onBlur={() => onTyping(false)}
             />
-            <select
-              aria-label="When to deliver"
+            <label className="visually-hidden" htmlFor={`delivery-${pet.id}`}>
+              When to deliver
+            </label>
+            <Select
+              id={`delivery-${pet.id}`}
               value={delivery}
-              onChange={(event) => setDelivery(event.target.value as Delivery)}
-            >
-              <option value="nextSession">Next session</option>
-              <option value="nextStep">Next step</option>
-            </select>
+              onChange={(next) => setDelivery(next as Delivery)}
+              options={[
+                { value: "nextSession", label: "Next session" },
+                { value: "nextStep", label: "Next step" },
+              ]}
+            />
             <button
               className="button button--primary"
               type="submit"

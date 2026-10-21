@@ -9,6 +9,7 @@ import {
   setYoutubeKey,
 } from "../lib/bridge";
 import { Info } from "../lib/Info";
+import { Select } from "../lib/Select";
 import type { Snapshot } from "../lib/types";
 import {
   channelLabel,
@@ -194,17 +195,15 @@ export function NumbersPage({ snapshot }: { snapshot: Snapshot }) {
               <label className="visually-hidden" htmlFor="paypal-product">
                 Product
               </label>
-              <select
+              <Select
                 id="paypal-product"
                 value={product}
-                onChange={(event) => setProduct(event.target.value)}
-              >
-                {pets.map((pet) => (
-                  <option key={pet.id} value={pet.id}>
-                    {pet.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setProduct}
+                options={pets.map((pet) => ({
+                  value: pet.id,
+                  label: pet.name,
+                }))}
+              />
             </div>
             <label className="visually-hidden" htmlFor="paypal-client">
               Client ID

@@ -15,6 +15,7 @@ import type {
   NewProduct,
   NewSchedule,
   Notch,
+  Nudge,
   ProductNumbers,
   Note,
   Reminders,
@@ -691,4 +692,17 @@ export function writeProfile(text: string): Promise<void> {
       .some((line) => line.trim() && !line.trim().startsWith("#")),
   }));
   return Promise.resolve();
+}
+
+/** Reminders as they come due. The preview fakes one with `?nudge=Drink water`. */
+export function onNudge(handler: (nudge: Nudge) => void): Promise<() => void> {
+  if (inApp()) return listen<Nudge>("nudge", (event) => handler(event.payload));
+  const text = new URLSearchParams(window.location.search).get("nudge");
+  const timer = text
+    ? window.setTimeout(
+        () => handler({ title: text, body: "Every 2 hours", todoId: 5 }),
+        600,
+      )
+    : 0;
+  return Promise.resolve(() => window.clearTimeout(timer));
 }

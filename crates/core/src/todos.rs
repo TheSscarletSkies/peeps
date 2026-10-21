@@ -435,6 +435,34 @@ impl TodoStore {
         Ok(true)
     }
 
+    /// To-dos ticked off since `since`, such as the start of the user's day.
+    pub fn done_ids_since(&self, since: DateTime<Utc>) -> rusqlite::Result<Vec<i64>> {
+        let mut query = self
+            .db
+            .prepare("SELECT DISTINCT todo_id FROM todo_log WHERE done_at >= ?1")?;
+        let rows = query.query_map(params![since], |row| row.get(0))?;
+        rows.collect()
+    }
+
+    /// Ticks a to-do off, unless it is a daily-or-longer repeat already done today: ticking that
+    /// again used to skip it a day further each time.
+    pub fn complete_once(
+        &self,
+        id: i64,
+        now: DateTime<Utc>,
+        today: NaiveDate,
+        day_start: DateTime<Utc>,
+    ) -> rusqlite::Result<bool> {
+        let Some(todo) = self.get(id)? else {
+            return Ok(false);
+        };
+        let repeats_by_day = todo.repeat != Repeat::Never && todo.repeat.hours().is_none();
+        if repeats_by_day && self.done_ids_since(day_start)?.contains(&id) {
+            return Ok(false);
+        }
+        self.complete(id, now, today)
+    }
+
     /// Puts a finished to-do back on the list.
     pub fn reopen(&self, id: i64) -> rusqlite::Result<bool> {
         let changed = self.db.execute(
@@ -681,6 +709,27 @@ mod tests {
             store.done_since(now - chrono::TimeDelta::days(1)).unwrap(),
             3
         );
+    }
+
+    #[test]
+    fn a_daily_repeat_counts_once_a_day() {
+        let store = TodoStore::in_memory().unwrap();
+        let today = day("2026-10-21");
+        let morning = Utc.with_ymd_and_hms(2026, 10, 21, 4, 0, 0).unwrap();
+        let water = TodoInput {
+            repeat: Repeat::Daily,
+            due: Some(day("2026-10-20")),
+            ..input("Drink water")
+        };
+        let todo = store.add(&water, morning).unwrap();
+        let start = Utc.with_ymd_and_hms(2026, 10, 21, 0, 0, 0).unwrap();
+        for _ in 0..5 {
+            store.complete_once(todo.id, morning, today, start).unwrap();
+        }
+        let open = store.open_items().unwrap();
+        assert_eq!(open[0].due, Some(day("2026-10-22")));
+        assert_eq!(open[0].streak, 1);
+        assert_eq!(store.done_ids_since(start).unwrap(), [todo.id]);
     }
 
     #[test]

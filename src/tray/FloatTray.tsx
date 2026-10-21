@@ -13,7 +13,15 @@ import {
   type Spot,
 } from "../life/float";
 import { shown, toggleHidden, usePrefs } from "../life/prefs";
-import { ALL, CardBody, HELPER, Roster, type Resident } from "./shared";
+import {
+  ALL,
+  CardBody,
+  HELPER,
+  NUDGE,
+  Roster,
+  type Reminder,
+  type Resident,
+} from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
 import { giveFiles, useFileDrop } from "../life/drops";
 import { announceFed } from "../life/events";
@@ -64,9 +72,11 @@ function saveSpot(spot: Spot) {
 export function FloatTray({
   snapshot,
   residents,
+  reminder,
 }: {
   snapshot: Snapshot;
   residents: Resident[];
+  reminder: Reminder;
 }) {
   const [area] = useState(screenArea);
   const [spot, setSpot] = useState(() => savedSpot(area));
@@ -82,7 +92,12 @@ export function FloatTray({
   const frame = useRef(0);
   const open = openId !== null;
   const panelHeight = useHeight(panel, open);
-  useCloseOnLeave(() => setOpenId(null));
+  useCloseOnLeave(() => setOpenId((now) => (now === NUDGE ? now : null)));
+  // A reminder opens beside the pet on its own; it goes away with Done or Later.
+  useEffect(() => {
+    if (reminder.nudge) setOpenId(NUDGE);
+    else setOpenId((now) => (now === NUDGE ? null : now));
+  }, [reminder.nudge]);
   useFileDrop((id, paths) => {
     giveFiles(id, paths);
     announceFed(id);
@@ -180,7 +195,12 @@ export function FloatTray({
             ["--pet" as string]: pet?.color ?? snapshot.helper.color,
           }}
         >
-          <div className="float__pets" role="tablist" aria-label="Your pets">
+          <div
+            className="float__pets"
+            role="tablist"
+            aria-label="Your pets"
+            data-hidden={openId === NUDGE || undefined}
+          >
             <button
               role="tab"
               aria-selected={openId === HELPER}
@@ -228,6 +248,7 @@ export function FloatTray({
           <CardBody
             openId={openId}
             snapshot={snapshot}
+            reminder={reminder}
             roster={
               <Roster
                 residents={residents}

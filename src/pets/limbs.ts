@@ -43,9 +43,10 @@ export function limbsFor(look: Look, kind: PetKind): Limbs {
     case "stalled":
       return { ...both(rest), hidden: true, napping: true };
     case "needsYou":
+    case "wave":
       return {
         left: rest,
-        right: { x: 100, y: 55, motion: "limb-wave" },
+        right: { x: 104, y: 47, motion: "limb-wave" },
       };
     case "celebrate":
       return both({ x: 22, y: 44, motion: "limb-cheer" });

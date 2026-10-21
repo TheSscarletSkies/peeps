@@ -110,7 +110,7 @@ Tested by `crates/core/src/profile.rs`, `crates/core/src/setup.rs`, `crates/core
 ### UC10. Keep to-dos and habits
 
 **When** they add "Pay rent #bills" due on the 1st, monthly, reminded the morning of.
-**Then** tags become coloured chips with a filter, nudges like "drink water" can repeat every 1, 2 or 3 hours between two times and count how many today, typing "remind me to drink water every 2 hours" (or "at 6pm", "tomorrow at 9", "every Monday at 10", "in 20 minutes") to the helper sets it up instantly, repeating to-dos roll forward when ticked and count a streak while done on time, and a notification arrives at the chosen lead.
+**Then** tags become coloured chips with a filter, nudges like "drink water" can repeat every 1, 2 or 3 hours between two times and count how many today, typing "remind me to drink water every 2 hours" (or "at 6pm", "tomorrow at 9", "every Monday at 10", "in 20 minutes") to the helper sets it up instantly, repeating to-dos roll forward when ticked and count a streak while done on time (a daily habit ticked today shows "Done today" and can't be ticked again until tomorrow; a nudge through the day shows "3 of 7 today"), and at the chosen lead a notification arrives while the helper waves and says the reminder in a speech bubble, with Done to tick it off and Later to hear it again in 15 minutes.
 
 Tested by `e2e/helper.e2e.ts`, `crates/core/src/todos.rs`, `crates/core/src/quick.rs`, `src/helper/todoForm.test.ts`.
 

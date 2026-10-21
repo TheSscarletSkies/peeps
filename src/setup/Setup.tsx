@@ -14,12 +14,12 @@ import type { NewProduct, PetKind, Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 
 const COLORS = [
-  "#FFF3E3",
-  "#FFE6D5",
-  "#FFDDE4",
-  "#E8DDFB",
-  "#DCEBFF",
-  "#DDF5E7",
+  "#FFE7C9",
+  "#FFD2BC",
+  "#FFC9D6",
+  "#DFCFFF",
+  "#C9E0FF",
+  "#C6EFD8",
 ];
 
 interface Props {
@@ -60,11 +60,11 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
         <span className="setup__hint">
           So pets know when an agent starts, finishes or asks for permission.
         </span>
-        {hooks && !hooks.agent && (
+        {hooks && !hooks.agent ? (
           <div className="setup__row">
             <span className="tray__error">
-              Claude Code isn't on this computer, or peeps can't see it. Install
-              it from claude.com/claude-code, open a terminal and run{" "}
+              peeps can't find Claude Code on this computer. Install it from
+              claude.com/claude-code, open a terminal and run{" "}
               <code>claude</code> once, then check again.
             </span>
             <button
@@ -74,16 +74,11 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
               Check again
             </button>
           </div>
-        )}
-        {hooks?.installed ? (
+        ) : hooks?.installed ? (
           <div className="setup__row">
-            <span className="setup__ok">
-              {hooks.agent
-                ? "Connected"
-                : "Listening, but Claude Code is missing"}
-            </span>
+            <span className="setup__ok">Connected</span>
             <button
-              className="button"
+              className="tray__link"
               onClick={() => run(async () => setHooks(await uninstallHooks()))}
             >
               Disconnect

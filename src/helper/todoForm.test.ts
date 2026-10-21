@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { demoSnapshot } from "../lib/demo";
-import { draftFrom, EMPTY, hasTitle, inputFrom } from "./todoForm";
+import {
+  draftFrom,
+  EMPTY,
+  hasTitle,
+  inputFrom,
+  nudgesPerDay,
+} from "./todoForm";
 
 describe("todo form", () => {
   it("round-trips a to-do through the form", () => {
@@ -48,5 +54,14 @@ describe("todo form", () => {
     expect(hasTitle("#bills #home")).toBe(false);
     expect(hasTitle("Pay rent #bills")).toBe(true);
     expect(hasTitle("   ")).toBe(false);
+  });
+});
+
+describe("nudgesPerDay", () => {
+  it("counts the nudges between from and until", () => {
+    expect(nudgesPerDay("every2h", "09:00:00", "21:00:00")).toBe(7);
+    expect(nudgesPerDay("every3h", "09:00", "18:00")).toBe(4);
+    expect(nudgesPerDay("hourly", null, null)).toBe(13);
+    expect(nudgesPerDay("daily", "09:00", "21:00")).toBe(0);
   });
 });

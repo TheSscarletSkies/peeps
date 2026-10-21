@@ -174,7 +174,10 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           )}
           {page === "home" && <HomePage snapshot={snapshot} onGo={setPage} />}
           {page === "todo" && (
-            <Section title="To-do" lead="Deadlines, study blocks and chores.">
+            <Section
+              title="To-do"
+              lead="Deadlines, habits, reminders and chores."
+            >
               <div className="card">
                 <Todos helper={helper} onTyping={noop} />
               </div>
@@ -341,7 +344,12 @@ function HomePage({
           <h1>{greeting(new Date().getHours())}</h1>
           <p>{summary}</p>
         </div>
-        <div className="hero__steamer" aria-hidden="true">
+        <div
+          className="hero__steamer"
+          aria-hidden="true"
+          // One steamer seat per pet, so a lone helper isn't sitting on a wide plank.
+          style={{ width: Math.min(420, 150 + Math.min(pets.length, 4) * 80) }}
+        >
           <div className="hero__pets">
             {pets.slice(0, 4).map((pet) => (
               <LivePet
@@ -415,6 +423,31 @@ function HomePage({
               onOpen={() => setOpenPet(pet.id)}
             />
           ))}
+          {pets.length === 0 && (
+            <div className="card home__empty">
+              <LivePet
+                dropId="helper"
+                kind="bao"
+                color="#FFE6D6"
+                mood="chill"
+                heat={0}
+                size={72}
+              />
+              <div>
+                <h2>Your products live here</h2>
+                <p className="setup__hint">
+                  Add Funderly or anything you build, and it hatches as a pet
+                  that shows its numbers, its agent and what it needs from you.
+                </p>
+              </div>
+              <button
+                className="button button--primary"
+                onClick={() => onGo("products")}
+              >
+                Add a product
+              </button>
+            </div>
+          )}
         </section>
 
         <aside className="home__side">

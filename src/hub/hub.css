@@ -1,5 +1,5 @@
 /* The peeps window: near-black and neutral, like the notch tray, so the pastel pets and the
-   bright accent carry the colour. */
+   coral accent carry the colour. */
 
 .hub {
   --ink: #09090b;
@@ -7,8 +7,8 @@
   --line: #24242a;
   --text: #f5f5f7;
   --muted: #a1a1aa;
-  --accent: #ffd66b;
-  --accent-ink: #1a1406;
+  --accent: #ffb59c;
+  --accent-ink: #3a1a10;
   --field: #1c1c21;
   --field-line: #2d2d34;
   --focus: rgba(245, 245, 247, 0.45);
@@ -196,7 +196,7 @@
 
 .hero__steamer {
   position: relative;
-  width: 420px;
+  max-width: 45%;
   height: 150px;
   flex-shrink: 0;
 }
@@ -218,8 +218,8 @@
   left: 0;
   right: 0;
   bottom: -2px;
-  height: 46px;
-  border-radius: 14px 14px 0 0;
+  height: 40px;
+  border-radius: 16px 16px 0 0;
   background:
     linear-gradient(#f6ddba, #f6ddba) top / 100% 12px no-repeat,
     linear-gradient(#ddb283, #ddb283) 0 30px / 100% 3px no-repeat,
@@ -592,30 +592,36 @@
 
 /* Light theme: cream paper, same pastel pets. */
 
+/* Light: warm paper with crisp ink, so text and pets keep their contrast. */
 .hub[data-theme="light"] {
-  --ink: #f6f1ea;
-  --surface: #fffdf9;
-  --line: #ece4da;
-  --text: #2b2420;
-  --muted: #8a7f75;
-  --accent: #ffc9a8;
-  --accent-ink: #3a2418;
-  --field: #f4eee6;
-  --field-line: #e6ddd2;
-  --focus: rgba(43, 36, 32, 0.35);
-  --check: #6cc490;
-  --check-line: #cfc5ba;
-  --good: #2f8a55;
-  --bad: #b0443a;
+  --ink: #f4efe9;
+  --surface: #ffffff;
+  --line: #e4dbd1;
+  --text: #1d1916;
+  --muted: #6b6159;
+  --accent: #ff9f80;
+  --accent-ink: #3a1a10;
+  --field: #f6f1eb;
+  --field-line: #ddd2c6;
+  --focus: rgba(29, 25, 22, 0.35);
+  --check: #3fa96b;
+  --check-line: #c4b8ab;
+  --good: #1f7a46;
+  --bad: #b8382e;
   --card-shadow: 0 1px 2px rgba(80, 50, 30, 0.06), inset 0 0 0 1px var(--line);
 }
 
 .hub[data-theme="light"] .hero {
   background:
     radial-gradient(
-      70% 120% at 78% 115%,
-      rgba(255, 186, 140, 0.4) 0%,
+      60% 110% at 82% 115%,
+      rgba(255, 170, 140, 0.35) 0%,
       transparent 60%
+    ),
+    radial-gradient(
+      50% 90% at 55% 120%,
+      rgba(190, 170, 255, 0.28) 0%,
+      transparent 65%
     ),
     var(--surface);
 }
@@ -733,7 +739,8 @@
 }
 
 .rule > input,
-.rule > select {
+.rule > select,
+.rule > .select {
   flex: 1;
   min-width: 0;
 }
@@ -1061,4 +1068,19 @@ li[data-done] .started__check {
 .hub__logo {
   display: block;
   border-radius: 9px;
+}
+
+.home__empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.home__empty h2 {
+  margin: 0 0 4px;
+}
+
+.home__empty > div {
+  flex: 1;
 }

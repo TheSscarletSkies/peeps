@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { choose } from "./choose";
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
@@ -17,14 +19,14 @@ test("UC19: an email the helper drafted waits in its card to be edited and sent"
   const email = page.getByRole("form", {
     name: "Email to sara@brightfund.org",
   });
-  await expect(email.getByLabel("From")).toHaveValue("hello@funderly.app");
+  await expect(email.getByLabel("From")).toHaveText(/hello@funderly.app/);
   await email.getByLabel("Subject").fill("Welcome aboard, Sara");
-  await email.getByLabel("From").selectOption("mariyam@icloud.com");
+  await choose(email.getByLabel("From"), "mariyam@icloud.com");
   await expect(
     email.getByText(/app password for mariyam@icloud.com/),
   ).toBeVisible();
   await expect(email.getByRole("button", { name: "Send" })).toBeDisabled();
-  await email.getByLabel("From").selectOption("hello@funderly.app");
+  await choose(email.getByLabel("From"), /hello@funderly.app/);
   await email.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("status")).toHaveText(
     "Sent to sara@brightfund.org. I'll tell you when they reply.",
@@ -51,10 +53,10 @@ test("UC19: the Mail page adds accounts, writes email and follows up", async ({
   await expect(page.getByLabel("Email address")).toHaveValue(
     "mariyam@icloud.com",
   );
-  await expect(page.getByLabel("Provider")).toHaveValue("icloud");
+  await expect(page.getByLabel("Provider")).toHaveText("iCloud");
 
   await page.getByLabel("Email address").fill("hello@kaiveni.com");
-  await page.getByLabel("Provider").selectOption("gmail");
+  await choose(page.getByLabel("Provider"), "Gmail");
   await page
     .getByLabel(/I send from this address inside another Gmail/)
     .check();

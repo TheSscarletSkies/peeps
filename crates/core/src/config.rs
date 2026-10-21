@@ -117,7 +117,7 @@ impl Default for Helper {
             name: "Helper".into(),
             pet: Pet {
                 kind: PetKind::Bao,
-                color: "#DDF5E7".into(),
+                color: "#FFD9C4".into(),
             },
             command: vec!["claude".into(), "-p".into(), "{prompt}".into()],
             timeout_seconds: 240,

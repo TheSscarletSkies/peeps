@@ -12,6 +12,7 @@ import {
 } from "../lib/bridge";
 import { hasFiles } from "../life/drops";
 import { announceFed } from "../life/events";
+import { Select } from "../lib/Select";
 import { Outbox } from "../mail/Outbox";
 import type {
   DueState,
@@ -28,6 +29,7 @@ import {
   hasTitle,
   inputFrom,
   isDaytime,
+  nudgesPerDay,
   REMINDERS,
   REPEATS,
   whenLabel,
@@ -155,17 +157,15 @@ function TodoForm({
         <label className="visually-hidden" htmlFor={`${id}-repeat`}>
           Repeat
         </label>
-        <select
+        <Select
           id={`${id}-repeat`}
           value={draft.repeat}
-          onChange={(event) => set({ repeat: event.target.value as Repeat })}
-        >
-          {REPEATS.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => set({ repeat: next as Repeat })}
+          options={REPEATS.map((option) => ({
+            value: option.id,
+            label: option.label,
+          }))}
+        />
         {!daytime && (
           <>
             <label className="visually-hidden" htmlFor={`${id}-due`}>
@@ -222,19 +222,18 @@ function TodoForm({
           <label className="visually-hidden" htmlFor={`${id}-remind`}>
             Reminder
           </label>
-          <select
+          <Select
             id={`${id}-remind`}
             value={draft.remind}
-            onChange={(event) => set({ remind: event.target.value })}
-          >
-            {REMINDERS.map((option) => (
-              <option key={option.label} value={option.minutes ?? ""}>
-                {option.minutes === 0 && !draft.time
+            onChange={(next) => set({ remind: next })}
+            options={REMINDERS.map((option) => ({
+              value: String(option.minutes ?? ""),
+              label:
+                option.minutes === 0 && !draft.time
                   ? "Morning of"
-                  : option.label}
-              </option>
-            ))}
-          </select>
+                  : option.label,
+            }))}
+          />
         </div>
       )}
       <div className="todo-form__actions">
@@ -296,6 +295,9 @@ function TodoRow({
   }
 
   const daytime = isDaytime(todo.repeat);
+  // A daily-or-longer repeat done today waits for its next turn instead of skipping ahead.
+  const restingToday = !daytime && todo.repeat !== "never" && todo.doneToday;
+  const perDay = nudgesPerDay(todo.repeat, todo.time, todo.until);
   const when = daytime
     ? `${todo.time?.slice(0, 5) ?? ""}–${todo.until?.slice(0, 5) ?? ""}`
     : todo.due
@@ -303,11 +305,12 @@ function TodoRow({
       : "";
 
   return (
-    <li data-due={todo.dueState}>
+    <li data-due={restingToday ? "done" : todo.dueState}>
       <input
         type="checkbox"
         aria-label={`Done: ${todo.title}`}
-        checked={false}
+        checked={restingToday}
+        disabled={restingToday}
         onChange={() => {
           announceFed("helper");
           void setTodoDone(todo.id, true);
@@ -332,13 +335,15 @@ function TodoRow({
         {todo.repeat !== "never" && (
           <span className="todos__repeat">
             {daytime
-              ? `${REPEAT_LABEL[todo.repeat]}${todo.liveStreak > 0 ? ` · ${todo.liveStreak} today` : ""}`
-              : todo.liveStreak > 1
-                ? `${todo.liveStreak} in a row`
-                : REPEAT_LABEL[todo.repeat]}
+              ? `${REPEAT_LABEL[todo.repeat]} · ${todo.liveStreak} of ${perDay} today`
+              : restingToday
+                ? `Done today${todo.liveStreak > 1 ? ` · ${todo.liveStreak} in a row` : ""}`
+                : todo.liveStreak > 1
+                  ? `${todo.liveStreak} in a row`
+                  : REPEAT_LABEL[todo.repeat]}
           </span>
         )}
-        {when && <span className="todos__due">{when}</span>}
+        {when && !restingToday && <span className="todos__due">{when}</span>}
       </span>
       <button
         className="todos__remove"
@@ -491,32 +496,30 @@ export function Write({
           <label className="visually-hidden" htmlFor="draft-kind">
             Kind of draft
           </label>
-          <select
+          <Select
             id="draft-kind"
             value={kind}
-            onChange={(event) => setKind(event.target.value)}
-          >
-            {helper.draftKinds.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={setKind}
+            options={helper.draftKinds.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+          />
           <label className="visually-hidden" htmlFor="draft-when">
             When
           </label>
-          <select
+          <Select
             id="draft-when"
             value={when}
-            onChange={(event) => setWhen(event.target.value as "now" | Repeat)}
-          >
-            <option value="now">Now</option>
-            {REPEATS.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.id === "never" ? "Later, once" : option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setWhen(next as "now" | Repeat)}
+            options={[
+              { value: "now", label: "Now" },
+              ...REPEATS.map((option) => ({
+                value: option.id,
+                label: option.id === "never" ? "Later, once" : option.label,
+              })),
+            ]}
+          />
           <button
             className="button button--primary"
             type="submit"

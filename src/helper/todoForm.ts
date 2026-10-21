@@ -17,6 +17,29 @@ export function isDaytime(repeat: Repeat): boolean {
 }
 
 /** Lead times on offer; `null` turns the reminder off. */
+const STEP_HOURS: Partial<Record<Repeat, number>> = {
+  hourly: 1,
+  every2h: 2,
+  every3h: 3,
+};
+
+/** How many nudges a through-the-day repeat gives between its from and until times. */
+export function nudgesPerDay(
+  repeat: Repeat,
+  from: string | null,
+  until: string | null,
+): number {
+  const step = STEP_HOURS[repeat];
+  if (!step) return 0;
+  const minutes = (time: string | null, fallback: number) => {
+    if (!time) return fallback;
+    const [h = 0, m = 0] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const span = minutes(until, 21 * 60) - minutes(from, 9 * 60);
+  return span < 0 ? 0 : Math.floor(span / (step * 60)) + 1;
+}
+
 export const REMINDERS: { minutes: number | null; label: string }[] = [
   { minutes: null, label: "No reminder" },
   { minutes: 0, label: "On time" },
