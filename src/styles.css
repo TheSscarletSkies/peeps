@@ -2765,6 +2765,11 @@ body,
   z-index: 2;
 }
 
+.reaction__rise--late {
+  animation-delay: 0.25s !important;
+  opacity: 0;
+}
+
 .reaction__rise {
   animation: reaction-rise 2.1s ease-out forwards;
   transform-box: fill-box;
@@ -3000,9 +3005,23 @@ li[data-presence="focusing"] .friends__who {
 }
 
 .friends__react svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.15s ease-out;
+}
+
+.friends__react:hover svg {
+  transform: scale(1.18) rotate(-6deg);
+}
+
+.friends__react:active svg {
+  transform: scale(0.9);
+}
+
+.friends__remove svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
   stroke: currentColor;
   stroke-linecap: round;
 }

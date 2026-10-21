@@ -4,55 +4,14 @@ import { addFriend, react, removeFriend, startFriends } from "../lib/bridge";
 import type { FriendView, Friends, Reaction } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 import { friendLook, presenceLine } from "./look";
+import { Sticker } from "./ReactionArt";
 
-const REACTIONS: { id: Reaction; label: string; icon: JSX.Element }[] = [
-  {
-    id: "heart",
-    label: "Send a steamy heart",
-    icon: (
-      <path d="M10 6.5c-1.6-1.6-4.3-.7-3.9 1.4.3 1.8 3.9 3.9 3.9 3.9s3.6-2.1 3.9-3.9c.4-2.1-2.3-3-3.9-1.4z" />
-    ),
-  },
-  {
-    id: "poke",
-    label: "Poke with chopsticks",
-    icon: <path d="M15 3L6 12M17 5l-9 9" strokeWidth="1.6" fill="none" />,
-  },
-  {
-    id: "bonk",
-    label: "Bonk with a rolling pin",
-    icon: (
-      <>
-        <rect x="5" y="7" width="10" height="5" rx="2.5" />
-        <path d="M2.5 9.5h2.5M15 9.5h2.5" strokeWidth="1.6" />
-      </>
-    ),
-  },
-  {
-    id: "study",
-    label: "Save them a seat to study",
-    icon: (
-      <>
-        <path d="M3 5.5l7 2 7-2v9l-7 2-7-2z" />
-        <path d="M10 7.5v9" strokeWidth="1.2" stroke="var(--surface)" />
-      </>
-    ),
-  },
-  {
-    id: "tea",
-    label: "Tea break?",
-    icon: (
-      <>
-        <path d="M5 8h9v2a4.5 4.5 0 0 1-9 0z" />
-        <path d="M14 9a2 2 0 0 1 0 3" strokeWidth="1.4" fill="none" />
-        <path
-          d="M7.5 6.5c-.6-.8.6-1.2 0-2M10.5 6.5c-.6-.8.6-1.2 0-2"
-          strokeWidth="1.2"
-          fill="none"
-        />
-      </>
-    ),
-  },
+const REACTIONS: { id: Reaction; label: string }[] = [
+  { id: "heart", label: "Send a heart" },
+  { id: "poke", label: "Poke with chopsticks" },
+  { id: "bonk", label: "Bonk with a rolling pin" },
+  { id: "study", label: "Save them a seat to study" },
+  { id: "tea", label: "Tea break?" },
 ];
 
 /** Your code, your friends' peeps and what they are up to, and something to send each. */
@@ -186,8 +145,8 @@ export function FriendsPanel({
                       title={reaction.label}
                       onClick={() => send(friend, reaction)}
                     >
-                      <svg viewBox="0 0 20 20" aria-hidden="true">
-                        {reaction.icon}
+                      <svg viewBox="0 0 40 40" aria-hidden="true">
+                        <Sticker kind={reaction.id} />
                       </svg>
                     </button>
                   ))}
