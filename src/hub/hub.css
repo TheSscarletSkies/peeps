@@ -1057,3 +1057,8 @@ li[data-done] .started__check {
 .about-me[open] summary {
   margin-bottom: 12px;
 }
+
+.hub__logo {
+  display: block;
+  border-radius: 9px;
+}

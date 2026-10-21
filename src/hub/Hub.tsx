@@ -11,7 +11,6 @@ import type { Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import { boop, setSoundEnabled, soundEnabled } from "../life/sound";
 import { usePetEvents } from "../life/usePetEvents";
-import { Dumpling } from "../pets/Dumpling";
 import { Setup } from "../setup/Setup";
 import { GettingStarted } from "./GettingStarted";
 import { greeting } from "./greeting";
@@ -42,6 +41,7 @@ import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
 import { Tour, tourSeen } from "./Tour";
+import logo from "../assets/logo.png";
 import "./hub.css";
 
 type Page =
@@ -108,13 +108,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
       )}
       <aside className="hub__side">
         <div className="hub__brand">
-          <Dumpling
-            kind="bao"
-            color="#FFF3E3"
-            mood="chill"
-            heat={0}
-            size={30}
-          />
+          <img className="hub__logo" src={logo} alt="" width={34} height={34} />
           <span>peeps</span>
         </div>
         <nav aria-label="Sections">
