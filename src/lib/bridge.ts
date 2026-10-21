@@ -30,7 +30,7 @@ export function loadSnapshot(): Promise<Snapshot> {
   return inApp() ? invoke<Snapshot>("snapshot") : Promise.resolve(preview);
 }
 
-// The preview has no app behind it; logging numbers updates this copy so the cards respond.
+// The preview has no app behind it; changes go to this copy so the page responds.
 let preview: Snapshot = demoSnapshot;
 const previewHandlers = new Set<(snapshot: Snapshot) => void>();
 
@@ -136,7 +136,35 @@ export async function pickFolder(): Promise<string | null> {
 }
 
 export function addTodo(input: TodoInput): Promise<Todo | null> {
-  return inApp() ? invoke<Todo>("add_todo", { input }) : Promise.resolve(null);
+  if (inApp()) return invoke<Todo>("add_todo", { input });
+  // The preview keeps the to-do so switches and lists respond.
+  updatePreview((snapshot) => {
+    const id = Math.max(0, ...snapshot.helper.todos.map((t) => t.id)) + 1;
+    const tags = [...input.title.matchAll(/#([\p{L}\p{N}_-]+)/gu)].map(
+      (match) => match[1] ?? "",
+    );
+    const todo = {
+      id,
+      title: input.title.replace(/\s*#[\p{L}\p{N}_-]+/gu, "").trim(),
+      tags,
+      due: input.due,
+      time: input.time,
+      repeat: input.repeat,
+      remindMinutes: input.remindMinutes,
+      until: input.until,
+      streak: 0,
+      liveStreak: 0,
+      doneToday: false,
+      createdAt: new Date().toISOString(),
+      doneAt: null,
+      dueState: "undated" as const,
+    };
+    return {
+      ...snapshot,
+      helper: { ...snapshot.helper, todos: [...snapshot.helper.todos, todo] },
+    };
+  });
+  return Promise.resolve(null);
 }
 
 export function setTodoDone(id: number, done: boolean): Promise<void> {
@@ -146,9 +174,15 @@ export function setTodoDone(id: number, done: boolean): Promise<void> {
 }
 
 export function deleteTodo(id: number): Promise<void> {
-  return inApp()
-    ? invoke("delete_todo", { id }).then(() => undefined)
-    : Promise.resolve();
+  if (inApp()) return invoke("delete_todo", { id }).then(() => undefined);
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    helper: {
+      ...snapshot.helper,
+      todos: snapshot.helper.todos.filter((todo) => todo.id !== id),
+    },
+  }));
+  return Promise.resolve();
 }
 
 export function writeDraft(kind: string, topic: string): Promise<Draft> {

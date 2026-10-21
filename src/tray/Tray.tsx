@@ -4,7 +4,6 @@ import { notch as loadNotch } from "../lib/bridge";
 import type { Notch, Snapshot } from "../lib/types";
 import { useNudge } from "../life/nudges";
 import { usePrefs } from "../life/prefs";
-import { usePetEvents } from "../life/usePetEvents";
 import { FloatTray } from "./FloatTray";
 import { NotchTray } from "./NotchTray";
 import { residentsOf } from "./shared";
@@ -13,7 +12,6 @@ import { residentsOf } from "./shared";
 export function Tray({ snapshot }: { snapshot: Snapshot }) {
   const [notch, setNotch] = useState<Notch | null>(null);
   const [prefs] = usePrefs();
-  const { celebrating, arriving } = usePetEvents(snapshot.pets, true);
   const reminder = useNudge();
 
   useEffect(() => {
@@ -23,12 +21,7 @@ export function Tray({ snapshot }: { snapshot: Snapshot }) {
   // Pets take their spots once the screen is measured, so they never start squeezed.
   if (!notch) return null;
 
-  const residents = residentsOf(
-    snapshot,
-    celebrating,
-    arriving,
-    reminder.nudge !== null,
-  );
+  const residents = residentsOf(snapshot, reminder.nudge !== null);
   const floating =
     prefs.place === "float" || (prefs.place === "auto" && notch.width === 0);
 

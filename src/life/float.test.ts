@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BOX, clampSpot, defaultSpot, openRect, PANEL } from "./float";
+import { BOX, boxFor, clampSpot, defaultSpot, openRect, PANEL } from "./float";
 
 const SCREEN = { left: 0, top: 0, width: 1440, height: 860 };
 
@@ -33,5 +33,14 @@ describe("floating pet", () => {
     const rect = openRect({ x: 600, y: 300 }, 2000, SCREEN);
     expect(rect.height).toBeLessThanOrEqual(860);
     expect(rect.y).toBeGreaterThanOrEqual(0);
+  });
+
+  it("keeps a bigger pet on screen too", () => {
+    const box = boxFor("large");
+    expect(box).toBeGreaterThan(BOX);
+    expect(boxFor("small")).toBeLessThan(BOX);
+    const spot = clampSpot({ x: 5000, y: 5000 }, SCREEN, box);
+    expect(spot.x + box).toBeLessThanOrEqual(1440);
+    expect(spot.y + box).toBeLessThanOrEqual(860);
   });
 });

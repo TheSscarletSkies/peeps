@@ -14,67 +14,37 @@ export interface TourStep {
 
 export const STEPS: TourStep[] = [
   {
-    title: "Hi, I'm your helper",
-    text: "Let me show you around. It takes half a minute.",
+    title: "Hi, I'm your peep",
+    text: "I keep you on top of your day. Click me for a pat; double-click or right-click me on your desktop to talk.",
   },
   {
-    target: "ask",
-    page: "ask",
-    title: "Ask me anything",
-    text: "“What's on today?”, “draft a reply to Sara”, or “remind me to drink water every 2 hours”. I use your own Claude.",
+    target: "today",
+    page: "today",
+    title: "Today",
+    text: "Your list and what's coming up. Tick something off and I get a snack.",
   },
   {
-    target: "todo",
-    page: "todo",
-    title: "Your list",
-    text: "Add #tags, dates and repeats. Habits keep a streak, and I nudge you when things are due.",
+    target: "chat",
+    page: "chat",
+    title: "Chat",
+    text: "“What's on today?” or “remind me to call mum at 6”. I use your own Claude and remember what you tell me about you.",
   },
   {
-    target: "reminders",
-    page: "reminders",
-    title: "Never miss a class",
-    text: "Paste your calendar links and choose how early I should remind you, like 30 minutes before anything called class.",
+    target: "nudges",
+    page: "nudges",
+    title: "Nudges",
+    text: "Stretch, drink water, rest your eyes. Switch them on and I'll pop up when it's time.",
   },
   {
-    target: "mail",
-    page: "mail",
-    title: "Email, with your OK",
-    text: "Add Gmail or iCloud with an app password. I draft, you edit and press Send, and I tell you who hasn't replied.",
-  },
-  {
-    target: "team",
-    page: "team",
-    title: "Your team",
-    text: "Give each product teammates, like a sales co-chair or a showrunner. They work on a rhythm from playbooks you write, and everything they draft waits for you.",
-  },
-  {
-    target: "numbers",
-    page: "numbers",
-    title: "Money and posts",
-    text: "PayPal payments and YouTube uploads show up on each product's card. Log a bank transfer or a TikTok post with one tap.",
-  },
-  {
-    target: "write",
-    page: "write",
-    title: "Posts in your voice",
-    text: "I draft LinkedIn or X posts now, or on a schedule, like every Monday at 9.",
-  },
-  {
-    target: "products",
-    page: "products",
-    title: "Pets for your projects",
-    text: "Optional. Add the projects you build with Claude Code and each one hatches as a pet that tells you when it needs you.",
-  },
-  {
-    target: "devices",
-    page: "devices",
-    title: "On all your computers",
-    text: "Pick a folder in iCloud Drive, OneDrive, Dropbox or Google Drive and your Mac and PC stay in step. No account needed.",
+    target: "settings",
+    page: "settings",
+    title: "Make me yours",
+    text: "Make me smaller or bigger, keep me at the top of the screen or anywhere, and add your calendars.",
   },
   {
     target: "toggles",
-    title: "Make it yours",
-    text: "Light or dark, and a soft boop when a pet needs you. You can replay this tour from the ? any time.",
+    title: "Light, dark and sound",
+    text: "Replay this tour from the ? any time.",
   },
 ];
 
@@ -165,7 +135,7 @@ export function Tour({
 
   const finish = () => {
     markSeen();
-    onPage("home");
+    onPage("today");
     onClose();
   };
   const next = () => (last ? finish() : setIndex((now) => now + 1));

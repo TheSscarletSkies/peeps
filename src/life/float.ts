@@ -1,3 +1,5 @@
+import type { PetSize } from "./roam";
+
 /** Where the floating pet sits: the top left of its box, in screen pixels. */
 export interface Spot {
   x: number;
@@ -12,32 +14,46 @@ export interface Area {
 }
 
 export const BOX = 100;
+
+/** The floating pet is bigger than the notch ones; large stays well short of taking over the desk. */
+export const FLOAT_PET: Record<PetSize, number> = {
+  small: 56,
+  medium: 80,
+  large: 104,
+};
+
+/** Room around the pet for its hands, bubble and shadow. */
+export function boxFor(size: PetSize): number {
+  return FLOAT_PET[size] + 20;
+}
+
 export const PANEL = 380;
 const GAP = 8;
 const MARGIN = 8;
 
 /** Keeps the pet on screen, a little clear of the edges. */
-export function clampSpot(spot: Spot, area: Area): Spot {
+export function clampSpot(spot: Spot, area: Area, box = BOX): Spot {
   return {
     x: Math.min(
       Math.max(spot.x, area.left + MARGIN),
-      area.left + area.width - BOX - MARGIN,
+      area.left + area.width - box - MARGIN,
     ),
     y: Math.min(
       Math.max(spot.y, area.top + MARGIN),
-      area.top + area.height - BOX - MARGIN,
+      area.top + area.height - box - MARGIN,
     ),
   };
 }
 
 /** Out of the way by default: bottom right, above the taskbar or Dock. */
-export function defaultSpot(area: Area): Spot {
+export function defaultSpot(area: Area, box = BOX): Spot {
   return clampSpot(
     {
-      x: area.left + area.width - BOX - 24,
-      y: area.top + area.height - BOX - 120,
+      x: area.left + area.width - box - 24,
+      y: area.top + area.height - box - 120,
     },
     area,
+    box,
   );
 }
 
@@ -57,12 +73,13 @@ export function openRect(
   spot: Spot,
   panelHeight: number,
   area: Area,
+  box = BOX,
 ): OpenRect {
-  const right = area.left + area.width - (spot.x + BOX);
+  const right = area.left + area.width - (spot.x + box);
   const left = spot.x - area.left;
   const side = right >= PANEL + GAP || right >= left ? "right" : "left";
-  const width = BOX + GAP + PANEL;
-  const height = Math.min(Math.max(BOX, panelHeight), area.height - MARGIN * 2);
+  const width = box + GAP + PANEL;
+  const height = Math.min(Math.max(box, panelHeight), area.height - MARGIN * 2);
   const y = Math.min(
     Math.max(spot.y, area.top + MARGIN),
     area.top + area.height - height - MARGIN,

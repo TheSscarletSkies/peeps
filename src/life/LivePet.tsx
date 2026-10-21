@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Mood, PetKind } from "../lib/types";
 import { Dumpling, type Expression } from "../pets/Dumpling";
 import { useDropHover } from "./drops";
-import { onFed } from "./events";
+import { onFed, onPat } from "./events";
 import { poke } from "./pokes";
 import { seasonalAccessory, type Accessory } from "./season";
 
@@ -106,6 +106,16 @@ export function LivePet({
         say(PATTED[Math.floor(Math.random() * PATTED.length)] ?? "hi!");
     }
   };
+
+  const poked = useRef(onPoke);
+  poked.current = onPoke;
+  useEffect(
+    () =>
+      onPat((patId) => {
+        if (patId === (dropId ?? id)) poked.current();
+      }),
+    [id, dropId],
+  );
 
   const expression: Expression | undefined = eager
     ? "eager"

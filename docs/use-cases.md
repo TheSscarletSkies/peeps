@@ -2,165 +2,100 @@
 
 What peeps is for, written from the side of the person using it. Each case lists what should happen and where it is tested: `e2e/` runs the interface in a browser with demo data, `crates/core` holds the Rust unit tests, and `src/**/*.test.ts` the interface logic.
 
-The person in these examples runs three products (Funderly, Enigma Archives, Kaiveni Hiya), studies, and wants to spend their attention only where it is needed.
+The person in these examples studies, runs a small business, and wants a friendly nudge through the day without another app to manage.
 
-## Products
+## Their day
 
-### UC1. See every product at a glance
+### UC1. See the day at a glance
 
-**When** they glance at the top of the screen.
-**Then** each product is a pet beside the notch (or floating, on screens without one), showing its mood: working, sweating on a long task, steaming when its context is nearly full, hungry when a check fires, crying when a session failed, asleep when nothing has happened for a while. Pets that need them stay still and show a `!`; the rest wander.
+**When** they open peeps.
+**Then** Today greets them with their peep, what's due and what's coming up from their calendars. Ticking a to-do feeds the peep, which says "yum, thanks!". Only the companion lives on the desktop.
 
-Tested by `e2e/notch.e2e.ts` (pets and moods), `crates/core/src/mood.rs`, `crates/core/src/snapshot.rs`.
-
-### UC2. Approve a tool from anywhere
-
-**When** an agent asks to run something, like `git push origin main`.
-**Then** that product's pet needs them; clicking it shows the exact command with Allow and Deny, and the agent carries on as soon as they choose. The same works for the helper's own agent.
-
-Tested by `e2e/notch.e2e.ts`, `crates/core/src/protocol.rs`, `crates/core/src/session.rs`.
-
-### UC3. Leave a note for a product's next session
-
-**When** they think of something for Funderly while it is busy.
-**Then** they feed the pet a note; the agent reads it when its next session starts, or after its next step. Nothing running is interrupted.
-
-Tested by `e2e/notch.e2e.ts`, `crates/core/src/notes.rs`.
-
-### UC4. Hand a file to a product or the helper
-
-**When** they drag a file from Finder or Explorer onto a pet.
-**Then** the pet opens its mouth while the file hovers and gulps it on drop. A product's card opens with the file attached to a note; the helper attaches it to the next message. The agent receives the full path.
-
-Tested by `e2e/drops.e2e.ts`, `src/life/drops.test.ts`.
-
-### UC5. Watch their own data
-
-**When** Funderly has sign-ups nobody answered, or Enigma Archives has not posted in four days.
-**Then** a check written in the config (an HTTP query such as Supabase, or any script) makes that pet hungry or need its litter box, with the reason on its card.
-
-Tested by `crates/core/src/checks/`.
-
-## Living with the pets
-
-### UC6. Arrange the pets
-
-**When** the strip gets crowded or a product is quiet.
-**Then** they can drag any pet anywhere in the strip, hide pets (a hidden pet still comes out when it needs them), choose small, medium or large, and choose where pets live: the notch, the top of the screen, or floating anywhere.
-
-Tested by `e2e/notch.e2e.ts`, `src/life/roam.test.ts`, `src/life/prefs.test.ts`.
-
-### UC7. Use peeps on a screen without a notch
-
-**When** they use Windows, or a Mac with an external display.
-**Then** the helper floats wherever they drop it, never over the browser's tabs unless they put it there. A badge counts pets that need them; a click opens all pets and the helper beside it, towards the side with room.
-
-Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
-
-### UC8. Enjoy them
-
-Each pet sits at the top of its own card to play with: pat it and it says "hehe!" or "boop!" in a little bubble and hugs a heart, pat it quickly and it gets dizzy ("whoa…"), feed it a note or send an email and it says "yum, thanks!". Pets have stubby hands and feet: they wave when they need you, hold a little "help" sign when something broke, scribble with a pencil while working, sip from a cup when all is calm, reach up to catch a file dragged over them, cheer with both arms when an agent finishes, step as they walk along the notch and kick their feet when picked up. They blink, glance around and wiggle on their own, cheer when an agent finishes, hatch when a product is added, squish when poked, get dizzy after three quick pokes, show love when fed or when a to-do is ticked, and wear a hat or scarf in season.
-
-Tested by `src/life/*.test.ts`, `src/pets/limbs.test.ts`.
-
-### UC17. Think a product through with its pet
-
-**When** they open a product (Ask on its card) and ask "Where are we losing people?".
-**Then** the pet answers as that product's strategist through their own Claude, knowing its brief (goal, audience, voice, numbers, links, past decisions) and how it is doing right now, and able to read the project. What they agree on becomes to-dos tagged with the product, decisions are dated in the brief, and coding work can be handed to the product's agent as a note. Each product keeps its own conversation. The brief is plain Markdown beside the config, so it syncs and can be edited on the Brief tab.
-
-Tested by `e2e/products.e2e.ts`, `crates/core/src/briefs.rs`, `crates/core/src/chat.rs`, `crates/core/src/tools.rs`, `crates/hook/tests/mcp.rs`.
-
-### UC20. Know what each product earned and posted
-
-**When** Funderly gets paid through PayPal, a sponsor pays Funderly by bank transfer, and Enigma Archives posts on YouTube and TikTok.
-**Then** each product's card (in the hub and the tray) shows its last seven days, like "$147 · 3 payments" and "3 posts · last 2 days ago". PayPal payments arrive on their own every 30 minutes, with a notification, once they connect a PayPal REST app on the Numbers page; YouTube uploads arrive with a free API key and the channel id. Teammates keep the rest current through the user's Claude connectors (PayPal, Stripe, Supabase), logging payments and sign-ups themselves. Logging by hand, for a bank transfer or a TikTok post, sits under "Log by hand" on the Numbers page rather than on every card. Their Claude can log both ("Funderly got $49 from Green Hope") and reads the numbers in reviews and product chats. Entries sync between computers, and the same PayPal payment pulled on two computers counts once. Keys stay in each computer's keychain, and peeps can only read transactions.
-
-Tested by `e2e/numbers.e2e.ts`, `src/numbers/format.test.ts`, `crates/core/src/numbers.rs`, `crates/core/src/paypal.rs`, `crates/core/src/youtube.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
-
-### UC21. A team for each product
-
-**When** they give Funderly a sales co-chair, Enigma Archives a showrunner and Kaiveni Hiya a launch marketer from the Team tab.
-**Then** a product with no team gets a suggested one, pre-ticked, from what peeps knows about it: sign-ups, payments or pricing suggest a sales co-chair, episodes and videos a showrunner, a launch or waitlist a launch marketer, each with a growth marketer, and the Team page can add every product's suggestion at once. Each teammate starts from a role's playbook (what it owns, what to do each shift, its rules), which they can rewrite in plain words, and works on that role's rhythm, such as weekdays at 9, through their own Claude. A shift ends with a short report in the teammate's own conversation: what it did, what is waiting for them (emails in Mail, posts and scripts in Write, to-dos tagged with the product) and one question. A notification says the report is in. They can pause a teammate, run a shift now, or talk to it like any pet. Teammates never send or publish; everything they make waits for approval. Teammates and playbooks sync between computers, and each shift runs once, on the computer that set it up.
-
-Tested by `e2e/team.e2e.ts`, `src/team/team.test.ts`, `src/lib/rich.test.ts`, `crates/core/src/teammates.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
-
-### UC18. A weekly review for each product
-
-**When** they switch on Weekly review on a product's Ask tab.
-**Then** every Monday at 9 its pet reads the brief, the live status and the project, writes a short review in the product's conversation with the numbers that matter and the three most useful moves, adds those as to-dos tagged with the product, due by Friday, and sends a notification.
-
-Tested by `e2e/products.e2e.ts`, `crates/core/src/chat.rs`, `src/tray/review.test.ts`.
-
-## The helper
-
-### UC9. Ask the helper anything
-
-**When** they type "What's on today?" or "Draft a reply to the Funderly sign-ups".
-**Then** the helper answers through their own Claude Code, with their connectors, knowing today's to-dos, events and products. The conversation carries on between messages until they start a new one. Anything the agent wants to do that needs permission comes back as Allow or Deny. The agent has peeps tools: it can add to-dos and reminders, schedule drafts, draft emails for approval, log payments and posts, leave notes for products and keep product briefs, so "plan my week" ends in real to-dos. It uses the person's own Claude settings until they pick a model and effort (Haiku, Sonnet or Opus; low, medium or high) from the chip above the message box; drafts use the same choice. The helper works with no products at all.
-
-Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
-
-### UC22. The helper gets to know you
-
-**When** they open peeps for the first time.
-**Then** the helper offers "Get to know me" and asks a few short questions, one or two at a time, saving the answers to an About me page (who they are, what they're building, how they like things done). Every conversation, with the helper, a product's pet or a teammate, reads that page, and the agent adds to it when they mention something lasting. They can edit it on the Ask page. Until setup is done, a notification once a day says what's left: connect Claude Code, tell the helper about you, add a product. If Claude Code isn't installed, the Products page offers Install Claude Code: one click opens a terminal that runs Anthropic's installer and then starts Claude to sign in, and the step turns Connected by itself once it's done. The command is there to copy as well, with a note to use PowerShell on Windows.
-
-Tested by `crates/core/src/profile.rs`, `crates/core/src/setup.rs`, `crates/core/src/programs.rs`, `src/hub/setupSteps.test.ts`.
+Tested by `e2e/hub.e2e.ts`, `e2e/notch.e2e.ts`.
 
 ### UC10. Keep to-dos and habits
 
 **When** they add "Pay rent #bills" due on the 1st, monthly, reminded the morning of.
-**Then** tags become coloured chips with a filter, nudges like "drink water" can repeat every 1, 2 or 3 hours between two times and count how many today, typing "remind me to drink water every 2 hours" (or "at 6pm", "tomorrow at 9", "every Monday at 10", "in 20 minutes") to the helper sets it up instantly, repeating to-dos roll forward when ticked and count a streak while done on time (a daily habit ticked today shows "Done today" and can't be ticked again until tomorrow; a nudge through the day shows "3 of 7 today"), and at the chosen lead a notification arrives while the helper waves and says the reminder in a speech bubble, with Done to tick it off and Later to hear it again in 15 minutes.
+**Then** tags become coloured chips with a filter, typing "remind me to drink water every 2 hours" (or "at 6pm", "tomorrow at 9", "every Monday at 10", "in 20 minutes") in Chat sets it up instantly, repeating to-dos roll forward when ticked and count a streak (a daily habit ticked today shows "Done today" and can't be ticked again until tomorrow), and at the chosen time a notification arrives while the peep waves and says the reminder in a speech bubble, with Done and Later (15 minutes).
 
-Tested by `e2e/helper.e2e.ts`, `crates/core/src/todos.rs`, `crates/core/src/quick.rs`, `src/helper/todoForm.test.ts`.
+Tested by `e2e/helper.e2e.ts`, `e2e/nudge.e2e.ts`, `crates/core/src/todos.rs`, `crates/core/src/quick.rs`, `src/helper/todoForm.test.ts`.
+
+### UC17. Nudges like a friend would give
+
+**When** they open Nudges.
+**Then** stand up and stretch (hourly, 9 to 6), drink water (every 2 hours, 9 to 9) and rest your eyes (every 3 hours) are each one switch, with their own reminders listed below. Nudges stay off the to-do list so it doesn't fill up.
+
+Tested by `e2e/helper.e2e.ts`, `e2e/hub.e2e.ts`, `src/nudges/presets.test.ts`.
 
 ### UC11. Never miss a class
 
-**When** they add their college Google calendar and a rule "titles with _class_ remind 30 min before".
-**Then** a notification arrives 30 minutes before every class, including repeats, skipping cancelled ones and following moved ones. All-day events like exams remind on the morning. Rules win over a calendar's own lead, which wins over the default.
+**When** they add their college Google calendar in Settings and a rule "titles with _class_ remind 30 min before".
+**Then** a notification arrives 30 minutes before every class, including repeats, skipping cancelled ones and following moved ones. All-day events like exams remind on the morning.
 
 Tested by `e2e/hub.e2e.ts`, `crates/core/src/calendar.rs`, `crates/core/src/reminders.rs`.
 
-### UC19. Email with approval
+## Their peep
 
-**When** they add hello@funderly.app (Gmail, with an app password) and ask the helper "welcome the three new Funderly sign-ups".
-**Then** each email waits in the helper's card, which opens on Mail with a badge on the helper: From, To, Subject and the message are all editable, and nothing goes out until they press Send. Discard drops it. A failed send stays with the reason and a Try again. Sent mail is checked for replies every 10 minutes; a reply sends a notification, and the Mail page lists who hasn't answered in 30 days with a Follow up that asks the helper for a threaded draft. Gmail and iCloud work; a work address added to a personal Gmail with "Send mail as" signs in through that Gmail. A synced computer without the app password shows "Needs its app password on this computer". Outlook needs a sign-in peeps can't do without a server, so it isn't supported.
+### UC9. Chat
 
-Tested by `e2e/mail.e2e.ts`, `src/mail/mail.test.ts`, `crates/core/src/mail.rs`, `crates/core/src/config_edit.rs`, `crates/core/src/tools.rs`.
+**When** they type "What's on today?".
+**Then** the peep answers through their own Claude, knowing today's to-dos and events. The conversation carries on until they start a new one, and anything it wants to do comes back as Allow or Deny. It can add to-dos and reminders for them. A model and effort can be picked from the chip above the message box, but never has to be.
 
-### UC12. Get posts written on a schedule
+Tested by `e2e/helper.e2e.ts`, `e2e/hub.e2e.ts`, `crates/core/src/chat.rs`.
 
-**When** they schedule "LinkedIn post, every Monday at 9, about what I shipped".
-**Then** the helper drafts it with their agent at that time, in their voice guide, and notifies them that it is ready to copy.
+### UC22. It gets to know you
 
-Tested by `e2e/helper.e2e.ts`, `crates/core/src/schedule.rs`.
+**When** they say hi for the first time.
+**Then** the peep asks a few short questions and saves the answers to About me, which every chat reads. It adds to it when they mention something lasting, and they can edit it on the Chat page.
 
-### UC13. Share the week
+Tested by `crates/core/src/profile.rs`.
 
-**When** they open Recap.
-**Then** they get a 1080 by 1350 card with agent hours, tokens, to-dos done, drafts written, the busiest day and each product's hours, saved to Downloads or copied.
+### UC8. Play
 
-Tested by `e2e/hub.e2e.ts`, `src/hub/recap.test.ts`, `crates/core/src/helper.rs`.
+Click the peep and it says "hehe!" or "boop!" and hugs a heart; click it quickly and it gets dizzy ("whoa…"). Hands come out only when it has something to do: waving for a reminder, reaching for a file dragged over it. It blinks, glances around and wears a hat or scarf in season.
+
+Tested by `e2e/helper.e2e.ts`, `e2e/float.e2e.ts`, `src/life/*.test.ts`, `src/pets/limbs.test.ts`.
+
+### UC4. Hand it a file
+
+**When** they drag a file onto the peep.
+**Then** it opens its mouth while the file hovers, gulps it on drop and attaches it to the next message.
+
+Tested by `e2e/drops.e2e.ts`, `src/life/drops.test.ts`.
+
+### UC6. Make it the right size
+
+**When** it feels too big or too small.
+**Then** they choose small, medium or large, and whether it lives at the top of the screen or floats anywhere. On the notch it can be dragged along the strip.
+
+Tested by `e2e/notch.e2e.ts`, `e2e/float.e2e.ts`, `src/life/float.test.ts`, `src/life/prefs.test.ts`.
+
+### UC7. Anywhere on screen
+
+**When** they use Windows, or a Mac with an external display.
+**Then** the peep floats wherever they drop it and remembers the spot. A click pats it; a double click, a right click or the bubble that appears on hover opens its card towards the side with room.
+
+Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
 
 ## Getting going
 
-### UC14. Set up in a few minutes
+### UC14. Set up in a minute
 
 **When** they open peeps for the first time.
-**Then** a short tour walks through the window one tooltip at a time, with Back, Next and Skip, and can be replayed from the ? in the sidebar. Home also lists four steps (connect Claude Code, add a product, add a calendar, add a to-do), ticks them off as they happen and can be hidden.
+**Then** a short tour walks through Today, Chat, Nudges and Settings, and can be replayed from the ?. Today lists three steps (say hi, turn on a nudge, add a calendar) and ticks them off. If Claude Code isn't installed, Settings installs it in one click and turns Connected by itself.
 
-Tested by `e2e/hub.e2e.ts`, `src/hub/gettingStarted.test.ts`.
+Tested by `e2e/hub.e2e.ts`, `src/hub/setupSteps.test.ts`, `crates/core/src/programs.rs`.
 
 ### UC16. The same peeps on every computer
 
 **When** they use a MacBook and a Windows PC.
-**Then** they choose a folder in a cloud drive they already have (iCloud Drive, OneDrive, Dropbox or Google Drive) on each computer. To-dos, habits, scheduled drafts, products and settings stay in step with no account and nothing hosted. The newest edit wins, deletions travel, and a scheduled draft is written once by the computer that made it. A product can have a folder on each computer. Calendar links, passwords and chats stay on each computer.
+**Then** they choose a folder in a cloud drive they already have on each computer, and to-dos, habits and settings stay in step with no account. Calendar links and chats stay on each computer.
 
-Tested by `e2e/hub.e2e.ts`, `crates/core/src/sync.rs`, `crates/core/src/todos.rs`, `crates/core/src/schedule.rs`, `crates/core/src/config_edit.rs`.
+Tested by `e2e/hub.e2e.ts`, `crates/core/src/sync.rs`.
 
 ### UC15. Light or dark
 
 **When** they prefer a light window.
-**Then** the sidebar toggle switches the peeps window to a cream theme and remembers it.
+**Then** the sidebar toggle switches to a cream theme and remembers it.
 
 Tested by `e2e/hub.e2e.ts`.

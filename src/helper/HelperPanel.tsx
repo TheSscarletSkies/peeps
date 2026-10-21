@@ -10,15 +10,13 @@ import {
   setTodoDone,
   writeDraft,
 } from "../lib/bridge";
-import { hasFiles } from "../life/drops";
 import { announceFed } from "../life/events";
 import { LivePet } from "../life/LivePet";
 import { Select } from "../lib/Select";
-import { Outbox } from "../mail/Outbox";
+import { Nudges } from "../nudges/Nudges";
 import type {
   DueState,
   Helper,
-  MailView,
   OpenTodo,
   Pet,
   Repeat,
@@ -40,38 +38,20 @@ import { Upcoming } from "./Upcoming";
 import { Chat } from "./Chat";
 import { scheduleLabel } from "./when";
 
-type Tab = "ask" | "mail" | "todo" | "write" | "tokens";
+type Tab = "chat" | "today" | "nudges";
 
 interface Props {
   helper: Helper;
-  pets: Pet[];
-  tips: Tip[];
-  mail: MailView;
   knowsYou?: boolean;
   onTyping: (typing: boolean) => void;
 }
 
-export function HelperPanel({
-  helper,
-  pets,
-  tips,
-  mail,
-  knowsYou,
-  onTyping,
-}: Props) {
-  const waiting = mail.outbox.length;
-  // An email waiting for approval is usually why the helper was opened, unless a file was dropped on it.
-  const [tab, setTab] = useState<Tab>(
-    waiting > 0 && !hasFiles("helper") ? "mail" : "ask",
-  );
+export function HelperPanel({ helper, knowsYou, onTyping }: Props) {
+  const [tab, setTab] = useState<Tab>("chat");
   const tabs: [Tab, string][] = [
-    ["ask", "Ask"],
-    ...(waiting > 0 || tab === "mail"
-      ? [["mail", `Mail${waiting > 0 ? ` ${waiting}` : ""}`] as [Tab, string]]
-      : []),
-    ["todo", "To-do"],
-    ["write", "Write"],
-    ["tokens", "Tokens"],
+    ["chat", "Chat"],
+    ["today", "Today"],
+    ["nudges", "Nudges"],
   ];
 
   return (
@@ -104,16 +84,14 @@ export function HelperPanel({
           </button>
         ))}
       </div>
-      {tab === "ask" && <Upcoming events={helper.upcoming} limit={2} />}
-      {tab === "ask" && (
+      {tab === "chat" && (
         <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
       )}
-      {tab === "mail" && (
-        <Outbox mail={mail} limit={1} emptyText="No emails waiting for you." />
+      {tab === "today" && <Upcoming events={helper.upcoming} limit={3} />}
+      {tab === "today" && <Todos helper={helper} onTyping={onTyping} />}
+      {tab === "nudges" && (
+        <Nudges helper={helper} onAdd={() => setTab("today")} />
       )}
-      {tab === "todo" && <Todos helper={helper} onTyping={onTyping} />}
-      {tab === "write" && <Write helper={helper} onTyping={onTyping} />}
-      {tab === "tokens" && <Tokens helper={helper} pets={pets} tips={tips} />}
     </section>
   );
 }
@@ -386,10 +364,10 @@ export function Todos({
   const [tag, setTag] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const tags = [...new Set(helper.todos.flatMap((todo) => todo.tags))].sort();
-  const shown = tag
-    ? helper.todos.filter((todo) => todo.tags.includes(tag))
-    : helper.todos;
+  // Hourly nudges would drown the list; they live on their own tab.
+  const todos = helper.todos.filter((todo) => !todo.tags.includes("nudge"));
+  const tags = [...new Set(todos.flatMap((todo) => todo.tags))].sort();
+  const shown = tag ? todos.filter((todo) => todo.tags.includes(tag)) : todos;
 
   const add = async () => {
     try {

@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
 
 import { HelperPanel } from "../helper/HelperPanel";
-import { MOOD_LABEL } from "../hub/ProductCard";
 import { openHome } from "../lib/bridge";
 import type { Mood, Nudge, Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import type { Place } from "../life/prefs";
 import type { PetSize } from "../life/roam";
 import { NudgeCard } from "./NudgeCard";
-import { PetPanel } from "./PetPanel";
 
 export const URGENT: Mood[] = [
   "needsYou",
@@ -17,6 +15,17 @@ export const URGENT: Mood[] = [
   "hungry",
   "litterBox",
 ];
+export const MOOD_LABEL: Record<Mood, string> = {
+  needsYou: "Needs you",
+  failing: "Failing",
+  steaming: "Steaming",
+  hungry: "Hungry",
+  litterBox: "Litter box",
+  sweating: "Sweating",
+  working: "Working",
+  stalled: "Napping",
+  chill: "Chill",
+};
 export const HELPER = "helper";
 export const ALL = "all";
 /** The card a reminder opens, with the helper saying it. */
@@ -46,41 +55,16 @@ export interface Resident {
   pet: (size: number) => ReactNode;
 }
 
-/** Every pet the user has, helper last, each able to draw itself at any size. */
-export function residentsOf(
-  snapshot: Snapshot,
-  celebrating: Set<string>,
-  arriving: Set<string>,
-  waving = false,
-): Resident[] {
-  const { pets, helper, mail } = snapshot;
-  const emails = mail.outbox.length;
+/** The one companion, able to draw itself at any size. Project pets stay out of the way. */
+export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
+  const { helper } = snapshot;
   return [
-    ...pets.map((resident) => ({
-      id: resident.id,
-      name: resident.name,
-      mood: resident.mood,
-      urgent: URGENT.includes(resident.mood),
-      pet: (size: number) => (
-        <LivePet
-          id={resident.id}
-          celebrating={celebrating.has(resident.id)}
-          arriving={arriving.has(resident.id)}
-          kind={resident.kind}
-          color={resident.color}
-          mood={resident.mood}
-          heat={resident.heat}
-          size={size}
-        />
-      ),
-    })),
     {
       id: HELPER,
       name: helper.name,
       mood: helper.mood,
-      // The helper interrupts for a permission, an event about to start or an email to approve,
-      // never for its own to-dos.
-      urgent: helper.mood === "needsYou" || emails > 0 || waving,
+      // It interrupts for a permission or a reminder, never for its own to-dos.
+      urgent: helper.mood === "needsYou" || waving,
       pet: (size: number) => (
         <LivePet
           dropId={HELPER}
@@ -98,7 +82,7 @@ export function residentsOf(
 
 const noop = () => undefined;
 
-/** What a dropped-down card shows: a pet, the helper, or every pet. */
+/** What a dropped-down card shows: a reminder, the settings, or the companion. */
 export function CardBody({
   openId,
   snapshot,
@@ -110,7 +94,6 @@ export function CardBody({
   roster: ReactNode;
   reminder?: Reminder;
 }) {
-  const pet = snapshot.pets.find((candidate) => candidate.id === openId);
   if (openId === NUDGE && reminder?.nudge)
     return (
       <NudgeCard
@@ -124,36 +107,9 @@ export function CardBody({
     <>
       {openId === ALL ? (
         roster
-      ) : pet ? (
-        <>
-          <div className="notch__head">
-            <span className="mood" data-mood={pet.mood}>
-              {MOOD_LABEL[pet.mood]}
-            </span>
-          </div>
-          <PetPanel
-            key={pet.id}
-            pet={pet}
-            chat={snapshot.productChats.find(
-              (chat) => chat.productId === pet.id,
-            )}
-            helper={snapshot.helper}
-            numbers={snapshot.numbers.products.find(
-              (numbers) => numbers.productId === pet.id,
-            )}
-            team={snapshot.teammates.filter(
-              (teammate) => teammate.productId === pet.id,
-            )}
-            roles={snapshot.roles}
-            onTyping={noop}
-          />
-        </>
       ) : (
         <HelperPanel
           helper={snapshot.helper}
-          pets={snapshot.pets}
-          tips={snapshot.tips}
-          mail={snapshot.mail}
           knowsYou={snapshot.knowsYou}
           onTyping={noop}
         />
@@ -180,69 +136,19 @@ export function AllIcon() {
 }
 
 interface RosterProps {
-  residents: Resident[];
-  waiting: number;
-  hidden: string[];
   size: PetSize;
   place: Place;
-  onOpen: (id: string) => void;
-  onToggle: (id: string) => void;
   onSize: (size: PetSize) => void;
   onPlace: (place: Place) => void;
 }
 
-/** Every pet in one place, including the hidden ones, with who shows in the notch and how big. */
-export function Roster({
-  residents,
-  waiting,
-  hidden,
-  size,
-  place,
-  onOpen,
-  onToggle,
-  onSize,
-  onPlace,
-}: RosterProps) {
+/** How big the companion is and where it lives. */
+export function Roster({ size, place, onSize, onPlace }: RosterProps) {
   return (
-    <section className="panel" aria-label="All pets">
+    <section className="panel" aria-label="Size and place">
       <header className="panel__head">
-        <span className="panel__name">Your pets</span>
-        <span className="panel__headline">
-          {waiting > 0
-            ? `${waiting} ${waiting === 1 ? "needs" : "need"} you`
-            : "Everyone is fine"}
-        </span>
+        <span className="panel__name">Size and place</span>
       </header>
-      <ul className="roster">
-        {residents.map((resident) => {
-          const isHidden = hidden.includes(resident.id);
-          return (
-            <li key={resident.id} data-urgent={resident.urgent || undefined}>
-              <button
-                className="roster__pet"
-                onClick={() => onOpen(resident.id)}
-              >
-                {resident.pet(30)}
-                <span className="roster__name">{resident.name}</span>
-                <span className="mood" data-mood={resident.mood}>
-                  {MOOD_LABEL[resident.mood]}
-                </span>
-              </button>
-              <button
-                className="button button--small"
-                aria-pressed={!isHidden}
-                aria-label={`${isHidden ? "Show" : "Hide"} ${resident.name}`}
-                onClick={() => onToggle(resident.id)}
-              >
-                {isHidden ? "Show" : "Hide"}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="setup__hint">
-        Hidden pets still come out when they need you.
-      </p>
       <div className="roster__size">
         <span>Size</span>
         <div className="segmented" role="radiogroup" aria-label="Pet size">

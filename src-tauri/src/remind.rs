@@ -57,7 +57,12 @@ pub async fn setup_nudge(app: Arc<App>) {
     let left = peeps_core::setup::missing(
         crate::commands::claude_ready(),
         snapshot.knows_you,
-        snapshot.snapshot.pets.len(),
+        snapshot
+            .helper
+            .todos
+            .iter()
+            .filter(|view| view.todo.tags.iter().any(|tag| tag == "nudge"))
+            .count(),
     );
     if let Some(text) = peeps_core::setup::nudge(&left) {
         app.notify("A few steps left to set up peeps", &text);

@@ -1,18 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { MOOD_LABEL } from "../hub/ProductCard";
-import { floatTray, openHome } from "../lib/bridge";
+import { floatTray } from "../lib/bridge";
 import type { Snapshot } from "../lib/types";
 import {
-  BOX,
+  boxFor,
   clampSpot,
+  FLOAT_PET,
   defaultSpot,
   openRect,
   PANEL,
   type Area,
   type Spot,
 } from "../life/float";
-import { shown, toggleHidden, usePrefs } from "../life/prefs";
+import { usePrefs } from "../life/prefs";
 import {
   ALL,
   CardBody,
@@ -24,11 +24,10 @@ import {
 } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
 import { giveFiles, useFileDrop } from "../life/drops";
-import { announceFed } from "../life/events";
+import { announceFed, announcePat } from "../life/events";
 
 const KEY = "peeps.float";
 const DRAG_THRESHOLD = 4;
-const PET = 80;
 
 function screenArea(): Area {
   const screen = window.screen as Screen & {
@@ -43,18 +42,18 @@ function screenArea(): Area {
   };
 }
 
-function savedSpot(area: Area): Spot {
+function savedSpot(area: Area, box: number): Spot {
   try {
     const value = JSON.parse(
       localStorage.getItem(KEY) ?? "null",
     ) as Spot | null;
     if (value && Number.isFinite(value.x) && Number.isFinite(value.y)) {
-      return clampSpot(value, area);
+      return clampSpot(value, area, box);
     }
   } catch {
     // A missing or broken spot just means the default one.
   }
-  return defaultSpot(area);
+  return defaultSpot(area, box);
 }
 
 function saveSpot(spot: Spot) {
@@ -66,8 +65,8 @@ function saveSpot(spot: Spot) {
 }
 
 /**
- * For screens without a notch: the helper floats wherever it was dropped, with a badge when pets need you.
- * A click opens your pets and the helper beside it, on whichever side has room.
+ * For screens without a notch: the companion floats wherever it was dropped.
+ * A click pats it; a double click, a right click or the little bubble opens its card beside it.
  */
 export function FloatTray({
   snapshot,
@@ -79,9 +78,10 @@ export function FloatTray({
   reminder: Reminder;
 }) {
   const [area] = useState(screenArea);
-  const [spot, setSpot] = useState(() => savedSpot(area));
-  const [openId, setOpenId] = useState<string | null>(null);
   const [prefs, setPrefs] = usePrefs();
+  const box = boxFor(prefs.size);
+  const [spot, setSpot] = useState(() => savedSpot(area, box));
+  const [openId, setOpenId] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const grab = useRef<{
     x: number;
@@ -105,12 +105,9 @@ export function FloatTray({
   });
 
   const helper = residents.find((resident) => resident.id === HELPER);
-  const products = residents.filter(
-    (resident) =>
-      resident.id !== HELPER && shown(resident.id, resident.urgent, prefs),
-  );
   const waiting = residents.filter((resident) => resident.urgent).length;
-  const rect = openRect(spot, panelHeight, area);
+  const rect = openRect(spot, panelHeight, area, box);
+  const toggleCard = () => setOpenId((now) => (now === null ? HELPER : null));
 
   // Opening or closing moves and resizes the window, and the window and the page can't change
   // in the same frame. Hiding the pet until the window is in place avoids a frame where it jumps.
@@ -126,21 +123,22 @@ export function FloatTray({
     if (open && panelHeight > 0) {
       void floatTray(rect.x, rect.y, rect.width, rect.height).then(show);
     } else if (!open) {
-      void floatTray(spot.x, spot.y, BOX, BOX).then(show);
+      const kept = clampSpot(spot, area, box);
+      setSpot(kept);
+      void floatTray(kept.x, kept.y, box, box).then(show);
     }
     // Moving while dragging is handled frame by frame below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, panelHeight]);
+  }, [open, panelHeight, box]);
 
   const move = (next: Spot) => {
     setSpot(next);
     cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
-      void floatTray(next.x, next.y, BOX, BOX);
+      void floatTray(next.x, next.y, box, box);
     });
   };
 
-  const pet = snapshot.pets.find((candidate) => candidate.id === openId);
   const side = open ? rect.side : "right";
 
   return (
@@ -152,7 +150,7 @@ export function FloatTray({
       <button
         className="float__pet"
         data-drop={HELPER}
-        style={{ top: open ? rect.petTop : 0 }}
+        style={{ top: open ? rect.petTop : 0, width: box, height: box }}
         data-waiting={waiting > 0 || undefined}
         aria-label={
           waiting > 0
@@ -178,26 +176,45 @@ export function FloatTray({
           if (!current.moved) setOpenId(null);
           current.moved = true;
           move(
-            clampSpot({ x: current.from.x + dx, y: current.from.y + dy }, area),
+            clampSpot(
+              { x: current.from.x + dx, y: current.from.y + dy },
+              area,
+              box,
+            ),
           );
         }}
         onPointerUp={() => {
           const current = grab.current;
           grab.current = null;
-          if (current?.moved) {
-            saveSpot(spot);
-            return;
-          }
-          setOpenId((now) => (now === null ? HELPER : null));
+          if (current?.moved) saveSpot(spot);
+          // Capturing the pointer for dragging keeps the click from the pet, so pass the pat on.
+          else if (current) announcePat(HELPER);
+        }}
+        onDoubleClick={toggleCard}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          toggleCard();
         }}
         onClick={(event) => {
-          if (event.detail === 0)
-            setOpenId((now) => (now === null ? HELPER : null));
+          // Keyboard users have no pat; Enter opens the card.
+          if (event.detail === 0) toggleCard();
         }}
       >
-        {helper?.pet(PET)}
+        {helper?.pet(FLOAT_PET[prefs.size])}
         {waiting > 0 && <span className="float__badge">{waiting}</span>}
       </button>
+      {!open && (
+        <button
+          className="float__open"
+          aria-label={`Talk to ${snapshot.helper.name}`}
+          title="Open"
+          onClick={toggleCard}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h7A1.5 1.5 0 0 1 12 3.5v5A1.5 1.5 0 0 1 10.5 10H6l-3 2.5V10h0A1.5 1.5 0 0 1 2 8.5z" />
+          </svg>
+        </button>
+      )}
 
       {open && (
         <div
@@ -206,7 +223,7 @@ export function FloatTray({
           style={{
             width: PANEL,
             maxHeight: area.height - 16,
-            ["--pet" as string]: pet?.color ?? snapshot.helper.color,
+            ["--pet" as string]: snapshot.helper.color,
           }}
         >
           <button
@@ -222,7 +239,7 @@ export function FloatTray({
           <div
             className="float__pets"
             role="tablist"
-            aria-label="Your pets"
+            aria-label="Card"
             data-hidden={openId === NUDGE || undefined}
           >
             <button
@@ -234,40 +251,15 @@ export function FloatTray({
               {helper?.pet(30)}
               <span>{snapshot.helper.name}</span>
             </button>
-            {products.map((resident) => (
-              <button
-                key={resident.id}
-                role="tab"
-                aria-selected={openId === resident.id}
-                className="float__chip"
-                data-drop={resident.id}
-                data-urgent={resident.urgent || undefined}
-                onClick={() => setOpenId(resident.id)}
-                title={`${resident.name}: ${MOOD_LABEL[resident.mood]}`}
-              >
-                {resident.pet(30)}
-                <span>{resident.name}</span>
-              </button>
-            ))}
-            {snapshot.pets.length === 0 ? (
-              <button
-                className="float__chip float__chip--all"
-                onClick={() => void openHome()}
-                title="Each Claude Code project you add becomes a pet"
-              >
-                + Add a product
-              </button>
-            ) : (
-              <button
-                role="tab"
-                aria-selected={openId === ALL}
-                className="float__chip float__chip--all"
-                onClick={() => setOpenId(ALL)}
-                aria-label="All pets and settings"
-              >
-                ⋯
-              </button>
-            )}
+            <button
+              role="tab"
+              aria-selected={openId === ALL}
+              className="float__chip float__chip--all"
+              onClick={() => setOpenId(ALL)}
+              aria-label="Size and place"
+            >
+              ⋯
+            </button>
           </div>
           <CardBody
             openId={openId}
@@ -275,13 +267,8 @@ export function FloatTray({
             reminder={reminder}
             roster={
               <Roster
-                residents={residents}
-                waiting={waiting}
-                hidden={prefs.hidden}
                 size={prefs.size}
                 place={prefs.place}
-                onOpen={setOpenId}
-                onToggle={(id) => setPrefs(toggleHidden(prefs, id))}
                 onSize={(next) => setPrefs({ ...prefs, size: next })}
                 onPlace={(next) => setPrefs({ ...prefs, place: next })}
               />

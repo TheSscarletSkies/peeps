@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { hooksStatus } from "../lib/bridge";
 import type { Snapshot } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 import { gettingStarted, type Destination } from "./setupSteps";
@@ -22,18 +21,11 @@ export function GettingStarted({
   snapshot: Snapshot;
   onGo: (page: Destination) => void;
 }) {
-  const [hooks, setHooks] = useState(false);
   const [hidden, setHidden] = useState(dismissed);
   // A slim bar with the next step; the full list is one click away.
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    void hooksStatus().then((status) =>
-      setHooks(status.installed && status.agent !== null),
-    );
-  }, [snapshot]);
-
-  const steps = gettingStarted(snapshot, hooks);
+  const steps = gettingStarted(snapshot);
   const left = steps.filter((step) => !step.done).length;
   if (hidden || left === 0) return null;
 

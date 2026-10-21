@@ -7,8 +7,6 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole("button", { name: /^Helper/ }).click();
-  // The preview has an email waiting, so the card opens on Mail.
-  await page.getByRole("tab", { name: "Ask", exact: true }).click();
 });
 
 test("UC9: the helper answers a message", async ({ page }) => {
@@ -33,7 +31,7 @@ test("UC9: model and effort are picked from the chip, never forced", async ({
 });
 
 test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {
-  await page.getByRole("tab", { name: "To-do" }).click();
+  await page.getByRole("tab", { name: "Today" }).click();
   await page.getByLabel("To-do").last().fill("Pay rent #bills");
   await expect(page.getByLabel("Reminder")).toHaveCount(0);
   await page.getByLabel("Due date").last().fill("2026-11-01");
@@ -49,7 +47,7 @@ test("UC10: to-dos take tags, dates and reminders", async ({ page }) => {
 });
 
 test("UC10: nudges through the day get a from–to window", async ({ page }) => {
-  await page.getByRole("tab", { name: "To-do" }).click();
+  await page.getByRole("tab", { name: "Today" }).click();
   await expect(page.getByText(/Every 2 h · 3 of \d+ today/)).toBeVisible();
   await page.getByLabel("To-do").last().fill("Stretch");
   await choose(page.getByLabel("Repeat").last(), "Every 2 hours");
@@ -58,19 +56,24 @@ test("UC10: nudges through the day get a from–to window", async ({ page }) => 
   await expect(page.getByLabel("Until")).toHaveValue("21:00");
 });
 
-test("UC12: a draft can be scheduled to repeat", async ({ page }) => {
-  await page.getByRole("tab", { name: "Write" }).click();
-  await expect(
-    page.getByRole("list", { name: "Scheduled drafts" }),
-  ).toContainText("What I shipped this week");
-  await choose(page.getByLabel("When"), "Weekly");
-  await expect(page.getByLabel("Starting")).toBeVisible();
-  await page.getByLabel("What to write about").fill("A week of peeps");
-  await expect(page.getByRole("button", { name: "Schedule" })).toBeEnabled();
+test("UC17: a nudge is one switch away", async ({ page }) => {
+  await page.getByRole("tab", { name: "Nudges" }).click();
+  const stretch = page.getByRole("switch", { name: "Stand up and stretch" });
+  await expect(stretch).toHaveAttribute("aria-checked", "false");
+  await stretch.click();
+  await expect(stretch).toHaveAttribute("aria-checked", "true");
+  // Hourly nudges stay off the to-do list.
+  await page.getByRole("tab", { name: "Today" }).click();
+  await expect(page.locator(".todos")).not.toContainText(
+    "Stand up and stretch",
+  );
+  await page.getByRole("tab", { name: "Nudges" }).click();
+  await stretch.click();
+  await expect(stretch).toHaveAttribute("aria-checked", "false");
 });
 
 test("UC10: a daily habit done today waits for tomorrow", async ({ page }) => {
-  await page.getByRole("tab", { name: "To-do" }).click();
+  await page.getByRole("tab", { name: "Today" }).click();
   const stretch = page.getByLabel("Done: Stretch");
   await expect(stretch).toBeChecked();
   await expect(stretch).toBeDisabled();

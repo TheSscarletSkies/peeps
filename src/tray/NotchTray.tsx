@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { MOOD_LABEL } from "../hub/ProductCard";
 import { setTraySize } from "../lib/bridge";
 import type { Notch, Snapshot } from "../lib/types";
-import { shown, toggleHidden, usePrefs } from "../life/prefs";
+import { shown, usePrefs } from "../life/prefs";
 import {
   ICON,
   landing,
@@ -16,6 +15,7 @@ import {
 } from "../life/roam";
 import {
   ALL,
+  MOOD_LABEL,
   AllIcon,
   CardBody,
   NUDGE,
@@ -146,13 +146,8 @@ export function NotchTray({
             reminder={reminder}
             roster={
               <Roster
-                residents={residents}
-                waiting={waiting}
-                hidden={prefs.hidden}
                 size={prefs.size}
                 place={prefs.place}
-                onOpen={setOpenId}
-                onToggle={(id) => setPrefs(toggleHidden(prefs, id))}
                 onSize={(next) => setPrefs({ ...prefs, size: next })}
                 onPlace={(next) => setPrefs({ ...prefs, place: next })}
               />

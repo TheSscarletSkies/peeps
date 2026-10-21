@@ -20,17 +20,6 @@ async function dropFile(page: Page, target: string, name: string) {
   );
 }
 
-test("UC4: a file dropped on a product pet waits in its note", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await dropFile(page, '[data-drop="kaiveni-hiya"]', "launch-plan.pdf");
-  await expect(
-    page.getByRole("list", { name: "Attached files" }),
-  ).toContainText("launch-plan.pdf");
-  await expect(page.getByRole("button", { name: "Feed" })).toBeEnabled();
-});
-
 test("UC4: a file dropped on the helper joins the next message", async ({
   page,
 }) => {

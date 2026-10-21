@@ -6,16 +6,31 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("UC7: without a notch the helper floats, counting pets that need you", async ({
+test("UC7: a click pats the floating pet; a double click opens it", async ({
   page,
 }) => {
-  const helper = page.locator(".float__pet");
-  await expect(helper).toBeVisible();
-  await expect(helper.locator(".float__badge")).toHaveText(/\d+/);
-  await helper.click();
-  await expect(page.getByRole("tab", { name: /Funderly/ })).toBeVisible();
-  await page.getByRole("tab", { name: /Funderly/ }).click();
-  await expect(page.getByLabel("Note for Funderly")).toBeVisible();
+  const pet = page.locator(".float__pet");
+  await pet.locator(".live-pet").click();
+  await expect(page.locator(".float__panel")).toHaveCount(0);
+  await expect(pet.locator(".dumpling--love")).toBeVisible();
+  await pet.dblclick();
+  await expect(page.getByRole("tab", { name: "Chat" })).toBeVisible();
+});
+
+test("UC7: right click opens the card too", async ({ page }) => {
+  await page.locator(".float__pet").click({ button: "right" });
+  await expect(page.getByRole("tab", { name: "Nudges" })).toBeVisible();
+});
+
+test("UC6: the floating pet comes in three sizes", async ({ page }) => {
+  const pet = page.locator(".float__pet");
+  const medium = await pet.boundingBox();
+  await pet.click({ button: "right" });
+  await page.getByRole("tab", { name: "Size and place" }).click();
+  await page.getByRole("radio", { name: "small" }).click();
+  await page.getByRole("button", { name: "Close" }).click();
+  const small = await pet.boundingBox();
+  expect(small?.width ?? 0).toBeLessThan(medium?.width ?? 0);
 });
 
 test("UC7: the floating pet remembers where it was put", async ({ page }) => {

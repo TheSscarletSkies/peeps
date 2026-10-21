@@ -1162,3 +1162,8 @@ li[data-done] .started__check {
 .ledger__manual[open] summary {
   margin-bottom: 8px;
 }
+
+.section__sub {
+  margin: 28px 0 12px;
+  font-size: 15px;
+}

@@ -1,102 +1,52 @@
-import { Fragment, useCallback, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
-import { Todos, Tokens, Write } from "../helper/HelperPanel";
+import { Todos } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
 import { Chat } from "../helper/Chat";
 import { Upcoming } from "../helper/Upcoming";
-import { setTodoDone } from "../lib/bridge";
-import { announceFed } from "../life/events";
 import { Boundary } from "../lib/Boundary";
 import type { Snapshot } from "../lib/types";
 import { LivePet } from "../life/LivePet";
+import { usePrefs } from "../life/prefs";
 import { boop, setSoundEnabled, soundEnabled } from "../life/sound";
-import { usePetEvents } from "../life/usePetEvents";
-import { Setup } from "../setup/Setup";
+import { Nudges } from "../nudges/Nudges";
+import { ClaudeStatus } from "../setup/ClaudeStatus";
+import { Roster } from "../tray/shared";
 import { GettingStarted } from "./GettingStarted";
 import { greeting } from "./greeting";
 import {
   AskIcon,
   BellIcon,
-  DevicesIcon,
   HomeIcon,
-  MailIcon,
   MoonIcon,
-  NumbersIcon,
-  TeamIcon,
-  ProductsIcon,
-  RecapIcon,
+  SettingsIcon,
   SoundIcon,
   SunIcon,
-  TodoIcon,
-  TokensIcon,
-  WriteIcon,
 } from "./icons";
-import { PetPanel } from "../tray/PetPanel";
-import { ProductCard } from "./ProductCard";
 import { DevicesPage } from "./DevicesPage";
-import { MailPage } from "./MailPage";
-import { NumbersPage } from "./NumbersPage";
-import { TeamPage } from "./TeamPage";
-import { RecapPage } from "./RecapPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
 import { Tour, tourSeen } from "./Tour";
 import logo from "../assets/logo.png";
 import "./hub.css";
 
-type Page =
-  | "home"
-  | "ask"
-  | "todo"
-  | "reminders"
-  | "mail"
-  | "numbers"
-  | "team"
-  | "write"
-  | "tokens"
-  | "recap"
-  | "products"
-  | "devices";
+type Page = "today" | "chat" | "nudges" | "settings";
 
-const PAGES: { id: Page; label: string; icon: ReactNode; group: string }[] = [
-  { id: "home", label: "Home", icon: <HomeIcon />, group: "Every day" },
-  { id: "ask", label: "Ask", icon: <AskIcon />, group: "Every day" },
-  { id: "todo", label: "To-do", icon: <TodoIcon />, group: "Every day" },
-  {
-    id: "reminders",
-    label: "Reminders",
-    icon: <BellIcon />,
-    group: "Every day",
-  },
-  { id: "mail", label: "Mail", icon: <MailIcon />, group: "Work" },
-  { id: "team", label: "Team", icon: <TeamIcon />, group: "Work" },
-  { id: "numbers", label: "Numbers", icon: <NumbersIcon />, group: "Work" },
-  { id: "write", label: "Write", icon: <WriteIcon />, group: "Work" },
-  { id: "tokens", label: "Tokens", icon: <TokensIcon />, group: "Look back" },
-  { id: "recap", label: "Recap", icon: <RecapIcon />, group: "Look back" },
-  {
-    id: "products",
-    label: "Products",
-    icon: <ProductsIcon />,
-    group: "Set up",
-  },
-  { id: "devices", label: "Devices", icon: <DevicesIcon />, group: "Set up" },
+const PAGES: { id: Page; label: string; icon: ReactNode }[] = [
+  { id: "today", label: "Today", icon: <HomeIcon /> },
+  { id: "chat", label: "Chat", icon: <AskIcon /> },
+  { id: "nudges", label: "Nudges", icon: <BellIcon /> },
+  { id: "settings", label: "Settings", icon: <SettingsIcon /> },
 ];
 
-const URGENT = new Set([
-  "needsYou",
-  "failing",
-  "steaming",
-  "hungry",
-  "litterBox",
-]);
 const noop = () => undefined;
 
 export function Hub({ snapshot }: { snapshot: Snapshot }) {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>("today");
   const [theme, setTheme] = useState<Theme>(savedTheme);
   const [sound, setSound] = useState(soundEnabled);
   const [touring, setTouring] = useState(() => !tourSeen());
+  const [prefs, setPrefs] = usePrefs();
   const goTo = useCallback((next: string) => setPage(next as Page), []);
   const { helper } = snapshot;
 
@@ -122,29 +72,17 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           <span>peeps</span>
         </div>
         <nav aria-label="Sections">
-          {PAGES.map((item, index) => (
-            <Fragment key={item.id}>
-              {item.group !== PAGES[index - 1]?.group && (
-                <span className="nav__group">{item.group}</span>
-              )}
-              <button
-                className={page === item.id ? "nav nav--on" : "nav"}
-                data-tour={item.id}
-                aria-current={page === item.id ? "page" : undefined}
-                onClick={() => setPage(item.id)}
-              >
-                {item.icon}
-                {item.label}
-                {item.id === "todo" && helper.todos.length > 0 && (
-                  <span className="nav__count">{helper.todos.length}</span>
-                )}
-                {item.id === "mail" && snapshot.mail.outbox.length > 0 && (
-                  <span className="nav__count">
-                    {snapshot.mail.outbox.length}
-                  </span>
-                )}
-              </button>
-            </Fragment>
+          {PAGES.map((item) => (
+            <button
+              key={item.id}
+              className={page === item.id ? "nav nav--on" : "nav"}
+              data-tour={item.id}
+              aria-current={page === item.id ? "page" : undefined}
+              onClick={() => setPage(item.id)}
+            >
+              {item.icon}
+              {item.label}
+            </button>
           ))}
         </nav>
         <div className="hub__toggles" data-tour="toggles">
@@ -160,7 +98,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             className="toggle-icon"
             onClick={toggleSound}
             aria-pressed={sound}
-            aria-label="Boop when a pet needs you"
+            aria-label="Boop when a reminder comes"
             title={sound ? "Sound on" : "Sound off"}
           >
             <SoundIcon on={sound} />
@@ -174,11 +112,6 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
             ?
           </button>
         </div>
-        <p className="hub__status">
-          <span className="hub__dot" aria-hidden="true" />
-          Watching {snapshot.pets.length}{" "}
-          {snapshot.pets.length === 1 ? "product" : "products"}
-        </p>
       </aside>
 
       <main className="hub__main">
@@ -186,21 +119,11 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           {snapshot.configError && (
             <p className="hub__error">Config problem: {snapshot.configError}</p>
           )}
-          {page === "home" && <HomePage snapshot={snapshot} onGo={setPage} />}
-          {page === "todo" && (
+          {page === "today" && <TodayPage snapshot={snapshot} onGo={setPage} />}
+          {page === "chat" && (
             <Section
-              title="To-do"
-              lead="Deadlines, habits, reminders and chores."
-            >
-              <div className="card">
-                <Todos helper={helper} onTyping={noop} />
-              </div>
-            </Section>
-          )}
-          {page === "ask" && (
-            <Section
-              title={`Ask ${helper.name}`}
-              lead="Talks to your own Claude, with your connectors. Anything it wants to do, it asks first."
+              title={`Chat with ${helper.name}`}
+              lead="Talks to your own Claude and remembers what you tell it about you. Anything it wants to do, it asks first."
             >
               <div className="ask-page">
                 <div className="card ask">
@@ -219,82 +142,35 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               </div>
             </Section>
           )}
-          {page === "reminders" && (
+          {page === "nudges" && (
             <Section
-              title="Reminders"
-              lead="Your calendars and when each kind of event should nudge you."
+              title="Nudges"
+              lead={`Little reminders through the day. ${helper.name} pops up and says it, like a friend would.`}
             >
+              <div className="card">
+                <Nudges helper={helper} onAdd={() => setPage("today")} />
+              </div>
+            </Section>
+          )}
+          {page === "settings" && (
+            <Section
+              title="Settings"
+              lead={`How big ${helper.name} is, where it lives, and what it can see.`}
+            >
+              <div className="reminders">
+                <section className="card">
+                  <Roster
+                    size={prefs.size}
+                    place={prefs.place}
+                    onSize={(next) => setPrefs({ ...prefs, size: next })}
+                    onPlace={(next) => setPrefs({ ...prefs, place: next })}
+                  />
+                </section>
+                <ClaudeStatus />
+              </div>
               <RemindersPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "mail" && (
-            <Section
-              title="Mail"
-              lead={`${helper.name} drafts, you approve. Nothing is sent without you.`}
-            >
-              <MailPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "team" && (
-            <Section
-              title="Team"
-              lead="AI helpers with one job each, like sales or content. They work on a schedule and leave you drafts to approve."
-            >
-              <TeamPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "numbers" && (
-            <Section
-              title="Numbers"
-              lead="Payments and posts for each product, from PayPal, YouTube and what you log."
-            >
-              <NumbersPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "write" && (
-            <Section
-              title="Write"
-              lead="Drafts in your voice, written by your own agent when you ask."
-            >
-              <div className="card">
-                <Write helper={helper} onTyping={noop} />
-              </div>
-            </Section>
-          )}
-          {page === "tokens" && (
-            <Section title="Tokens" lead="What each product used this week.">
-              <div className="card">
-                <Tokens
-                  helper={helper}
-                  pets={snapshot.pets}
-                  tips={snapshot.tips}
-                />
-              </div>
-            </Section>
-          )}
-          {page === "recap" && (
-            <Section
-              title="Recap"
-              lead="Your week in one card, ready to share."
-            >
-              <RecapPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "devices" && (
-            <Section
-              title="Devices"
-              lead="The same peeps on your Mac and your Windows PC."
-            >
+              <h2 className="section__sub">Your computers</h2>
               <DevicesPage snapshot={snapshot} />
-            </Section>
-          )}
-          {page === "products" && (
-            <Section title="Products" lead="A pet for every project you build.">
-              <Setup
-                snapshot={snapshot}
-                onDone={() => setPage("home")}
-                onTyping={noop}
-              />
             </Section>
           )}
         </Boundary>
@@ -323,33 +199,23 @@ function Section({
   );
 }
 
-function HomePage({
+function TodayPage({
   snapshot,
   onGo,
 }: {
   snapshot: Snapshot;
   onGo: (page: Page) => void;
 }) {
-  const { pets, helper } = snapshot;
-  const { celebrating, arriving } = usePetEvents(pets);
-  const [openPet, setOpenPet] = useState<string | null>(null);
-  const opened = pets.find((pet) => pet.id === openPet);
-  const urgent = pets.filter((pet) => URGENT.has(pet.mood));
-  const today = helper.todos.filter(
-    (todo) => todo.dueState === "overdue" || todo.dueState === "today",
+  const { helper } = snapshot;
+  const due = helper.todos.filter(
+    (todo) =>
+      !todo.tags.includes("nudge") &&
+      (todo.dueState === "overdue" || todo.dueState === "today"),
   );
-  const summary = [
-    pets.length === 0
-      ? "Add a product and it hatches as a pet."
-      : urgent.length > 0
-        ? `${urgent.map((pet) => pet.name).join(" and ")} ${urgent.length === 1 ? "needs" : "need"} you.`
-        : "Everyone is fine.",
-    today.length > 0
-      ? `${today.length} ${today.length === 1 ? "thing is" : "things are"} due today.`
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const summary =
+    due.length > 0
+      ? `${due.length} ${due.length === 1 ? "thing is" : "things are"} due today. Tick one off and ${helper.name} gets a snack.`
+      : `Nothing due. Give ${helper.name} a pat.`;
 
   return (
     <>
@@ -358,33 +224,16 @@ function HomePage({
           <h1>{greeting(new Date().getHours())}</h1>
           <p>{summary}</p>
         </div>
-        <div
-          className="hero__steamer"
-          aria-hidden="true"
-          // One steamer seat per pet, so a lone helper isn't sitting on a wide plank.
-          style={{ width: Math.min(420, 150 + Math.min(pets.length, 4) * 80) }}
-        >
+        <div className="hero__steamer" style={{ width: 200 }}>
           <div className="hero__pets">
-            {pets.slice(0, 4).map((pet) => (
-              <LivePet
-                key={pet.id}
-                id={pet.id}
-                celebrating={celebrating.has(pet.id)}
-                arriving={arriving.has(pet.id)}
-                kind={pet.kind}
-                color={pet.color}
-                mood={pet.mood}
-                heat={pet.heat}
-                size={84}
-              />
-            ))}
             <LivePet
               dropId="helper"
               kind={helper.kind}
               color={helper.color}
               mood={helper.mood}
               heat={0}
-              size={72}
+              size={96}
+              chatty
             />
           </div>
           <div className="hero__basket" />
@@ -393,77 +242,11 @@ function HomePage({
 
       <GettingStarted snapshot={snapshot} onGo={onGo} />
 
-      {opened && (
-        <section
-          className="card product-focus"
-          style={{ ["--pet" as string]: opened.color }}
-        >
-          <button
-            className="tray__link product-focus__close"
-            onClick={() => setOpenPet(null)}
-          >
-            Close
-          </button>
-          <PetPanel
-            key={opened.id}
-            pet={opened}
-            chat={snapshot.productChats.find(
-              (chat) => chat.productId === opened.id,
-            )}
-            helper={helper}
-            numbers={snapshot.numbers.products.find(
-              (numbers) => numbers.productId === opened.id,
-            )}
-            team={snapshot.teammates.filter(
-              (teammate) => teammate.productId === opened.id,
-            )}
-            roles={snapshot.roles}
-            onTyping={noop}
-          />
-        </section>
-      )}
-
       <div className="home">
-        <section className="home__pets" aria-label="Your products">
-          {pets.map((pet) => (
-            <ProductCard
-              key={pet.id}
-              pet={pet}
-              celebrating={celebrating.has(pet.id)}
-              arriving={arriving.has(pet.id)}
-              numbers={snapshot.numbers.products.find(
-                (numbers) => numbers.productId === pet.id,
-              )}
-              onOpen={() => setOpenPet(pet.id)}
-            />
-          ))}
-          {pets.length === 0 && (
-            <div className="card home__empty">
-              <LivePet
-                dropId="helper"
-                kind="bao"
-                color="#FFE6D6"
-                mood="chill"
-                heat={0}
-                size={72}
-              />
-              <div>
-                <h2>Your products live here</h2>
-                <p className="setup__hint">
-                  Add Funderly or anything you build, and it hatches as a pet
-                  that shows its numbers, its agent and what it needs from you.
-                </p>
-              </div>
-              <button
-                className="button button--primary"
-                onClick={() => onGo("products")}
-              >
-                Add a product
-              </button>
-            </div>
-          )}
+        <section className="card" aria-label="Your list">
+          <h2>Today</h2>
+          <Todos helper={helper} onTyping={noop} />
         </section>
-
         <aside className="home__side">
           {helper.upcoming.length > 0 && (
             <div className="card">
@@ -471,32 +254,6 @@ function HomePage({
               <Upcoming events={helper.upcoming} limit={4} />
             </div>
           )}
-          <div className="card">
-            <h2>Today</h2>
-            {helper.todos.length === 0 ? (
-              <p className="setup__hint">Nothing on the list.</p>
-            ) : (
-              <ul className="today">
-                {helper.todos.slice(0, 5).map((todo) => (
-                  <li key={todo.id} data-due={todo.dueState}>
-                    <input
-                      type="checkbox"
-                      aria-label={`Done: ${todo.title}`}
-                      onChange={() => {
-                        announceFed("helper");
-                        void setTodoDone(todo.id, true);
-                      }}
-                    />
-                    <span>{todo.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="card">
-            <h2>This week</h2>
-            <Tokens helper={helper} pets={pets} tips={[]} />
-          </div>
         </aside>
       </div>
     </>
