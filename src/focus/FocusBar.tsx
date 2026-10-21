@@ -1,20 +1,29 @@
 import { useEffect, useState } from "react";
 
 import { startFocus, stopFocus } from "../lib/bridge";
-import type { Focus } from "../lib/types";
+import type { Focus, Friends } from "../lib/types";
 import { left, LENGTHS, progress } from "./clock";
 
 /** Start a focus session, or watch the one going: the pet works with you, then calls a break. */
-export function FocusBar({ focus }: { focus: Focus | null }) {
+export function FocusBar({
+  focus,
+  friends,
+}: {
+  focus: Focus | null;
+  friends: Friends | null;
+}) {
   const [minutes, setMinutes] = useState(25);
   const [task, setTask] = useState("");
   const [now, setNow] = useState(Date.now);
 
+  const ticking =
+    focus !== null ||
+    (friends?.friends ?? []).some((friend) => friend.presence === "focusing");
   useEffect(() => {
-    if (!focus) return;
+    if (!ticking) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
-  }, [focus]);
+  }, [ticking]);
 
   if (focus) {
     const resting = focus.phase === "break";
@@ -42,7 +51,9 @@ export function FocusBar({ focus }: { focus: Focus | null }) {
             {resting
               ? "Break: stand up, stretch, look far away"
               : focus.task
-                ? `Focusing on ${focus.task}`
+                ? focus.task.startsWith("with ")
+                  ? `Focusing ${focus.task}`
+                  : `Focusing on ${focus.task}`
                 : "Focusing"}
           </span>
         </span>
@@ -56,6 +67,70 @@ export function FocusBar({ focus }: { focus: Focus | null }) {
     );
   }
 
+  // Joining ends with the friend, so the table breaks together.
+  const studying = (friends?.friends ?? []).filter(
+    (friend) => friend.presence === "focusing" && friend.focusUntil,
+  );
+
+  return (
+    <>
+      {studying.map((friend) => (
+        <div key={friend.code} className="focus focus--join">
+          <span className="focus__text">
+            <strong>{friend.name} is studying</strong>
+            <span>
+              {left(
+                {
+                  phase: "focus",
+                  startedAt: new Date(now).toISOString(),
+                  endsAt: friend.focusUntil ?? "",
+                  focusMinutes: 0,
+                  task: null,
+                },
+                now,
+              )}{" "}
+              left. Pull up a chair?
+            </span>
+          </span>
+          <button
+            className="button button--primary"
+            onClick={() =>
+              void startFocus(
+                Math.max(
+                  1,
+                  Math.round(
+                    (Date.parse(friend.focusUntil ?? "") - Date.now()) / 60_000,
+                  ),
+                ),
+                `with ${friend.name}`,
+              )
+            }
+          >
+            Join {friend.name}
+          </button>
+        </div>
+      ))}
+      <FocusForm
+        minutes={minutes}
+        setMinutes={setMinutes}
+        task={task}
+        setTask={setTask}
+      />
+    </>
+  );
+}
+
+function FocusForm({
+  minutes,
+  setMinutes,
+  task,
+  setTask,
+}: {
+  minutes: number;
+  setMinutes: (minutes: number) => void;
+  task: string;
+  setTask: (task: string) => void;
+}) {
   return (
     <form
       className="focus"

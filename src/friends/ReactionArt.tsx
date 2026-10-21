@@ -41,6 +41,20 @@ export function ReactionArt({ kind }: { kind: Reaction }) {
           </g>
         </>
       )}
+      {kind === "study" && (
+        // A little open book with a bookmark, held up like a seat being saved.
+        <g className="reaction__pop">
+          <path
+            d="M78 70l14 4 14-4v18l-14 4-14-4z"
+            fill="#fff8ef"
+            stroke="#c9b29a"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path d="M92 74v18" stroke="#c9b29a" strokeWidth="2" />
+          <path d="M98 72v10l3-2 3 2V71" fill="#ff9fb5" />
+        </g>
+      )}
       {kind === "tea" && (
         <g className="reaction__pop">
           <ellipse cx="98" cy="92" rx="18" ry="4" fill="#e9dccb" />

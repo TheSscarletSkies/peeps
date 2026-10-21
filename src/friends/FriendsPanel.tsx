@@ -29,6 +29,16 @@ const REACTIONS: { id: Reaction; label: string; icon: JSX.Element }[] = [
     ),
   },
   {
+    id: "study",
+    label: "Save them a seat to study",
+    icon: (
+      <>
+        <path d="M3 5.5l7 2 7-2v9l-7 2-7-2z" />
+        <path d="M10 7.5v9" strokeWidth="1.2" stroke="var(--surface)" />
+      </>
+    ),
+  },
+  {
     id: "tea",
     label: "Tea break?",
     icon: (

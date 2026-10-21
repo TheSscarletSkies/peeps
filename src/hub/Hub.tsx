@@ -2,15 +2,14 @@ import { useCallback, useState, type ReactNode } from "react";
 
 import { FocusBar } from "../focus/FocusBar";
 import { FriendsPanel } from "../friends/FriendsPanel";
+import { StudyTable } from "../friends/StudyTable";
 import { useReactions } from "../friends/useReactions";
-import { moodWith } from "../focus/clock";
 import { Todos } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
 import { Chat } from "../helper/Chat";
 import { Upcoming } from "../helper/Upcoming";
 import { Boundary } from "../lib/Boundary";
 import type { Snapshot } from "../lib/types";
-import { LivePet } from "../life/LivePet";
 import { usePrefs } from "../life/prefs";
 import { boop, setSoundEnabled, soundEnabled } from "../life/sound";
 import { Nudges } from "../nudges/Nudges";
@@ -248,23 +247,15 @@ function TodayPage({
           <h1>{greeting(new Date().getHours())}</h1>
           <p>{summary}</p>
         </div>
-        <div className="hero__steamer" style={{ width: 200 }}>
-          <div className="hero__pets">
-            <LivePet
-              dropId="helper"
-              kind={helper.kind}
-              color={helper.color}
-              mood={moodWith(helper.mood, snapshot.focus)}
-              heat={0}
-              size={96}
-              chatty
-            />
-          </div>
-          <div className="hero__basket" />
-        </div>
+        <StudyTable
+          helper={helper}
+          focus={snapshot.focus}
+          friends={snapshot.friends}
+          you={snapshot.friends?.name || "You"}
+        />
       </section>
 
-      <FocusBar focus={snapshot.focus} />
+      <FocusBar focus={snapshot.focus} friends={snapshot.friends} />
 
       <GettingStarted snapshot={snapshot} onGo={onGo} />
 

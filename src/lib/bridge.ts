@@ -858,7 +858,11 @@ export function onReaction(
     return listen<ReactionEvent>("reaction", (event) => handler(event.payload));
   const kind = new URLSearchParams(window.location.search).get("reaction");
   const timer =
-    kind === "heart" || kind === "poke" || kind === "bonk" || kind === "tea"
+    kind === "heart" ||
+    kind === "poke" ||
+    kind === "bonk" ||
+    kind === "tea" ||
+    kind === "study"
       ? window.setTimeout(
           () => handler({ from: "Sara", reaction: kind, line: "" }),
           600,

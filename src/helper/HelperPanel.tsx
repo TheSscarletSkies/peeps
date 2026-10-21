@@ -111,7 +111,7 @@ export function HelperPanel({
       {tab === "chat" && (
         <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
       )}
-      {tab === "today" && <FocusBar focus={focus} />}
+      {tab === "today" && <FocusBar focus={focus} friends={friends} />}
       {tab === "today" && <Upcoming events={helper.upcoming} limit={3} />}
       {tab === "today" && <Todos helper={helper} onTyping={onTyping} />}
       {tab === "friends" && (

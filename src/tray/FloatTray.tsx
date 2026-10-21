@@ -215,7 +215,10 @@ export function FloatTray({
           onClick={() => setOpenId(company[0]?.id ?? HELPER)}
         >
           {company.map((resident) => (
-            <span key={resident.id}>{resident.pet(22)}</span>
+            <span key={resident.id} className="float__mate">
+              {resident.pet(24)}
+              <span className="float__tag">{resident.name}</span>
+            </span>
           ))}
         </button>
       )}

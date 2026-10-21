@@ -134,3 +134,15 @@ test("UC24: one thing at a time is off until switched on", async ({ page }) => {
   await guard.click();
   await expect(guard).toHaveAttribute("aria-checked", "true");
 });
+
+test("UC26: friends studying sit at the table and can be joined", async ({
+  page,
+}) => {
+  await expect(page.locator(".hero .seat__tag")).toHaveText([
+    "Mariyam",
+    "Sara",
+  ]);
+  await page.getByRole("button", { name: "Join Sara" }).click();
+  const session = page.getByRole("region", { name: "Focus session" });
+  await expect(session).toContainText("Focusing with Sara");
+});

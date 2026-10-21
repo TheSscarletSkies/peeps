@@ -3035,3 +3035,33 @@ li[data-presence="focusing"] .friends__who {
 .hub .focus {
   margin: 16px 0;
 }
+
+.focus--join {
+  background: color-mix(in srgb, #8fd9b0 14%, var(--surface));
+}
+
+.focus + .focus {
+  margin-top: 8px;
+}
+
+.float__mate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.float__tag {
+  max-width: 34px;
+  margin-top: -3px;
+  padding: 0 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff8ef;
+  color: #5a3a2a;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

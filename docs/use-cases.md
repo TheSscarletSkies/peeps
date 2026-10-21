@@ -100,6 +100,13 @@ Tested by `e2e/float.e2e.ts`, `src/life/float.test.ts`.
 
 Tested by `e2e/helper.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/friends.rs`.
 
+### UC26. Study together
+
+**When** Sara starts a focus session.
+**Then** her peep pulls up a chair at their table on Today, next to theirs, each with a little name tag; more friends make more seats. "Sara is studying, 18:00 left. Pull up a chair?" with Join starts their own session ending when hers does, so they break together. Saving someone a seat (the open book) invites them.
+
+Tested by `e2e/hub.e2e.ts`.
+
 ## Getting going
 
 ### UC14. Set up in a minute

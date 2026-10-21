@@ -30,6 +30,8 @@ pub enum Reaction {
     Bonk,
     /// A teacup: time for a break together?
     Tea,
+    /// An open book: come sit at my table and study.
+    Study,
 }
 
 impl Reaction {
@@ -39,6 +41,7 @@ impl Reaction {
             Self::Poke => format!("{from} poked you with chopsticks: you got this"),
             Self::Bonk => format!("{from} bonked you with a rolling pin"),
             Self::Tea => format!("{from} is making tea. Break together?"),
+            Self::Study => format!("{from} saved you a seat. Study together?"),
         }
     }
 }

@@ -378,7 +378,7 @@ export interface Focus {
   task: string | null;
 }
 
-export type Reaction = "heart" | "poke" | "bonk" | "tea";
+export type Reaction = "heart" | "poke" | "bonk" | "tea" | "study";
 
 export interface FriendView {
   code: string;
