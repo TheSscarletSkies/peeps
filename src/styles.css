@@ -431,8 +431,8 @@ body,
 }
 
 .chip--on {
-  background: var(--text);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .swatch {
@@ -878,9 +878,9 @@ body,
 }
 
 .chip--on {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Opens the folder picker, but reads as the field it fills in. */
@@ -940,8 +940,16 @@ body,
   border-radius: 0 0 14px 14px;
 }
 
+/* A glow of the open pet's colour under the notch, so each card feels like that pet's own. */
 .notch--open {
   border-radius: 0 0 26px 26px;
+  background:
+    radial-gradient(
+      ellipse 60% 180px at 50% var(--strip),
+      color-mix(in oklch, var(--pet, var(--accent)) 24%, transparent),
+      transparent
+    ),
+    #000;
 }
 
 .notch__strip {
@@ -1104,6 +1112,7 @@ body,
 }
 
 .notch__card {
+  position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1118,6 +1127,7 @@ body,
   display: flex;
   justify-content: flex-end;
   margin-bottom: -30px;
+  padding-right: 36px;
 }
 
 :is(.notch__card, .float__panel) .tray__link {
@@ -1239,8 +1249,15 @@ body,
   overflow-y: auto;
   padding: 14px 16px 16px;
   border-radius: var(--r-card);
-  background: #0b0b0c;
-  box-shadow: inset 0 0 0 1px #232326;
+  background:
+    radial-gradient(
+      ellipse 80% 160px at 50% 0,
+      color-mix(in oklch, var(--pet, var(--accent)) 26%, transparent),
+      transparent
+    ),
+    #0b0b0c;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--pet, var(--accent)) 28%, #232326);
   animation: drop 0.2s ease-out;
 }
 
@@ -1256,6 +1273,7 @@ body,
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  padding-right: 34px;
 }
 
 .float__chip {
@@ -1595,10 +1613,10 @@ body,
   font-weight: 600;
 }
 
+/* The pet speaks in a light pastel of its own colour: a dark tint of peach only turns brown. */
 .chat__message[data-from="helper"] p {
-  background: color-mix(in srgb, var(--pet, var(--accent)) 28%, var(--field));
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--pet, var(--accent)) 30%, transparent);
+  background: color-mix(in oklch, var(--pet, var(--accent)) 65%, #fffaf6);
+  color: #2a1d16;
 }
 
 .chat__dots {
@@ -2467,4 +2485,37 @@ body,
   overflow-x: auto;
   font-size: 13px;
   white-space: nowrap;
+}
+
+/* A clear way out of a card, beside the pet's name. */
+.card__close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.card__close:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+}
+
+.card__close svg {
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.chat__message[data-from="helper"] code {
+  background: rgba(42, 29, 22, 0.1);
 }

@@ -76,3 +76,10 @@ test("UC10: a daily habit done today waits for tomorrow", async ({ page }) => {
   await expect(stretch).toBeDisabled();
   await expect(page.getByText(/Done today · 6 in a row/)).toBeVisible();
 });
+
+test("UC9: the card closes with its × button", async ({ page }) => {
+  const card = page.locator(".notch__card");
+  await expect(card).toBeVisible();
+  await card.getByRole("button", { name: "Close" }).click();
+  await expect(card).toHaveCount(0);
+});
