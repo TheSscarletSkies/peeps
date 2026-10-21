@@ -86,3 +86,15 @@ test("UC16: devices can share a sync folder without an account", async ({
     page.getByText("Calendar links and passwords stay"),
   ).toBeVisible();
 });
+
+test("UC14: without Claude Code, one click installs it", async ({ page }) => {
+  await page.goto("/?view=home&claude=missing");
+  await page.getByRole("button", { name: /^Products/ }).click();
+  await expect(page.getByText(/It isn't on this computer yet/)).toBeVisible();
+  await page.getByRole("button", { name: "Install Claude Code" }).click();
+  await expect(page.getByText(/A window opened/)).toBeVisible();
+  await page.getByText("Or paste this into a terminal yourself").click();
+  await expect(page.locator(".install__command code")).toHaveText(
+    "curl -fsSL https://claude.ai/install.sh | bash",
+  );
+});

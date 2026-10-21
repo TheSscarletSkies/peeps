@@ -103,7 +103,7 @@ Tested by `e2e/helper.e2e.ts`, `crates/core/src/chat.rs`.
 ### UC22. The helper gets to know you
 
 **When** they open peeps for the first time.
-**Then** the helper offers "Get to know me" and asks a few short questions, one or two at a time, saving the answers to an About me page (who they are, what they're building, how they like things done). Every conversation, with the helper, a product's pet or a teammate, reads that page, and the agent adds to it when they mention something lasting. They can edit it on the Ask page. Until setup is done, a notification once a day says what's left: connect Claude Code, tell the helper about you, add a product. If Claude Code isn't installed or can't be found, the setup screen and the chat say so plainly.
+**Then** the helper offers "Get to know me" and asks a few short questions, one or two at a time, saving the answers to an About me page (who they are, what they're building, how they like things done). Every conversation, with the helper, a product's pet or a teammate, reads that page, and the agent adds to it when they mention something lasting. They can edit it on the Ask page. Until setup is done, a notification once a day says what's left: connect Claude Code, tell the helper about you, add a product. If Claude Code isn't installed, the Products page offers Install Claude Code: one click opens a terminal that runs Anthropic's installer and then starts Claude to sign in, and the step turns Connected by itself once it's done. The command is there to copy as well, with a note to use PowerShell on Windows.
 
 Tested by `crates/core/src/profile.rs`, `crates/core/src/setup.rs`, `crates/core/src/programs.rs`, `src/hub/setupSteps.test.ts`.
 

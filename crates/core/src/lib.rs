@@ -8,6 +8,7 @@ pub mod config_edit;
 pub mod drafts;
 pub mod helper;
 pub mod hooks_install;
+pub mod install;
 pub mod ipc;
 pub mod mail;
 pub mod mcp;

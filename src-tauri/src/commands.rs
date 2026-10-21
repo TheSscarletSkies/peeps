@@ -350,6 +350,8 @@ pub struct HooksStatus {
     command: String,
     /// Where the helper's agent was found, or None when peeps can't see it.
     agent: Option<PathBuf>,
+    /// What to paste in a terminal to install Claude Code here, if the button can't.
+    install_command: &'static str,
 }
 
 /// Claude Code is hooked up and its program can be found, so pets and chats both work.
@@ -377,6 +379,7 @@ pub fn hooks_status() -> Result<HooksStatus> {
         settings_path: paths::claude_settings_file(),
         command,
         agent: hook_agent(),
+        install_command: peeps_core::install::command(peeps_core::install::Os::current()),
     })
 }
 
@@ -810,4 +813,48 @@ pub fn write_profile(app: State<'_, Arc<App>>, text: String) -> Result<()> {
     peeps_core::profile::write(&paths::config_file(), &text).map_err(message)?;
     app.publish();
     Ok(())
+}
+
+/// Opens a terminal that installs Claude Code with Anthropic's installer and then starts it, so
+/// the person signs in there. Nothing runs hidden: they see every step.
+#[tauri::command]
+pub fn install_claude() -> Result<()> {
+    use peeps_core::install::{self, Os};
+    let os = Os::current();
+    let script = install::script(os);
+    let mut command = match os {
+        Os::Windows => {
+            let mut command = std::process::Command::new("powershell");
+            command.args([
+                "-NoExit",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                &script,
+            ]);
+            #[cfg(windows)]
+            {
+                use std::os::windows::process::CommandExt;
+                // A console of its own; from a windowed app there is none to share.
+                const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+                command.creation_flags(CREATE_NEW_CONSOLE);
+            }
+            command
+        }
+        Os::Mac => {
+            let mut command = std::process::Command::new("osascript");
+            command.args(["-e", &install::mac_terminal(&script)]);
+            command
+        }
+        Os::Linux => {
+            let mut command = std::process::Command::new("x-terminal-emulator");
+            command.args(["-e", "bash", "-c", &format!("{script}; exec bash")]);
+            command
+        }
+    };
+    command
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| format!("couldn't open a terminal: {error}"))
 }

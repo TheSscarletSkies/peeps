@@ -2438,3 +2438,33 @@ body,
 .float__pets[data-hidden] {
   display: none;
 }
+
+.install {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.install__manual summary {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.install__command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 6px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--r-control);
+  background: var(--field);
+}
+
+.install__command code {
+  flex: 1;
+  overflow-x: auto;
+  font-size: 13px;
+  white-space: nowrap;
+}

@@ -76,6 +76,8 @@ export interface HooksStatus {
   command: string;
   /** Where Claude Code was found; null when peeps can't see it on this computer. */
   agent: string | null;
+  /** What to paste in a terminal to install Claude Code, if the button can't open one. */
+  installCommand: string;
 }
 
 const demoHooks: HooksStatus = {
@@ -83,18 +85,28 @@ const demoHooks: HooksStatus = {
   settingsPath: "~/.claude/settings.json",
   command: "peeps-hook",
   agent: "/usr/local/bin/claude",
+  installCommand: "curl -fsSL https://claude.ai/install.sh | bash",
 };
 
+/** The preview shows a computer without Claude Code with `?claude=missing`. */
 export function hooksStatus(): Promise<HooksStatus> {
-  return inApp()
-    ? invoke<HooksStatus>("hooks_status")
-    : Promise.resolve(demoHooks);
+  if (inApp()) return invoke<HooksStatus>("hooks_status");
+  const missing =
+    new URLSearchParams(window.location.search).get("claude") === "missing";
+  return Promise.resolve(missing ? { ...demoHooks, agent: null } : demoHooks);
 }
 
 export function installHooks(): Promise<HooksStatus> {
   return inApp()
     ? invoke<HooksStatus>("install_hooks")
     : Promise.resolve({ ...demoHooks, installed: true });
+}
+
+/** Opens a terminal that installs Claude Code and then starts it, to sign in. */
+export function installClaude(): Promise<void> {
+  return inApp()
+    ? invoke("install_claude").then(() => undefined)
+    : Promise.resolve();
 }
 
 export function uninstallHooks(): Promise<HooksStatus> {

@@ -69,6 +69,7 @@ pub fn run() {
             commands::run_teammate,
             commands::suggest_team,
             commands::read_profile,
+            commands::install_claude,
             commands::write_profile,
             commands::set_sync_folder,
             commands::add_product_path,

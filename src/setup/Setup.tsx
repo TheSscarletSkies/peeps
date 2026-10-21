@@ -4,6 +4,7 @@ import {
   addProduct,
   addProductPath,
   hooksStatus,
+  installClaude,
   installHooks,
   pickFolder,
   removeProduct,
@@ -32,9 +33,23 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
   const [hooks, setHooks] = useState<HooksStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [installing, setInstalling] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const missing = hooks !== null && hooks.agent === null;
+
   useEffect(() => {
     hooksStatus().then(setHooks, (reason) => setError(String(reason)));
   }, []);
+
+  // While Claude Code is missing, keep looking, so the step turns Connected the moment the
+  // installer finishes without anyone pressing anything.
+  useEffect(() => {
+    if (!missing) return;
+    const timer = window.setInterval(() => {
+      void hooksStatus().then(setHooks);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [missing]);
 
   const run = async (action: () => Promise<unknown>): Promise<boolean> => {
     setError(null);
@@ -61,18 +76,49 @@ export function Setup({ snapshot, onDone, onTyping }: Props) {
           So pets know when an agent starts, finishes or asks for permission.
         </span>
         {hooks && !hooks.agent ? (
-          <div className="setup__row">
-            <span className="tray__error">
-              peeps can't find Claude Code on this computer. Install it from
-              claude.com/claude-code, open a terminal and run{" "}
-              <code>claude</code> once, then check again.
-            </span>
-            <button
-              className="button"
-              onClick={() => run(async () => setHooks(await hooksStatus()))}
-            >
-              Check again
-            </button>
+          <div className="install">
+            <p className="setup__hint">
+              peeps works through Claude Code, which comes with your Claude
+              account. It isn't on this computer yet.
+            </p>
+            <div className="setup__row">
+              <span className="setup__hint">
+                {installing
+                  ? "A window opened: let it finish, sign in there, then come back. This turns Connected by itself."
+                  : "One click opens a window that installs it, then asks you to sign in."}
+              </span>
+              <button
+                className="button button--primary"
+                onClick={() =>
+                  void run(async () => {
+                    await installClaude();
+                    setInstalling(true);
+                  })
+                }
+              >
+                {installing ? "Open it again" : "Install Claude Code"}
+              </button>
+            </div>
+            <details className="install__manual">
+              <summary>Or paste this into a terminal yourself</summary>
+              <div className="install__command">
+                <code>{hooks.installCommand}</code>
+                <button
+                  className="button button--small"
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText(hooks.installCommand)
+                      .then(() => setCopied(true))
+                  }
+                >
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="setup__hint">
+                On Windows, paste it into PowerShell (not Command Prompt). Then
+                open a new window and run <code>claude</code> once to sign in.
+              </p>
+            </details>
           </div>
         ) : hooks?.installed ? (
           <div className="setup__row">
