@@ -90,6 +90,7 @@ pub fn run_in(
         ),
     })?;
     let mut process = Command::new(found);
+    crate::programs::quietly(&mut process);
     if let Some(path) = crate::programs::path_for_children() {
         process.env("PATH", path);
     }

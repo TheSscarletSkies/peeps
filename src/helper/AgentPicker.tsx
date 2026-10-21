@@ -67,6 +67,13 @@ export function AgentPicker({
             Until you pick, I use your own Claude settings.
           </p>
         </div>
+        <button
+          className="tray__link agent-picker__back"
+          onClick={onDone}
+          aria-label="Back to the chat"
+        >
+          Back
+        </button>
       </header>
 
       <div className="agent-picker__row">

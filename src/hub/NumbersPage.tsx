@@ -9,6 +9,7 @@ import {
   setYoutubeKey,
 } from "../lib/bridge";
 import { Info } from "../lib/Info";
+import { NumbersStrip } from "../numbers/NumbersStrip";
 import { Select } from "../lib/Select";
 import type { Snapshot } from "../lib/types";
 import {
@@ -93,6 +94,15 @@ export function NumbersPage({ snapshot }: { snapshot: Snapshot }) {
                 ].join(" · ")}
               </span>
             </div>
+            <details className="ledger__manual">
+              <summary>Log by hand</summary>
+              <NumbersStrip
+                productId={product.productId}
+                name={nameOf(product.productId)}
+                numbers={product}
+                logging
+              />
+            </details>
             {product.recent.length > 0 && (
               <ul
                 className="calendars"
@@ -138,9 +148,10 @@ export function NumbersPage({ snapshot }: { snapshot: Snapshot }) {
           </div>
         ))}
         <p className="setup__hint">
-          Log a bank transfer or a TikTok or Instagram post from any product's
-          card, or tell {snapshot.helper.name} “Funderly got $49 from Green
-          Hope”.
+          Teammates keep these up to date for you: when your Claude can reach
+          PayPal, Stripe or Supabase through a connector, they log new payments
+          and sign-ups themselves. PayPal and YouTube below also come in on
+          their own. Log by hand only for things like a bank transfer.
         </p>
       </section>
 

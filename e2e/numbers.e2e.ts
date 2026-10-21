@@ -9,11 +9,16 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("UC20: a payment logged on a card shows up in its week", async ({
+test("UC20: a bank transfer logged by hand shows up in its week", async ({
   page,
 }) => {
+  await expect(page.getByLabel("Funderly this week").first()).toContainText(
+    "$147 · 3 payments",
+  );
+  await expect(page.getByRole("button", { name: "+ Payment" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Numbers/ }).click();
+  await page.getByText("Log by hand").first().click();
   const funderly = page.getByLabel("Funderly this week").first();
-  await expect(funderly).toContainText("$147 · 3 payments");
   await funderly.getByRole("button", { name: "+ Payment" }).click();
   await funderly.getByLabel("Amount").fill("49");
   await funderly.getByLabel("From").fill("Green Hope, bank transfer");
@@ -23,6 +28,8 @@ test("UC20: a payment logged on a card shows up in its week", async ({
 });
 
 test("UC20: one tap marks a TikTok or Instagram post", async ({ page }) => {
+  await page.getByRole("button", { name: /^Numbers/ }).click();
+  await page.getByText("Log by hand").nth(1).click();
   const enigma = page.getByLabel("Enigma Archives this week").first();
   await expect(enigma).toContainText("3 posts");
   await enigma.getByRole("button", { name: "Posted" }).click();
@@ -32,8 +39,6 @@ test("UC20: one tap marks a TikTok or Instagram post", async ({ page }) => {
     .click();
   await expect(enigma.getByRole("status")).toHaveText("TikTok post logged");
   await expect(enigma).toContainText("4 posts · last just now");
-  const kaiveni = page.getByLabel("Kaiveni Hiya this week").first();
-  await expect(kaiveni).toHaveText(/Nothing logged this week/);
 });
 
 test("UC20: the Numbers page shows sources and entries", async ({ page }) => {

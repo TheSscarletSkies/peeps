@@ -35,7 +35,7 @@ struct ScriptOutput {
 impl ScriptCheck {
     pub(crate) fn run(&self) -> Result<Finding, CheckError> {
         let command = crate::paths::expand_home(&self.command);
-        let mut child = Command::new(command)
+        let mut child = crate::programs::quietly(&mut Command::new(command))
             .args(&self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

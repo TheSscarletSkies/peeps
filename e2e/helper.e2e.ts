@@ -83,3 +83,19 @@ test("UC9: the card closes with its × button", async ({ page }) => {
   await card.getByRole("button", { name: "Close" }).click();
   await expect(card).toHaveCount(0);
 });
+
+test("UC9: the model picker has a way back", async ({ page }) => {
+  await page.getByTitle("Change model and effort").click();
+  const picker = page.getByRole("region", { name: "Choose a model" });
+  await picker.getByRole("button", { name: "Back to the chat" }).click();
+  await expect(picker).toHaveCount(0);
+  await expect(page.getByLabel("Message Helper")).toBeVisible();
+});
+
+test("UC8: pat the pet at the top of its card and it answers", async ({
+  page,
+}) => {
+  await page.locator(".panel__head--pet .live-pet").click();
+  await expect(page.locator(".pet-say")).toBeVisible();
+  await expect(page.locator(".panel__head--pet .dumpling--love")).toBeVisible();
+});

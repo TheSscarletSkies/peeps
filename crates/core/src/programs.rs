@@ -84,6 +84,18 @@ pub fn find(program: &str) -> Option<PathBuf> {
     find_in(program, &search_dirs(), cfg!(windows))
 }
 
+/// Runs a program without a window of its own. A windowed app on Windows would otherwise flash
+/// an empty console for every agent or script it starts.
+pub fn quietly(command: &mut std::process::Command) -> &mut std::process::Command {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    command
+}
+
 /// The PATH to hand a program we start, so tools it runs in turn, such as `node`, are found too.
 pub fn path_for_children() -> Option<OsString> {
     std::env::join_paths(search_dirs()).ok()

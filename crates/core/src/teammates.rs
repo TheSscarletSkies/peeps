@@ -43,7 +43,9 @@ pub const ROLES: [Role; 6] = [
                    1. Check product_numbers and peeps_overview for new sign-ups, payments and anything stuck.\n\
                    2. Draft the emails that should go out today with draft_email, one per person.\n\
                    3. Check waiting_replies and draft a gentle follow-up for anyone quiet for 4 days.\n\
-                   4. Add a to-do for anything only the founder can do, like a call.\n\n\
+                   4. Add a to-do for anything only the founder can do, like a call.\n\
+                   5. If a connector reaches payments or sign-ups (PayPal, Stripe, Supabase), log new \
+                   payments with log_payment so the numbers stay current without anyone typing them.\n\n\
                    ## Rules\n\n- Short, warm, specific. No discounts unless the brief says so.\n",
     },
     Role {
@@ -99,7 +101,9 @@ pub const ROLES: [Role; 6] = [
         time: "16:00",
         playbook: "## What I own\n\nKnowing what is working.\n\n\
                    ## Each shift\n\n\
-                   1. Compare the last 7 and 30 days with product_numbers.\n\
+                   1. Pull anything new from connected tools (payments, sign-ups, views) and log it \
+                   with log_payment or log_post, then compare the last 7 and 30 days with \
+                   product_numbers.\n\
                    2. Say what moved and the likeliest reason, in three lines.\n\
                    3. Name one experiment for next week and add it as a to-do.\n\
                    4. List any number that is missing and how to get it.\n",

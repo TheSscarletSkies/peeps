@@ -1151,3 +1151,14 @@ li[data-done] .started__check {
 .nav__group:first-child {
   margin-top: 0;
 }
+
+.ledger__manual summary {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ledger__manual[open] summary {
+  margin-bottom: 8px;
+}

@@ -2604,3 +2604,55 @@ body,
   color: var(--muted);
   font-size: 13px;
 }
+
+/* Hidden while the floating window moves, then faded back in. */
+.float {
+  transition: opacity 0.12s ease-out;
+}
+
+.float[data-settling] {
+  opacity: 0;
+  transition: none;
+}
+
+.agent-picker__back {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+/* The pet at the top of its own card: pat it, feed it, watch it react. */
+.panel__head--pet {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding-right: 36px;
+}
+
+.panel__head--pet .live-pet {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.panel__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pet-say {
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: 50%;
+  z-index: 3;
+  padding: 4px 10px;
+  border-radius: 12px 12px 12px 4px;
+  background: #fffaf6;
+  color: #2a1d16;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bubble-in 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+  transform-origin: 0 100%;
+}

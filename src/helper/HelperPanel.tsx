@@ -12,6 +12,7 @@ import {
 } from "../lib/bridge";
 import { hasFiles } from "../life/drops";
 import { announceFed } from "../life/events";
+import { LivePet } from "../life/LivePet";
 import { Select } from "../lib/Select";
 import { Outbox } from "../mail/Outbox";
 import type {
@@ -75,9 +76,20 @@ export function HelperPanel({
 
   return (
     <section className="panel" aria-label={helper.name}>
-      <header className="panel__head">
-        <span className="panel__name">{helper.name}</span>
-        <span className="panel__headline">{helper.headline}</span>
+      <header className="panel__head panel__head--pet">
+        <LivePet
+          dropId="helper"
+          kind={helper.kind}
+          color={helper.color}
+          mood={helper.mood}
+          heat={0}
+          size={52}
+          chatty
+        />
+        <span className="panel__who">
+          <span className="panel__name">{helper.name}</span>
+          <span className="panel__headline">{helper.headline}</span>
+        </span>
       </header>
       <div className="tabs" role="tablist" aria-label="Helper">
         {tabs.map(([id, label]) => (

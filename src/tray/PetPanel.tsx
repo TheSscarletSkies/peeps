@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Attachments } from "../life/Attachments";
 import { useGivenFiles, withFiles } from "../life/drops";
 import { announceFed } from "../life/events";
+import { LivePet } from "../life/LivePet";
 import { addNote, decide } from "../lib/bridge";
 import { Select } from "../lib/Select";
 import type {
@@ -81,9 +82,20 @@ export function PetPanel({
 
   return (
     <section className="panel" aria-label={pet.name}>
-      <header className="panel__head">
-        <span className="panel__name">{pet.name}</span>
-        <span className="panel__headline">{pet.headline}</span>
+      <header className="panel__head panel__head--pet">
+        <LivePet
+          id={pet.id}
+          kind={pet.kind}
+          color={pet.color}
+          mood={pet.mood}
+          heat={pet.heat}
+          size={52}
+          chatty
+        />
+        <span className="panel__who">
+          <span className="panel__name">{pet.name}</span>
+          <span className="panel__headline">{pet.headline}</span>
+        </span>
       </header>
       <NumbersStrip productId={pet.id} name={pet.name} numbers={numbers} />
 

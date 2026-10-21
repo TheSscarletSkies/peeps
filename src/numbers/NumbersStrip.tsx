@@ -12,10 +12,13 @@ export function NumbersStrip({
   productId,
   name,
   numbers,
+  logging = false,
 }: {
   productId: string;
   name: string;
   numbers: ProductNumbers | undefined;
+  /** Shows the hand-logging buttons; teammates log through connectors, so cards leave them out. */
+  logging?: boolean;
 }) {
   const [open, setOpen] = useState<Open>("none");
   const [amount, setAmount] = useState("");
@@ -75,29 +78,31 @@ export function NumbersStrip({
           </>
         )}
       </div>
-      <div className="numbers__actions">
-        <button
-          type="button"
-          className="chip"
-          aria-expanded={open === "payment"}
-          onClick={() => toggle("payment")}
-        >
-          + Payment
-        </button>
-        <button
-          type="button"
-          className="chip"
-          aria-expanded={open === "post"}
-          onClick={() => toggle("post")}
-        >
-          Posted
-        </button>
-        {flash && (
-          <span className="numbers__flash" role="status">
-            {flash}
-          </span>
-        )}
-      </div>
+      {logging && (
+        <div className="numbers__actions">
+          <button
+            type="button"
+            className="chip"
+            aria-expanded={open === "payment"}
+            onClick={() => toggle("payment")}
+          >
+            + Payment
+          </button>
+          <button
+            type="button"
+            className="chip"
+            aria-expanded={open === "post"}
+            onClick={() => toggle("post")}
+          >
+            Posted
+          </button>
+          {flash && (
+            <span className="numbers__flash" role="status">
+              {flash}
+            </span>
+          )}
+        </div>
+      )}
       {open === "payment" && (
         <form
           className="numbers__form"

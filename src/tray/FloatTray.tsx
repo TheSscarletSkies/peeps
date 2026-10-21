@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { MOOD_LABEL } from "../hub/ProductCard";
 import { floatTray, openHome } from "../lib/bridge";
@@ -112,11 +112,21 @@ export function FloatTray({
   const waiting = residents.filter((resident) => resident.urgent).length;
   const rect = openRect(spot, panelHeight, area);
 
+  // Opening or closing moves and resizes the window, and the window and the page can't change
+  // in the same frame. Hiding the pet until the window is in place avoids a frame where it jumps.
+  const [settled, setSettled] = useState(true);
+  const wasOpen = useRef(open);
+  useLayoutEffect(() => {
+    if (wasOpen.current !== open) setSettled(false);
+    wasOpen.current = open;
+  }, [open]);
+
   useEffect(() => {
+    const show = () => requestAnimationFrame(() => setSettled(true));
     if (open && panelHeight > 0) {
-      void floatTray(rect.x, rect.y, rect.width, rect.height);
+      void floatTray(rect.x, rect.y, rect.width, rect.height).then(show);
     } else if (!open) {
-      void floatTray(spot.x, spot.y, BOX, BOX);
+      void floatTray(spot.x, spot.y, BOX, BOX).then(show);
     }
     // Moving while dragging is handled frame by frame below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,7 +144,11 @@ export function FloatTray({
   const side = open ? rect.side : "right";
 
   return (
-    <div className="float" data-side={side}>
+    <div
+      className="float"
+      data-side={side}
+      data-settling={settled ? undefined : true}
+    >
       <button
         className="float__pet"
         data-drop={HELPER}
