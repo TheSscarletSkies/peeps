@@ -1,6 +1,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 
 import { Todos, Tokens, Write } from "../helper/HelperPanel";
+import { AboutMe } from "../helper/AboutMe";
 import { Chat } from "../helper/Chat";
 import { Upcoming } from "../helper/Upcoming";
 import { setTodoDone } from "../lib/bridge";
@@ -190,8 +191,20 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               title={`Ask ${helper.name}`}
               lead="Talks to your own Claude, with your connectors. Anything it wants to do, it asks first."
             >
-              <div className="card ask">
-                <Chat helper={helper} onTyping={noop} />
+              <div className="ask-page">
+                <div className="card ask">
+                  <Chat
+                    helper={helper}
+                    knowsYou={snapshot.knowsYou}
+                    onTyping={noop}
+                  />
+                </div>
+                <details className="card about-me" open={!snapshot.knowsYou}>
+                  <summary>
+                    <h2>About me</h2>
+                  </summary>
+                  <AboutMe />
+                </details>
               </div>
             </Section>
           )}
@@ -214,7 +227,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           {page === "team" && (
             <Section
               title="Team"
-              lead="Teammates for each product, working on a rhythm from playbooks you write."
+              lead="AI helpers with one job each, like sales or content. They work on a schedule and leave you drafts to approve."
             >
               <TeamPage snapshot={snapshot} />
             </Section>

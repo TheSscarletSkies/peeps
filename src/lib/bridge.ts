@@ -73,12 +73,15 @@ export interface HooksStatus {
   installed: boolean;
   settingsPath: string;
   command: string;
+  /** Where Claude Code was found; null when peeps can't see it on this computer. */
+  agent: string | null;
 }
 
 const demoHooks: HooksStatus = {
   installed: false,
   settingsPath: "~/.claude/settings.json",
   command: "peeps-hook",
+  agent: "/usr/local/bin/claude",
 };
 
 export function hooksStatus(): Promise<HooksStatus> {
@@ -666,4 +669,26 @@ export function suggestTeam(product: string): Promise<string[]> {
       (role) => !taken.includes(role),
     ),
   );
+}
+
+let previewProfile =
+  "# About me\n\n## Who I am\n\n\n## What I'm working on\n\n\n## How I like things done\n\n\n## Things to remember\n\n";
+
+/** The user's About me page, which every conversation reads. */
+export function readProfile(): Promise<string> {
+  return inApp()
+    ? invoke<string>("read_profile")
+    : Promise.resolve(previewProfile);
+}
+
+export function writeProfile(text: string): Promise<void> {
+  if (inApp()) return invoke("write_profile", { text }).then(() => undefined);
+  previewProfile = text;
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    knowsYou: text
+      .split("\n")
+      .some((line) => line.trim() && !line.trim().startsWith("#")),
+  }));
+  return Promise.resolve();
 }

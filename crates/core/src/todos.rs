@@ -695,7 +695,8 @@ mod tests {
             ..input("Drink water")
         };
         let todo = store.add(&water, Utc::now()).unwrap();
-        let day = day("2026-10-20");
+        // Nudges start the day the to-do is added, so the check uses that day.
+        let day = Utc::now().with_timezone(&zone).date_naive();
         let hours: Vec<String> = todo
             .nudges_on(day, zone)
             .iter()

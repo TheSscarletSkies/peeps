@@ -82,7 +82,17 @@ pub fn run_in(
         .map(|arg| arg.replace(PROMPT_PLACEHOLDER, prompt))
         .collect();
 
-    let mut process = Command::new(crate::paths::expand_home(program));
+    let found = crate::programs::find(program).ok_or_else(|| DraftError::Spawn {
+        command: program.clone(),
+        source: std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "it isn't installed, or peeps can't see where it is",
+        ),
+    })?;
+    let mut process = Command::new(found);
+    if let Some(path) = crate::programs::path_for_children() {
+        process.env("PATH", path);
+    }
     if let Some(dir) = cwd {
         process.current_dir(dir);
     }

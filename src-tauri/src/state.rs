@@ -120,6 +120,8 @@ pub struct AppSnapshot {
     pub sync: SyncStatus,
     pub product_chats: Vec<ProductChat>,
     pub teammates: Vec<TeammateView>,
+    /// Whether the user has told peeps anything about themselves yet.
+    pub knows_you: bool,
     /// The roles a new teammate can start from.
     pub roles: Vec<peeps_core::teammates::Role>,
     pub mail: MailView,
@@ -509,6 +511,8 @@ impl App {
                 .collect()
         };
         let config_error = self.config_error();
+        let knows_you =
+            !peeps_core::profile::is_empty(&peeps_core::profile::read(&paths::config_file()));
         let world = self.world();
         let permission = world
             .permissions
@@ -567,6 +571,7 @@ impl App {
             product_chats,
             teammates,
             roles: peeps_core::teammates::ROLES.to_vec(),
+            knows_you,
             mail: MailView {
                 accounts: config
                     .mail

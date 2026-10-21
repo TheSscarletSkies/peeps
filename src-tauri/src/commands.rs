@@ -343,6 +343,24 @@ pub struct HooksStatus {
     installed: bool,
     settings_path: PathBuf,
     command: String,
+    /// Where the helper's agent was found, or None when peeps can't see it.
+    agent: Option<PathBuf>,
+}
+
+/// Claude Code is hooked up and its program can be found, so pets and chats both work.
+pub(crate) fn claude_ready() -> bool {
+    let installed = match (hook_command(), read_settings()) {
+        (Ok(command), Ok(settings)) => hooks_install::is_installed(&settings, &command),
+        _ => false,
+    };
+    installed && hook_agent().is_some()
+}
+
+fn hook_agent() -> Option<PathBuf> {
+    let config = Config::parse(&std::fs::read_to_string(paths::config_file()).unwrap_or_default())
+        .unwrap_or_default();
+    let program = config.helper.chat_command.first().cloned()?;
+    peeps_core::programs::find(&program)
 }
 
 #[tauri::command]
@@ -353,6 +371,7 @@ pub fn hooks_status() -> Result<HooksStatus> {
         installed: hooks_install::is_installed(&settings, &command),
         settings_path: paths::claude_settings_file(),
         command,
+        agent: hook_agent(),
     })
 }
 
@@ -774,4 +793,16 @@ pub fn suggest_team(app: State<'_, Arc<App>>, product: String) -> Result<Vec<Str
         .into_iter()
         .map(str::to_owned)
         .collect())
+}
+
+#[tauri::command]
+pub fn read_profile() -> String {
+    peeps_core::profile::read(&paths::config_file())
+}
+
+#[tauri::command]
+pub fn write_profile(app: State<'_, Arc<App>>, text: String) -> Result<()> {
+    peeps_core::profile::write(&paths::config_file(), &text).map_err(message)?;
+    app.publish();
+    Ok(())
 }

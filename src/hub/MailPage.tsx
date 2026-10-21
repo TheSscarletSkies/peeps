@@ -245,7 +245,7 @@ export function MailPage({ snapshot }: { snapshot: Snapshot }) {
               checked={alias}
               onChange={(event) => setAlias(event.target.checked)}
             />
-            This address lives inside another account
+            I send from this address inside another Gmail (“Send mail as”)
           </label>
           {alias && (
             <>
@@ -307,10 +307,10 @@ export function MailPage({ snapshot }: { snapshot: Snapshot }) {
           <details>
             <summary>A work address added to your Gmail</summary>
             <p>
-              If the address is set up under Gmail's “Send mail as”, tick “This
-              address lives inside another account” and enter the Gmail you sign
-              in with, then use that Gmail's app password. If it is its own
-              Google Workspace account, add it on its own.
+              If you open your personal Gmail and pick this address in the From
+              box, it's a “Send mail as” address. Tick the box above, enter the
+              Gmail you sign in to, and use that Gmail's app password. If the
+              address has its own Google login, add it on its own.
             </p>
           </details>
         </div>

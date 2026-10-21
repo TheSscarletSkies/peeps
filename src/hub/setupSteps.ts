@@ -1,6 +1,6 @@
 import type { Snapshot } from "../lib/types";
 
-export type Destination = "products" | "reminders" | "todo";
+export type Destination = "products" | "reminders" | "todo" | "ask";
 
 export interface Step {
   id: string;
@@ -22,6 +22,13 @@ export function gettingStarted(
       detail: "So pets know when an agent is working, stuck or asking.",
       done: hooksInstalled,
       go: "products",
+    },
+    {
+      id: "about",
+      title: "Tell your helper about you",
+      detail: "A few quick questions, so every answer fits you.",
+      done: snapshot.knowsYou,
+      go: "ask",
     },
     {
       id: "product",

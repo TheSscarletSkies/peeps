@@ -61,6 +61,9 @@ pub enum Call {
     ProductNumbers {
         product: String,
     },
+    Remember {
+        fact: String,
+    },
     SaveDraft {
         kind: String,
         topic: String,
@@ -196,6 +199,15 @@ pub fn definitions() -> Vec<Definition> {
             input_schema: json!({ "type": "object", "properties": {} }),
         },
         Definition {
+            name: "remember",
+            description: "Saves something lasting about the user to their About me page, such as their name, what they're building, a preference or a standing instruction. Every conversation in peeps reads that page.",
+            input_schema: json!({
+                "type": "object",
+                "properties": { "fact": { "type": "string", "description": "One short sentence, in the user's terms." } },
+                "required": ["fact"]
+            }),
+        },
+        Definition {
             name: "save_draft",
             description: "Keeps a finished post, script or caption in the user's Write tab, ready to copy and post. Nothing is published.",
             input_schema: json!({
@@ -245,6 +257,11 @@ pub fn definitions() -> Vec<Definition> {
             }),
         },
     ]
+}
+
+#[derive(Deserialize)]
+struct Fact {
+    fact: String,
 }
 
 #[derive(Deserialize)]
@@ -416,6 +433,13 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
             }
         }
         "waiting_replies" => Call::WaitingReplies,
+        "remember" => {
+            let fact = serde_json::from_value::<Fact>(args).map_err(bad)?.fact;
+            if fact.trim().is_empty() {
+                return Err("there is nothing to remember".into());
+            }
+            Call::Remember { fact }
+        }
         "save_draft" => {
             let draft: SaveDraftArgs = serde_json::from_value(args).map_err(bad)?;
             if draft.text.trim().is_empty() {
@@ -490,6 +514,7 @@ mod tests {
             ),
             ("waiting_replies", json!({})),
             ("product_numbers", json!({ "product": "funderly" })),
+            ("remember", json!({ "fact": "Prefers short replies" })),
             (
                 "save_draft",
                 json!({ "kind": "TikTok script", "topic": "Part 4", "text": "Hook…" }),

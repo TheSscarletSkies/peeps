@@ -55,7 +55,9 @@ test("UC19: the Mail page adds accounts, writes email and follows up", async ({
 
   await page.getByLabel("Email address").fill("hello@kaiveni.com");
   await page.getByLabel("Provider").selectOption("gmail");
-  await page.getByLabel("This address lives inside another account").check();
+  await page
+    .getByLabel(/I send from this address inside another Gmail/)
+    .check();
   await expect(
     page.getByRole("button", { name: "Add account" }),
   ).toBeDisabled();

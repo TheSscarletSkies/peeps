@@ -20,7 +20,7 @@ import { announceFed } from "../life/events";
 
 const KEY = "peeps.float";
 const DRAG_THRESHOLD = 4;
-const PET = 56;
+const PET = 80;
 
 function screenArea(): Area {
   const screen = window.screen as Screen & {

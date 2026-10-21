@@ -44,10 +44,18 @@ interface Props {
   pets: Pet[];
   tips: Tip[];
   mail: MailView;
+  knowsYou?: boolean;
   onTyping: (typing: boolean) => void;
 }
 
-export function HelperPanel({ helper, pets, tips, mail, onTyping }: Props) {
+export function HelperPanel({
+  helper,
+  pets,
+  tips,
+  mail,
+  knowsYou,
+  onTyping,
+}: Props) {
   const waiting = mail.outbox.length;
   // An email waiting for approval is usually why the helper was opened, unless a file was dropped on it.
   const [tab, setTab] = useState<Tab>(
@@ -83,7 +91,9 @@ export function HelperPanel({ helper, pets, tips, mail, onTyping }: Props) {
           </button>
         ))}
       </div>
-      {tab === "ask" && <Chat helper={helper} onTyping={onTyping} />}
+      {tab === "ask" && (
+        <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
+      )}
       {tab === "mail" && (
         <Outbox mail={mail} limit={1} emptyText="No emails waiting for you." />
       )}

@@ -82,6 +82,10 @@ pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message>
     let reply = match outcome {
         Ok(reply) => reply,
         // Failures show up in the conversation, where the user is already looking.
+        Err(error) if error.contains("can't see where it is") => "I can't find Claude Code on \
+            this computer. Install it from claude.com/claude-code (or open a terminal and run \
+            `claude` once to finish setting it up), then ask me again."
+            .to_owned(),
         Err(error) => format!("I couldn't reach your agent: {error}"),
     };
     let message = app
@@ -182,6 +186,8 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
         ),
         None => (context(app), Vec::new()),
     };
+    let about = peeps_core::profile::context(&peeps_core::profile::read(&paths::config_file()));
+    let context = format!("{about}\n\n{context}");
     let command = chat::with_dirs(&chat::command(&base, session.as_deref(), &context), &dirs);
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();

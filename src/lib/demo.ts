@@ -406,6 +406,7 @@ export const demoSnapshot: Snapshot = {
       playbook: "## What I own\n\n\n## Each shift\n\n1. \n",
     },
   ],
+  knowsYou: false,
   teammates: [
     {
       productId: "funderly",

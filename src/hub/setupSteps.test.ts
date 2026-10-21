@@ -8,6 +8,7 @@ describe("getting started", () => {
     const steps = gettingStarted(demoSnapshot, false);
     expect(steps.map((step) => [step.id, step.done])).toEqual([
       ["hooks", false],
+      ["about", false],
       ["product", true],
       ["calendar", true],
       ["todo", true],

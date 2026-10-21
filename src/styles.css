@@ -1172,8 +1172,8 @@ body,
   position: absolute;
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
+  width: 100px;
+  height: 100px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -1574,9 +1574,19 @@ body,
   justify-content: flex-end;
 }
 
+/* Bright, like a messaging app: the user's words in the accent, the pet's in a tint of its own
+   colour, so every conversation has some colour even with a pale pet. */
 .chat__message[data-from="you"] p {
   border-bottom-right-radius: 6px;
-  background: color-mix(in srgb, var(--pet, #ffc9a8) 26%, var(--surface));
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.chat__message[data-from="helper"] p {
+  background: color-mix(in srgb, var(--pet, var(--accent)) 28%, var(--field));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--pet, var(--accent)) 30%, transparent);
 }
 
 .chat__dots {
@@ -2239,4 +2249,14 @@ body,
 .team__picks strong {
   font-size: 13px;
   color: var(--text);
+}
+
+/* Feet stay tucked under a resting pet and come out to walk, or to kick when picked up. */
+.dumpling__feet--idle {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+:is(.roamer--walking, .roamer--held, .float__pet:active) .dumpling__feet--idle {
+  opacity: 1;
 }

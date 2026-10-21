@@ -43,3 +43,23 @@ pub async fn run(app: Arc<App>) {
         last = now;
     }
 }
+
+/// Once a day, a nudge about whatever setup is left, until there is none.
+pub async fn setup_nudge(app: Arc<App>) {
+    tokio::time::sleep(Duration::from_secs(20)).await;
+    let today = Local::now().date_naive().to_string();
+    let stamp = peeps_core::paths::data_dir().join("setup-nudge");
+    if std::fs::read_to_string(&stamp).is_ok_and(|day| day.trim() == today) {
+        return;
+    }
+    let snapshot = app.snapshot();
+    let left = peeps_core::setup::missing(
+        crate::commands::claude_ready(),
+        snapshot.knows_you,
+        snapshot.snapshot.pets.len(),
+    );
+    if let Some(text) = peeps_core::setup::nudge(&left) {
+        app.notify("A few steps left to set up peeps", &text);
+        let _ = std::fs::write(stamp, today);
+    }
+}

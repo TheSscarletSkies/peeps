@@ -26,7 +26,9 @@ export function GettingStarted({
   const [hidden, setHidden] = useState(dismissed);
 
   useEffect(() => {
-    void hooksStatus().then((status) => setHooks(status.installed));
+    void hooksStatus().then((status) =>
+      setHooks(status.installed && status.agent !== null),
+    );
   }, [snapshot]);
 
   const steps = gettingStarted(snapshot, hooks);

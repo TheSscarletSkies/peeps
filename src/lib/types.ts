@@ -217,6 +217,8 @@ export interface Snapshot {
   numbers: NumbersView;
   teammates: Teammate[];
   roles: Role[];
+  /** Whether the user has told peeps anything about themselves yet. */
+  knowsYou: boolean;
 }
 
 /** A starting point for a new teammate. */

@@ -161,6 +161,16 @@ fn run(app: &App, call: Call) -> Result<String> {
                 })
                 .collect())
         }
+        Call::Remember { fact } => {
+            let config_file = paths::config_file();
+            let updated = peeps_core::profile::remember(
+                &peeps_core::profile::read(&config_file),
+                Local::now().date_naive(),
+                &fact,
+            );
+            peeps_core::profile::write(&config_file, &updated).map_err(|e| e.to_string())?;
+            Ok("Saved to the user's About me page.".into())
+        }
         Call::SaveDraft { kind, topic, text } => {
             app.drafts()
                 .add(&kind, &topic, &text, Utc::now())

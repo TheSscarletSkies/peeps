@@ -15,11 +15,16 @@ const STARTERS = [
 ];
 
 /** Talks to the user's own agent through the helper. Tool requests come back here for a yes or no. */
+export const GET_TO_KNOW = "Get to know me";
+
 export function Chat({
   helper,
+  knowsYou = true,
   onTyping,
 }: {
   helper: Helper;
+  /** False until the user has told peeps about themselves; the helper offers to ask. */
+  knowsYou?: boolean;
   onTyping: (typing: boolean) => void;
 }) {
   return (
@@ -31,8 +36,12 @@ export function Chat({
       messages={helper.chat}
       chatting={helper.chatting}
       permission={helper.permission}
-      starters={STARTERS}
-      intro="Ask anything. I use your own Claude, with your connectors, and check with you before doing anything that leaves your computer."
+      starters={knowsYou ? STARTERS : [GET_TO_KNOW, ...STARTERS.slice(0, 2)]}
+      intro={
+        knowsYou
+          ? "Ask anything. I use your own Claude, with your connectors, and check with you before doing anything that leaves your computer."
+          : "Hi! I don't know you yet. Tap “Get to know me” and I'll ask a few quick questions, or just ask me anything."
+      }
       agent={helper}
       onTyping={onTyping}
     />
@@ -124,7 +133,7 @@ export function Conversation({
   };
 
   return (
-    <div className="chat">
+    <div className="chat" style={{ ["--pet" as string]: color }}>
       {messages.length === 0 ? (
         <div className="chat__empty">
           <p className="setup__hint">{intro}</p>

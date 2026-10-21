@@ -384,9 +384,9 @@ const LIMB_LINE = {
 };
 
 /** Stubby feet that stay on the ground while the body hops, and step when the pet walks. */
-function Feet({ fill }: { fill: string }) {
+function Feet({ fill, idle }: { fill: string; idle: boolean }) {
   return (
-    <g className="dumpling__feet">
+    <g className={`dumpling__feet${idle ? " dumpling__feet--idle" : ""}`}>
       {[46, 74].map((cx, index) => (
         <ellipse
           key={cx}
@@ -420,7 +420,7 @@ function HandShape({ hand, fill }: { hand: Hand; fill: string }) {
   );
 }
 
-/** What a pet holds: a pencil while working, a cup when calm, a sign when things broke, a heart. */
+/** What a pet holds: a pencil while working, a sign when things broke, a heart. */
 function Held({ prop, right }: { prop: Prop; right: Hand }) {
   switch (prop) {
     case "pencil":
@@ -437,22 +437,6 @@ function Held({ prop, right }: { prop: Prop; right: Hand }) {
             <path d="M-2 1l2 4.5 2-4.5z" fill="#F6DCC8" />
             <path d="M-0.7 4l0.7 1.5 0.7-1.5z" fill={EYE} />
           </g>
-        </g>
-      );
-    case "cup":
-      return (
-        <g>
-          <path
-            d="M68 74h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"
-            fill="#FFFFFF"
-            {...LIMB_LINE}
-          />
-          <path
-            d="M69.5 76h9"
-            stroke="#C98A5E"
-            strokeWidth={1.6}
-            strokeLinecap="round"
-          />
         </g>
       );
     case "sign":
@@ -570,9 +554,9 @@ export function Dumpling({
       </defs>
       <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
       <PropBehind mood={look} />
-      {!limbs.hidden && (
+      {!limbs.napping && (
         <g transform={stretch}>
-          <Feet fill={skin} />
+          <Feet fill={skin} idle={Boolean(limbs.hidden)} />
         </g>
       )}
       <g
@@ -582,7 +566,15 @@ export function Dumpling({
       >
         <g className="dumpling__body">
           <g transform={stretch}>
-            <path d={shape.body} fill={skin} />
+            {/* A soft outline keeps the pastel shape clear on white pages as well as dark ones. */}
+            <path
+              d={shape.body}
+              fill={skin}
+              stroke="#9C6A4E"
+              strokeOpacity={0.55}
+              strokeWidth={2.4}
+              strokeLinejoin="round"
+            />
             <path d={shape.body} fill={`url(#${id}shade)`} />
             <path d={shape.body} fill={`url(#${id}glow)`} />
             <ellipse

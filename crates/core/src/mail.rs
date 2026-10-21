@@ -389,7 +389,10 @@ fn open_inbox(
             .login(account.imap_login(), password)
             .map_err(|(error, _)| match error {
                 imap::Error::No(_) | imap::Error::Bad(_) => {
-                    "the address or app password was not accepted".to_owned()
+                    "the sign-in wasn't accepted. Use an app password, not your normal \
+                     password. If this address is a “Send mail as” address inside another \
+                     Gmail, tick that box and sign in with that Gmail"
+                        .to_owned()
                 }
                 other => other.to_string(),
             })?;

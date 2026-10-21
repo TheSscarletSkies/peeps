@@ -132,6 +132,7 @@ export function CardBody({
           pets={snapshot.pets}
           tips={snapshot.tips}
           mail={snapshot.mail}
+          knowsYou={snapshot.knowsYou}
           onTyping={noop}
         />
       )}

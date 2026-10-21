@@ -58,8 +58,9 @@ export function SuggestedTeam({
       aria-label={`Suggested team for ${pet.name}`}
     >
       <p className="setup__hint">
-        Suggested for {pet.name}, from its brief, checks and numbers. They work
-        through your own Claude and only draft; you approve everything.
+        Teammates are AI helpers with one job each. They work on their own
+        schedule and leave you drafts and to-dos; nothing is sent without you.
+        Suggested for {pet.name}:
       </p>
       <ul className="team__picks">
         {chosen.map((role) => (

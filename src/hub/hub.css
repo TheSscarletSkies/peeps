@@ -1,18 +1,19 @@
-/* The peeps window: deep and warm so the pastel pets pop, matching the notch tray. */
+/* The peeps window: near-black and neutral, like the notch tray, so the pastel pets and the
+   bright accent carry the colour. */
 
 .hub {
-  --ink: #0f0e0d;
-  --surface: #191715;
-  --line: #2a2724;
-  --text: #f6f1ea;
-  --muted: #a39a90;
-  --accent: #ffc9a8;
-  --accent-ink: #3a2418;
-  --field: #23201d;
-  --field-line: #34302c;
-  --focus: rgba(246, 241, 234, 0.45);
+  --ink: #09090b;
+  --surface: #141417;
+  --line: #24242a;
+  --text: #f5f5f7;
+  --muted: #a1a1aa;
+  --accent: #ffd66b;
+  --accent-ink: #1a1406;
+  --field: #1c1c21;
+  --field-line: #2d2d34;
+  --focus: rgba(245, 245, 247, 0.45);
   --check: #9fd9b4;
-  --check-line: #5a544e;
+  --check-line: #52525b;
   --card-shadow: inset 0 0 0 1px var(--line);
 
   display: grid;
@@ -161,14 +162,14 @@
   border-radius: var(--r-card);
   background:
     radial-gradient(
-      70% 120% at 78% 115%,
-      rgba(255, 186, 140, 0.32) 0%,
+      60% 110% at 82% 115%,
+      rgba(196, 170, 255, 0.28) 0%,
       transparent 60%
     ),
     radial-gradient(
-      60% 90% at 0% 0%,
-      rgba(255, 230, 205, 0.06) 0%,
-      transparent 70%
+      50% 90% at 55% 120%,
+      rgba(150, 230, 200, 0.18) 0%,
+      transparent 65%
     ),
     var(--surface);
   box-shadow: var(--card-shadow);
@@ -1035,4 +1036,24 @@ li[data-done] .started__check {
 
 .hub .numbers__lines {
   font-size: 14px;
+}
+
+.ask-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about-me summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.about-me summary h2 {
+  display: inline;
+  margin: 0;
+}
+
+.about-me[open] summary {
+  margin-bottom: 12px;
 }

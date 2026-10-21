@@ -143,8 +143,8 @@ function AddTeammate({
       }}
     >
       <p className="setup__hint">
-        Teammates work on a rhythm through your own Claude, from a playbook you
-        can edit. They draft and suggest; nothing goes out without you.
+        Pick a job. The teammate works on its own schedule, follows instructions
+        you can change any time, and leaves you drafts to approve.
       </p>
       <div className="team__roles" role="radiogroup" aria-label="Role">
         {roles.map((candidate) => (

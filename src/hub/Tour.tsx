@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import type { Helper } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
@@ -118,6 +118,8 @@ export function Tour({
 }) {
   const [index, setIndex] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
+  const [height, setHeight] = useState(220);
+  const card = useRef<HTMLDivElement>(null);
   const step = STEPS[index] ?? STEPS[0];
   const last = index === STEPS.length - 1;
 
@@ -147,6 +149,10 @@ export function Tour({
     return () => window.removeEventListener("resize", measure);
   }, [step]);
 
+  useLayoutEffect(() => {
+    if (card.current) setHeight(card.current.offsetHeight);
+  }, [index, box]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") finish();
@@ -164,11 +170,14 @@ export function Tour({
   };
   const next = () => (last ? finish() : setIndex((now) => now + 1));
 
-  // Beside the target when there is room, otherwise above it; centred for the welcome.
+  // Beside the target when there is room, otherwise above it; centred for the welcome. Either
+  // way it stays inside the window, so targets near the bottom don't push it out of sight.
+  const fit = (top: number) =>
+    Math.max(16, Math.min(top, window.innerHeight - height - 16));
   const bubble = box
     ? box.left + box.width + GAP + BUBBLE < window.innerWidth
-      ? { top: Math.max(16, box.top - 8), left: box.left + box.width + GAP }
-      : { top: Math.max(16, box.top - 190), left: Math.max(16, box.left) }
+      ? { top: fit(box.top - 8), left: box.left + box.width + GAP }
+      : { top: fit(box.top - height - GAP), left: Math.max(16, box.left) }
     : null;
 
   return (
@@ -187,6 +196,7 @@ export function Tour({
         <div className="tour__shade" />
       )}
       <div
+        ref={card}
         className={
           bubble ? "tour__bubble" : "tour__bubble tour__bubble--centre"
         }

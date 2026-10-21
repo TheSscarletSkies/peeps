@@ -11,7 +11,7 @@ export interface Area {
   height: number;
 }
 
-export const BOX = 76;
+export const BOX = 100;
 export const PANEL = 380;
 const GAP = 8;
 const MARGIN = 8;

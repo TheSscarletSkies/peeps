@@ -39,10 +39,11 @@ describe("limbsFor", () => {
     expect(limbsFor("celebrate", "bao").left.motion).toBe("limb-cheer");
     expect(limbsFor("eager", "gyoza").left.y).toBeLessThan(50);
     expect(limbsFor("working", "bao").prop).toBe("pencil");
-    expect(limbsFor("chill", "wonton").prop).toBe("cup");
+    expect(limbsFor("chill", "wonton").hidden).toBe(true);
+    expect(limbsFor("sweating", "bao").hidden).toBe(true);
     expect(limbsFor("failing", "bao").prop).toBe("sign");
     expect(limbsFor("love", "bao").prop).toBe("heart");
-    expect(limbsFor("stalled", "bao").hidden).toBe(true);
+    expect(limbsFor("stalled", "bao").napping).toBe(true);
   });
 
   it("is symmetrical when both hands do the same thing", () => {

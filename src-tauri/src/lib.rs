@@ -68,6 +68,8 @@ pub fn run() {
             commands::write_playbook,
             commands::run_teammate,
             commands::suggest_team,
+            commands::read_profile,
+            commands::write_profile,
             commands::set_sync_folder,
             commands::add_product_path,
             commands::add_schedule,
@@ -112,6 +114,7 @@ pub fn run() {
                 }
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));
+            tauri::async_runtime::spawn(remind::setup_nudge(app.clone()));
             tauri::async_runtime::spawn(sync::run(app.clone()));
             tauri::async_runtime::spawn(mailbox::run(app.clone()));
             tauri::async_runtime::spawn(numbers::run(app.clone()));
