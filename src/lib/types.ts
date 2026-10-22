@@ -368,6 +368,8 @@ export interface Nudge {
   body: string;
   /** The to-do it is about, so Done can tick it off. */
   todoId: number | null;
+  /** "chat" when the nudge is an invitation to talk, like getting to know the user. */
+  action?: "chat" | null;
 }
 
 export interface Focus {

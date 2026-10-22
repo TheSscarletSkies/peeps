@@ -20,12 +20,11 @@ async function dropFile(page: Page, target: string, name: string) {
   );
 }
 
-test("UC4: a file dropped on the helper joins the next message", async ({
+test("UC4: a document dropped on the helper is eaten and asked about", async ({
   page,
 }) => {
   await page.goto("/?notch=none");
-  await dropFile(page, ".float__pet", "receipt.png");
-  await expect(
-    page.getByRole("list", { name: "Attached files" }),
-  ).toContainText("receipt.png");
+  await dropFile(page, ".float__pet", "syllabus.pdf");
+  await expect(page.getByText(/I just fed you this/)).toBeVisible();
+  await expect(page.getByText(/syllabus\.pdf/).first()).toBeVisible();
 });

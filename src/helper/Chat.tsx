@@ -4,7 +4,8 @@ import { decide, newChat, sendChat } from "../lib/bridge";
 import { RichText } from "../lib/RichText";
 import type { ChatMessage, Helper, Permission, PetKind } from "../lib/types";
 import { Attachments } from "../life/Attachments";
-import { useGivenFiles, withFiles } from "../life/drops";
+import { EAT_PROMPT, useGivenFiles, withFiles } from "../life/drops";
+import { onAsk, takeAsk } from "../life/events";
 import { Dumpling } from "../pets/Dumpling";
 import { agentLabel, AgentPicker } from "./AgentPicker";
 
@@ -85,9 +86,18 @@ export function Conversation({
   const [waiting, setWaiting] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
-  useGivenFiles(scope, (paths) =>
-    setFiles((now) => [...now, ...paths.filter((path) => !now.includes(path))]),
-  );
+  // A file dropped on the pet with nothing typed is eaten straight away, and the pet gets curious.
+  const eat = useRef<(paths: string[]) => void>(() => undefined);
+  const typed = useRef("");
+  typed.current = text;
+  useGivenFiles(scope, (paths) => {
+    if (typed.current.trim() === "") eat.current(paths);
+    else
+      setFiles((now) => [
+        ...now,
+        ...paths.filter((path) => !now.includes(path)),
+      ]);
+  });
   const list = useRef<HTMLOListElement>(null);
   // The app echoes messages back in its snapshot; local copies only bridge the gap.
   useEffect(() => setPending([]), [saved.length]);
@@ -99,8 +109,8 @@ export function Conversation({
     list.current?.scrollTo({ top: list.current.scrollHeight });
   }, [messages.length, thinking]);
 
-  const send = async (message: string) => {
-    const trimmed = withFiles(message, files);
+  const send = async (message: string, given: string[] = files) => {
+    const trimmed = withFiles(message, given);
     if (!trimmed || thinking) return;
     setText("");
     setFiles([]);
@@ -131,6 +141,16 @@ export function Conversation({
       setWaiting(false);
     }
   };
+
+  eat.current = (paths) => void send(EAT_PROMPT, paths);
+  const ask = useRef(send);
+  ask.current = send;
+  useEffect(() => {
+    if (scope !== "helper") return;
+    const waiting = takeAsk();
+    if (waiting) void ask.current(waiting);
+    return onAsk((message) => void ask.current(message));
+  }, [scope]);
 
   return (
     <div className="chat" style={{ ["--pet" as string]: color }}>

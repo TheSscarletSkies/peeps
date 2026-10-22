@@ -85,8 +85,12 @@ pub fn with_agent(base: &[String], model: Option<&str>, effort: Option<&str>) ->
     command
 }
 
+/// The model chat uses until the user picks one: a companion's replies should come back in seconds.
+pub const QUICK_MODEL: &str = "haiku";
+
 /// Gives Claude Code the peeps tools through `peeps-hook mcp`. They only touch peeps' own data,
-/// so they are allowed up front instead of asking each time.
+/// so they are allowed up front instead of asking each time. Only these load: starting every
+/// connector the user has set up in Claude Code made each reply wait for all of them.
 pub fn with_tools(base: &[String], hook: &str) -> Vec<String> {
     let mut command = base.to_vec();
     if !is_claude(base) {
@@ -100,6 +104,7 @@ pub fn with_tools(base: &[String], hook: &str) -> Vec<String> {
         [
             "--mcp-config".to_owned(),
             config.to_string(),
+            "--strict-mcp-config".to_owned(),
             "--allowedTools".to_owned(),
             "mcp__peeps".to_owned(),
         ],
@@ -374,8 +379,11 @@ mod tests {
         assert_eq!(with[1], "--mcp-config");
         let config: serde_json::Value = serde_json::from_str(&with[2]).unwrap();
         assert_eq!(config["mcpServers"]["peeps"]["args"][0], "mcp");
-        assert_eq!(&with[3..5], &args(&["--allowedTools", "mcp__peeps"])[..]);
-        assert_eq!(&with[5..], &chat[1..]);
+        assert_eq!(
+            &with[3..6],
+            &args(&["--strict-mcp-config", "--allowedTools", "mcp__peeps"])[..]
+        );
+        assert_eq!(&with[6..], &chat[1..]);
         assert_eq!(with_tools(&args(&["codex"]), "/x"), args(&["codex"]));
     }
 

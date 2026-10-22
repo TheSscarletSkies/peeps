@@ -49,3 +49,36 @@ export function onReactionShown(
   window.addEventListener(REACTED, listener);
   return () => window.removeEventListener(REACTED, listener);
 }
+
+const ASK = "peeps:ask";
+const OPEN_CHAT = "peeps:open-chat";
+// Kept until a chat is there to send it: the card holding the chat may still be opening.
+let queued: string | null = null;
+
+/** Opens the helper's chat and has it send a message, as when a nudge says "let's chat". */
+export function announceAsk(text: string): void {
+  queued = text;
+  window.dispatchEvent(new CustomEvent(OPEN_CHAT));
+  window.dispatchEvent(new CustomEvent(ASK, { detail: text }));
+}
+
+/** The message waiting for a chat to open, taken once. */
+export function takeAsk(): string | null {
+  const text = queued;
+  queued = null;
+  return text;
+}
+
+export function onAsk(handler: (text: string) => void): () => void {
+  const listener = () => {
+    const text = takeAsk();
+    if (text) handler(text);
+  };
+  window.addEventListener(ASK, listener);
+  return () => window.removeEventListener(ASK, listener);
+}
+
+export function onOpenChat(handler: () => void): () => void {
+  window.addEventListener(OPEN_CHAT, handler);
+  return () => window.removeEventListener(OPEN_CHAT, handler);
+}

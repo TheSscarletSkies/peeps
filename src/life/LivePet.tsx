@@ -12,6 +12,9 @@ const DIZZY_MS = 3000;
 const LOVE_MS = 1600;
 const SQUISH_MS = 320;
 const REACTION_MS = 2200;
+const GRUMPY_MS = 3000;
+const HOLD_MS = 600;
+const HUG_MS = 900;
 
 interface Props {
   id?: string;
@@ -59,6 +62,8 @@ export function LivePet({
   const [dizzy, setDizzy] = useState(false);
   const [love, setLove] = useState(false);
   const [squish, setSquish] = useState(false);
+  const [giggle, setGiggle] = useState(false);
+  const [grumpy, setGrumpy] = useState(false);
   const pokes = useRef<number[]>([]);
   const [reaction, setReaction] = useState<Reaction | null>(null);
   const timers = useRef<number[]>([]);
@@ -93,21 +98,60 @@ export function LivePet({
   };
 
   const onPoke = () => {
+    // The click that ends a long press is part of the hug, not a poke.
+    if (hugged.current) {
+      hugged.current = false;
+      return;
+    }
     const result = poke(pokes.current, Date.now());
     pokes.current = result.history;
     setSquish(true);
     later(() => setSquish(false), SQUISH_MS);
-    if (result.dizzy) {
+    if (result.level === "grumpy") {
+      setDizzy(false);
+      setLove(false);
+      setGrumpy(true);
+      later(() => setGrumpy(false), GRUMPY_MS);
+      if (chatty) say("hmph!");
+    } else if (result.level === "dizzy") {
       setDizzy(true);
       setLove(false);
       later(() => setDizzy(false), DIZZY_MS);
       if (chatty) say("whoa…");
-    } else if (!dizzy) {
+    } else if (result.level === "giggle") {
+      setGiggle(true);
+      later(() => setGiggle(false), LOVE_MS);
+      if (chatty) say("hehe, stop!");
+    } else if (!dizzy && !grumpy) {
       setLove(true);
       later(() => setLove(false), LOVE_MS);
       if (chatty)
         say(PATTED[Math.floor(Math.random() * PATTED.length)] ?? "hi!");
     }
+  };
+
+  // Holding the pet down is a hug.
+  const hugged = useRef(false);
+  const holding = useRef(0);
+  const onHoldStart = () => {
+    window.clearTimeout(holding.current);
+    holding.current = window.setTimeout(() => {
+      hugged.current = true;
+      setGrumpy(false);
+      setDizzy(false);
+      setLove(true);
+      setSquish(true);
+      later(() => setSquish(false), HUG_MS);
+      later(() => setLove(false), HUG_MS + LOVE_MS);
+      if (chatty) say("hugs!");
+    }, HOLD_MS);
+    const stop = () => {
+      window.clearTimeout(holding.current);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   };
 
   const poked = useRef(onPoke);
@@ -143,17 +187,19 @@ export function LivePet({
 
   const expression: Expression | undefined = reacting
     ? reacting
-    : eager
-      ? "eager"
-      : waving
-        ? "wave"
-        : dizzy
-          ? "dizzy"
-          : celebrating
-            ? "celebrate"
-            : love
-              ? "love"
-              : undefined;
+    : giggle
+      ? "celebrate"
+      : eager
+        ? "eager"
+        : waving
+          ? "wave"
+          : dizzy
+            ? "dizzy"
+            : celebrating
+              ? "celebrate"
+              : love
+                ? "love"
+                : undefined;
 
   const motion = [squish && "motion-squish", arriving && "motion-hatch"]
     .filter(Boolean)
@@ -163,6 +209,8 @@ export function LivePet({
     <span
       className="live-pet"
       onClick={onPoke}
+      onPointerDown={onHoldStart}
+      data-grumpy={grumpy || undefined}
       title={chatty ? "Pat me" : undefined}
     >
       {reaction && <ReactionArt key={reaction} kind={reaction} />}
@@ -175,7 +223,7 @@ export function LivePet({
         seed={id}
         kind={kind}
         color={color}
-        mood={mood}
+        mood={grumpy ? "steaming" : mood}
         heat={heat}
         size={size}
         expression={expression}

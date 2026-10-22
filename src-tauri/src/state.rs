@@ -449,6 +449,7 @@ impl App {
             "title": reminder.title,
             "body": reminder.body,
             "todoId": reminder.todo_id(),
+            "action": reminder.key.starts_with("setup:").then_some("chat"),
         });
         if let Err(error) = handle.emit(NUDGE_EVENT, payload) {
             eprintln!("peeps: could not show a reminder on the pets: {error}");

@@ -14,6 +14,10 @@ export function withFiles(text: string, paths: string[]): string {
   return `${text.trim()}\n\nFiles:\n${list}`.trim();
 }
 
+/** What the helper is asked when a file is dropped on it with nothing typed: eat it, then get curious. */
+export const EAT_PROMPT =
+  "I just fed you this. Read it, tell me in one line what it is, then ask me two or three short questions about it.";
+
 type Listener = () => void;
 
 const waiting = new Map<string, string[]>();

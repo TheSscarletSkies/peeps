@@ -39,7 +39,7 @@ export const NUDGE = "nudge";
 export interface Reminder {
   nudge: Nudge | null;
   dismiss: () => void;
-  later: () => void;
+  later: (minutes: number) => void;
   /** A friend's heart or bonk just now. */
   reaction?: ReactionEvent | null;
 }
@@ -132,6 +132,7 @@ export function CardBody({
         helper={snapshot.helper}
         onDone={reminder.dismiss}
         onLater={reminder.later}
+        onClose={reminder.dismiss}
       />
     );
   return (

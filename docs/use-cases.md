@@ -66,7 +66,7 @@ Tested by `crates/core/src/profile.rs`.
 
 ### UC8. Play
 
-Click the peep and it says "hehe!" or "boop!" and hugs a heart; click it quickly and it gets dizzy ("whoa…"). Hands come out only when it has something to do: waving for a reminder, reaching for a file dragged over it. It blinks, glances around and wears a hat or scarf in season.
+Click the peep and it says "hehe!" or "boop!" and hugs a heart; twice quickly and it giggles ("hehe, stop!"); three times and it gets dizzy ("whoa…"); keep going and it sulks with its back turned ("hmph!"). Hold it down for a hug. Hands come out only when it has something to do: waving for a reminder, reaching for a file dragged over it. It blinks, glances around and wears a hat or scarf in season.
 
 Tested by `e2e/helper.e2e.ts`, `e2e/float.e2e.ts`, `src/life/*.test.ts`, `src/pets/limbs.test.ts`.
 

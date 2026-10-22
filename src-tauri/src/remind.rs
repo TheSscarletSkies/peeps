@@ -66,6 +66,15 @@ pub async fn setup_nudge(app: Arc<App>) {
     );
     if let Some(text) = peeps_core::setup::nudge(&left) {
         app.notify("A few steps left to set up peeps", &text);
+        // Getting to know you happens in chat, so the pet asks for it itself.
+        if !snapshot.knows_you {
+            app.nudge(&peeps_core::reminders::Reminder {
+                key: format!("setup:{today}"),
+                title: "Can I get to know you?".to_owned(),
+                body: "A few quick questions, so I can help the way you like.".to_owned(),
+                at: chrono::Utc::now(),
+            });
+        }
         let _ = std::fs::write(stamp, today);
     }
 }

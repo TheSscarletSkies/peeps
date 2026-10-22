@@ -106,8 +106,11 @@ function Face({
 const HEART =
   "M20 33C9 26 4.5 19.5 6.5 13.5 8.5 7.5 15.5 6.5 20 12.5 24.5 6.5 31.5 7.5 33.5 13.5 35.5 19.5 31 26 20 33Z";
 
-/** Each reaction drawn in a 40 by 40 box, like a little sticker. */
-export function Sticker({ kind }: { kind: Reaction }) {
+/** Reactions, plus the drawings reminders use. */
+export type StickerKind = Reaction | "water" | "bell";
+
+/** Each drawing in a 40 by 40 box, like a little sticker. */
+export function Sticker({ kind }: { kind: StickerKind }) {
   const id = useId().replace(/:/g, "");
   return (
     <g>
@@ -233,6 +236,63 @@ export function Sticker({ kind }: { kind: Reaction }) {
             <circle cx="19" cy="7" r="2.8" />
             <circle cx="24.5" cy="10" r="2" />
           </g>
+        </>
+      )}
+      {kind === "water" && (
+        <>
+          <Soft
+            d="M20 5C14 13 9 19 9 25a11 11 0 0 0 22 0c0-6-5-12-11-20z"
+            fill="#BFE3FF"
+            edge="#4C93C9"
+            id={id}
+          />
+          <ellipse
+            cx="15"
+            cy="20"
+            rx="2"
+            ry="3.4"
+            fill="#fff"
+            opacity="0.85"
+            transform="rotate(25 15 20)"
+          />
+          <Face x={20} y={26} id={id} />
+        </>
+      )}
+      {kind === "bell" && (
+        <>
+          <circle
+            cx="20"
+            cy="7"
+            r="2.6"
+            fill="#E9B95A"
+            stroke="#B9852E"
+            {...EDGE}
+          />
+          <Soft
+            d="M9 29c3-3 3-7 3-11a8 8 0 0 1 16 0c0 4 0 8 3 11z"
+            fill="#FFE29A"
+            edge="#B9852E"
+            id={id}
+          />
+          <ellipse
+            cx="20"
+            cy="31.5"
+            rx="3.4"
+            ry="2.4"
+            fill="#E9B95A"
+            stroke="#B9852E"
+            {...EDGE}
+          />
+          <ellipse
+            cx="15"
+            cy="15"
+            rx="1.6"
+            ry="3"
+            fill="#fff"
+            opacity="0.8"
+            transform="rotate(20 15 15)"
+          />
+          <Face x={20} y={21} id={id} happy />
         </>
       )}
       {kind === "study" && (

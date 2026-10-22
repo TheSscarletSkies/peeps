@@ -2380,6 +2380,51 @@ body,
   transform: rotate(45deg);
 }
 
+.nudge__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 22px;
+}
+
+.nudge__art {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+/* Dark on the light bubble, always in view: the way out shouldn't need hunting for. */
+.nudge__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(42, 29, 22, 0.1);
+  color: #2a1d16;
+  cursor: pointer;
+}
+
+.nudge__close path {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.nudge__close:hover {
+  background: rgba(42, 29, 22, 0.2);
+}
+
+.nudge__later {
+  display: flex;
+  gap: 6px;
+}
+
 .nudge__title {
   margin: 0;
   font-size: 16px;
@@ -2392,8 +2437,15 @@ body,
   color: #6b5a50;
 }
 
+.nudge__actions .button {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
 .nudge__actions .button:not(.button--primary) {
-  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(42, 29, 22, 0.25);
+  background: #fffaf6;
   color: #2a1d16;
 }
 
@@ -3083,4 +3135,10 @@ li[data-presence="focusing"] .friends__who {
   line-height: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Poked too much: the pet turns its back for a moment. */
+.live-pet[data-grumpy] .dumpling {
+  transform: scaleX(-1);
+  transition: transform 0.25s ease-out;
 }

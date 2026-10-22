@@ -16,12 +16,12 @@ export const EFFORTS = [
   { id: "high", name: "High" },
 ];
 
-/** "Sonnet · Medium", or what the agent does on its own when nothing is picked. */
+/** "Sonnet · Medium", or "Quick" when nothing is picked and chat uses the fast model. */
 export function agentLabel(helper: Helper): string {
   const model =
     MODELS.find((option) => option.id === helper.model)?.name ?? helper.model;
   const effort = EFFORTS.find((option) => option.id === helper.effort)?.name;
-  if (!model && !effort) return "Claude defaults";
+  if (!model && !effort) return "Quick";
   return [model ?? "Default model", effort && `${effort} effort`]
     .filter(Boolean)
     .join(" · ");
@@ -129,7 +129,7 @@ export function AgentPicker({
         Use {chosen?.name} · {level?.name}
       </button>
       <button className="tray__link" onClick={() => void save(null, null)}>
-        Use my Claude defaults instead
+        Back to quick replies
       </button>
       {error && <p className="tray__error">{error}</p>}
     </section>

@@ -136,3 +136,22 @@ test("UC25: friends focusing keep you company", async ({ page }) => {
     page.getByRole("button", { name: /Focusing too: Sara/ }),
   ).toBeVisible();
 });
+
+test("UC8: the pet giggles, gets dizzy, sulks, and loves a hug", async ({
+  page,
+}) => {
+  const pet = page.locator(".panel__head--pet .live-pet");
+  await pet.click();
+  await pet.click();
+  await expect(page.locator(".pet-say")).toHaveText("hehe, stop!");
+  for (let i = 0; i < 5; i += 1) await pet.click();
+  await expect(page.locator(".pet-say")).toHaveText("hmph!");
+  await expect(pet).toHaveAttribute("data-grumpy", "true");
+  const box = await pet.boundingBox();
+  if (!box) throw new Error("pet not on screen");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(800);
+  await page.mouse.up();
+  await expect(page.locator(".pet-say")).toHaveText("hugs!");
+});

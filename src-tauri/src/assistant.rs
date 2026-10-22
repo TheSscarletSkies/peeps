@@ -153,7 +153,12 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
         .map_err(|error| error.to_string())?;
     let base = chat::with_agent(
         &config.helper.chat_command,
-        config.helper.model.as_deref(),
+        // Effort is a setting of the larger models, so picking one keeps Claude's own default.
+        config.helper.model.as_deref().or(config
+            .helper
+            .effort
+            .is_none()
+            .then_some(chat::QUICK_MODEL)),
         config.helper.effort.as_deref(),
     );
     // Without the hook binary the helper can still talk, just not act.

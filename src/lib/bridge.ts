@@ -745,10 +745,16 @@ export function writeProfile(text: string): Promise<void> {
 /** Reminders as they come due. The preview fakes one with `?nudge=Drink water`. */
 export function onNudge(handler: (nudge: Nudge) => void): Promise<() => void> {
   if (inApp()) return listen<Nudge>("nudge", (event) => handler(event.payload));
-  const text = new URLSearchParams(window.location.search).get("nudge");
+  const params = new URLSearchParams(window.location.search);
+  const text = params.get("nudge");
   const timer = text
     ? window.setTimeout(
-        () => handler({ title: text, body: "Every 2 hours", todoId: 5 }),
+        () =>
+          handler(
+            params.get("action") === "chat"
+              ? { title: text, body: "", todoId: null, action: "chat" }
+              : { title: text, body: "Every 2 hours", todoId: 5 },
+          ),
         600,
       )
     : 0;

@@ -129,22 +129,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           {page === "chat" && (
             <Section
               title={`Chat with ${helper.name}`}
-              lead="Talks to your own Claude and remembers what you tell it about you. Anything it wants to do, it asks first."
+              lead="Talks to your own Claude and remembers what you tell it about you. Drop a file on it and it reads it."
             >
-              <div className="ask-page">
-                <div className="card ask">
-                  <Chat
-                    helper={helper}
-                    knowsYou={snapshot.knowsYou}
-                    onTyping={noop}
-                  />
-                </div>
-                <details className="card about-me" open={!snapshot.knowsYou}>
-                  <summary>
-                    <h2>About me</h2>
-                  </summary>
-                  <AboutMe />
-                </details>
+              <div className="card ask">
+                <Chat
+                  helper={helper}
+                  knowsYou={snapshot.knowsYou}
+                  onTyping={noop}
+                />
               </div>
             </Section>
           )}
@@ -191,6 +183,13 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                 </section>
                 <ClaudeStatus />
               </div>
+              <section className="card about-me">
+                <h2>What {helper.name} knows about you</h2>
+                <p className="setup__hint">
+                  Filled in as you chat. Change anything here.
+                </p>
+                <AboutMe />
+              </section>
               <RemindersPage snapshot={snapshot} />
               <h2 className="section__sub">Your computers</h2>
               <DevicesPage snapshot={snapshot} />
