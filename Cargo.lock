@@ -2704,7 +2704,7 @@ dependencies = [
 
 [[package]]
 name = "peeps-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -2727,7 +2727,7 @@ dependencies = [
 
 [[package]]
 name = "peeps-desktop"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -2751,7 +2751,7 @@ dependencies = [
 
 [[package]]
 name = "peeps-hook"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "interprocess",
  "peeps-core",
