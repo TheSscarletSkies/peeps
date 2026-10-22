@@ -171,7 +171,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
         <g className="dumpling__wear">
           <path
             d={`M33 ${top + 16}Q33 ${top - 8} 60 ${top - 8}Q87 ${top - 8} 87 ${top + 16}z`}
-            fill="#CBE7DD"
+            fill="#EADFCB"
             {...OUTLINE}
           />
           <path
@@ -187,7 +187,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="60"
             height="9"
             rx="4.5"
-            fill="#B3DACC"
+            fill="#DCCDB3"
             {...OUTLINE}
           />
           <circle cx="60" cy={top - 9} r="5" fill="#FFF8EF" {...OUTLINE} />
@@ -206,7 +206,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
           <path
             d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
             fill="none"
-            stroke="#D8DDF2"
+            stroke="#E6DED2"
             strokeWidth={3}
             strokeLinecap="round"
           />
@@ -216,7 +216,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="12"
             height="18"
             rx="6"
-            fill="#C3CBEC"
+            fill="#D6CAB8"
             {...OUTLINE}
           />
           <rect
@@ -225,7 +225,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="12"
             height="18"
             rx="6"
-            fill="#C3CBEC"
+            fill="#D6CAB8"
             {...OUTLINE}
           />
         </g>

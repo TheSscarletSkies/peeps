@@ -52,14 +52,8 @@ const LAYOUTS: Spot[][] = [
 ];
 
 export const MAX_SEATS = LAYOUTS.length;
-const CUSHIONS = [
-  "#D9E8CD",
-  "#F8D6DC",
-  "#F6E7BD",
-  "#CFDFF2",
-  "#E5DBF4",
-  "#F6DDCB",
-];
+/** Every cushion the same oat, so the peeps are what you notice. */
+const CUSHIONS = ["#EFE1CB"];
 /** What each person is busy with: a book held up, a laptop, a notebook. */
 const BUSY: StickerKind[] = [
   "study",
@@ -186,9 +180,9 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
         <g stroke="#4A2614" strokeWidth="1.4" strokeLinejoin="round">
           <path d="M58 52l24-6 6 14-24 6z" fill="#FFFDF7" />
           <path d="M120 66l22 4-3 12-22-4z" fill="#FFFDF7" />
-          <rect x="86" y="54" width="30" height="8" rx="2" fill="#F1C7CB" />
-          <rect x="88" y="47" width="27" height="8" rx="2" fill="#BED1EA" />
-          <rect x="90" y="41" width="22" height="7" rx="2" fill="#CCDFBF" />
+          <rect x="86" y="54" width="30" height="8" rx="2" fill="#F2CFCC" />
+          <rect x="88" y="47" width="27" height="8" rx="2" fill="#E9DCC7" />
+          <rect x="90" y="41" width="22" height="7" rx="2" fill="#D9C3A2" />
           <path d="M124 44h12l-1.5 14h-9z" fill="#F8DEE3" />
           <path
             d="M126 44l-2-9M130 44l1-11M133 44l3-8"
@@ -208,7 +202,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             width="11"
             height="9"
             rx="1.5"
-            fill="#F6EAB6"
+            fill="#F3E6C4"
             transform="rotate(-8 75 72)"
           />
           <rect
@@ -217,7 +211,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             width="10"
             height="8"
             rx="1.5"
-            fill="#D0E7F3"
+            fill="#EFE6D6"
             transform="rotate(10 151 58)"
           />
         </g>

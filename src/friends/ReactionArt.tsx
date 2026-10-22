@@ -266,7 +266,7 @@ export function Sticker({ kind }: { kind: StickerKind }) {
             edge="#7C86A0"
             id={id}
           />
-          <rect x="10" y="12" width="20" height="11" rx="1.5" fill="#BFE3FF" />
+          <rect x="10" y="12" width="20" height="11" rx="1.5" fill="#F7F1E7" />
           <path
             d="M3 27h34l-2 4H5z"
             fill="#CDD3E2"

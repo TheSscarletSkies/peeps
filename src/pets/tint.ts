@@ -73,7 +73,7 @@ export function edge(color: string): string {
   return fromHsl([h, Math.min(1, s * 0.6 + 0.2), 0.42]);
 }
 
-/** A pet's colour, lightened toward bun cream, so a table of peeps stays soft rather than loud. */
+/** A pet's colour as a hint over bun cream, so a table of peeps reads as one set, not a rainbow. */
 export function soft(color: string): string {
-  return mix(color, "#FFF7EC", 0.4);
+  return mix(color, "#FFF7EC", 0.62);
 }
