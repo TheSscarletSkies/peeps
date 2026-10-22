@@ -6,19 +6,27 @@
   --r-tag: 8px;
   --r-box: 16px;
   --r-card: 24px;
-  --ink: #0b0b0c;
-  --surface: #161618;
-  --line: #232326;
-  --text: #f4f2ee;
-  --muted: #a8a6a1;
+  /* The peeps' pastels: one family, so nothing next to them clashes. */
+  --p-blush: #f2a7a0;
+  --p-peach: #f5be98;
+  --p-butter: #eed28c;
+  --p-sage: #b3d19e;
+  --p-sky: #a7c4e6;
+  --p-lilac: #c7b5ea;
+  /* Neutrals a touch warm, so the pastels sit on them rather than fight a blue-grey. */
+  --ink: #0d0c0b;
+  --surface: #181615;
+  --line: #282422;
+  --text: #f6f2ed;
+  --muted: #aaa29b;
   --accent: #ffb59c;
-  --field: #202024;
-  --field-line: #2e2e33;
+  --field: #211e1c;
+  --field-line: #332e2b;
   --focus: rgba(244, 242, 238, 0.55);
-  --check: #9ee6b8;
+  --check: var(--p-sage);
   --check-line: #55555b;
   --accent-ink: #3a1a10;
-  --good: #9fd9b4;
+  --good: var(--p-sage);
   --bad: #ffb3a7;
   font-family: "Nunito", ui-rounded, system-ui, sans-serif;
   font-weight: 500;
@@ -515,7 +523,8 @@ body,
 }
 
 .todos li[data-due="overdue"] {
-  background: #2a1a17;
+  background: color-mix(in srgb, var(--p-blush) 12%, var(--surface));
+  box-shadow: inset 3px 0 0 var(--p-blush);
 }
 
 .todos__title {
@@ -563,17 +572,28 @@ body,
   cursor: pointer;
 }
 
+/* The chosen option is soft cream on dark and white on cream, never a stark block. */
 .segmented .segmented__on {
-  background: var(--text);
-  color: var(--ink);
+  background: #ebe3da;
+  color: #1d1714;
+}
+
+.hub[data-theme="light"] .segmented .segmented__on {
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(74, 38, 20, 0.12);
 }
 
 .todos__tag {
   margin-left: 6px;
   padding: 1px 7px;
   border-radius: var(--r-tag);
-  background: hsl(var(--tag, 260) 40% 22%);
-  color: hsl(var(--tag, 260) 80% 86%);
+  background: color-mix(
+    in srgb,
+    var(--tag, var(--p-lilac)) 20%,
+    var(--surface)
+  );
+  color: var(--tag, var(--p-lilac));
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
@@ -2398,7 +2418,7 @@ body,
 }
 
 .focus[data-phase="break"] .focus__ring circle + circle {
-  stroke: #8fd9b0;
+  stroke: var(--p-sage);
 }
 
 .focus__text {
@@ -2720,7 +2740,7 @@ li[data-presence="focusing"] .friends__who {
 }
 
 .focus--join {
-  background: color-mix(in srgb, #8fd9b0 14%, var(--surface));
+  background: color-mix(in srgb, var(--p-sage) 14%, var(--surface));
 }
 
 .focus + .focus {
@@ -2765,7 +2785,7 @@ li[data-presence="focusing"] .friends__who {
   align-items: center;
   gap: 8px;
   margin: 0 0 6px;
-  color: hsl(var(--tag, 260) 80% 82%);
+  color: var(--text);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2777,7 +2797,7 @@ li[data-presence="focusing"] .friends__who {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: hsl(var(--tag, 260) 70% 70%);
+  background: var(--tag, var(--p-lilac));
 }
 
 .area__head[data-other] {
@@ -2825,8 +2845,7 @@ li[data-presence="focusing"] .friends__who {
 }
 
 .week__dot[data-done] {
-  background: hsl(var(--tag, 20) 75% 72%);
-  box-shadow: 0 0 0 2px hsl(var(--tag, 20) 75% 72% / 0.25);
+  background: var(--tag, var(--p-peach));
 }
 
 .week__streak {
@@ -2847,8 +2866,12 @@ li[data-presence="focusing"] .friends__who {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: hsl(var(--tag, 260) 40% 22%);
-  color: hsl(var(--tag, 260) 80% 86%);
+  background: color-mix(
+    in srgb,
+    var(--tag, var(--p-lilac)) 20%,
+    var(--surface)
+  );
+  color: var(--tag, var(--p-lilac));
 }
 
 .area-chip button {

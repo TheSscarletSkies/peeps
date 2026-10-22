@@ -2,18 +2,18 @@
    coral accent carry the colour. */
 
 .hub {
-  --ink: #09090b;
-  --surface: #141417;
-  --line: #24242a;
-  --text: #f5f5f7;
-  --muted: #a1a1aa;
+  --ink: #0d0c0b;
+  --surface: #181615;
+  --line: #282422;
+  --text: #f6f2ed;
+  --muted: #aaa29b;
   --accent: #ffb59c;
   --accent-ink: #3a1a10;
-  --field: #1c1c21;
-  --field-line: #2d2d34;
-  --focus: rgba(245, 245, 247, 0.45);
-  --check: #9fd9b4;
-  --check-line: #52525b;
+  --field: #211e1c;
+  --field-line: #332e2b;
+  --focus: rgba(246, 242, 237, 0.45);
+  --check: var(--p-sage);
+  --check-line: #57514c;
   --card-shadow: inset 0 0 0 1px var(--line);
 
   display: grid;
@@ -148,7 +148,7 @@
   margin: 0 0 16px;
   padding: 10px 14px;
   border-radius: var(--r-box);
-  background: #2a1a17;
+  background: color-mix(in srgb, var(--p-blush) 14%, var(--surface));
   color: var(--bad);
   font-size: 13px;
 }
@@ -168,12 +168,12 @@
   background:
     radial-gradient(
       60% 110% at 82% 115%,
-      rgba(196, 170, 255, 0.28) 0%,
+      color-mix(in srgb, var(--p-blush) 22%, transparent) 0%,
       transparent 60%
     ),
     radial-gradient(
       50% 90% at 55% 120%,
-      rgba(150, 230, 200, 0.18) 0%,
+      color-mix(in srgb, var(--p-butter) 12%, transparent) 0%,
       transparent 65%
     ),
     var(--surface);
@@ -441,7 +441,7 @@
 }
 
 .hub .card .todos li[data-due="overdue"] {
-  background: #2a1a17;
+  background: color-mix(in srgb, var(--p-blush) 12%, var(--surface));
 }
 
 /* Recap: a 4:5 card that exports at 1080 by 1350. */
@@ -612,10 +612,10 @@
   --field: #f6f1eb;
   --field-line: #ddd2c6;
   --focus: rgba(29, 25, 22, 0.35);
-  --check: #3fa96b;
+  --check: #6e9f5a;
   --check-line: #c4b8ab;
   --good: #1f7a46;
-  --bad: #b8382e;
+  --bad: #b3564b;
   --card-shadow: 0 1px 2px rgba(80, 50, 30, 0.06), inset 0 0 0 1px var(--line);
 }
 
@@ -623,12 +623,12 @@
   background:
     radial-gradient(
       60% 110% at 82% 115%,
-      rgba(255, 170, 140, 0.35) 0%,
+      color-mix(in srgb, var(--p-blush) 35%, transparent) 0%,
       transparent 60%
     ),
     radial-gradient(
       50% 90% at 55% 120%,
-      rgba(190, 170, 255, 0.28) 0%,
+      color-mix(in srgb, var(--p-butter) 30%, transparent) 0%,
       transparent 65%
     ),
     var(--surface);
@@ -666,13 +666,19 @@
 }
 
 .hub[data-theme="light"] .today li[data-due="overdue"] span {
-  color: #b0443a;
+  color: #a8463d;
 }
 
 .hub[data-theme="light"] .card .todos li[data-due="overdue"],
 .hub[data-theme="light"] .hub__error {
-  background: #ffe9e4;
-  color: #b0443a;
+  background: color-mix(in srgb, var(--p-blush) 22%, var(--surface));
+  color: var(--text);
+}
+
+/* On cream, a tag is a pale pastel with its own deep shade for the text. */
+.hub[data-theme="light"] :is(.todos__tag, .area-chip) {
+  background: color-mix(in srgb, var(--tag, var(--p-lilac)) 38%, #ffffff);
+  color: color-mix(in srgb, var(--tag, var(--p-lilac)) 30%, #3a2418);
 }
 
 /* Reminders */

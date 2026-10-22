@@ -8,6 +8,7 @@ import { FocusBar } from "../focus/FocusBar";
 import { FriendsPanel } from "../friends/FriendsPanel";
 import { moodWith } from "../focus/clock";
 import { Nudges } from "../nudges/Nudges";
+import { pastelFor } from "../lib/palette";
 import { areaLabel, groupByArea } from "../tracker/areas";
 import type {
   DueState,
@@ -375,11 +376,9 @@ function TodoRow({
   );
 }
 
-/** Each tag gets its own soft colour, the same everywhere. */
+/** Each tag gets one of the peeps' pastels, the same everywhere. */
 export function tagStyle(tag: string) {
-  let hash = 0;
-  for (const char of tag) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return { ["--tag" as string]: `${hash % 360}` };
+  return { ["--tag" as string]: `var(--p-${pastelFor(tag)})` };
 }
 
 export function Todos({
