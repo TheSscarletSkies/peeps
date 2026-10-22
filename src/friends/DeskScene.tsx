@@ -2,10 +2,17 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import type { Reaction } from "../lib/types";
 import { announcePat, onFed, onPat, onReactionShown } from "../life/events";
-import type { Wear } from "../pets/Dumpling";
+import {
+  BUN,
+  BunBody,
+  BunGlasses,
+  Dough,
+  Worn,
+  type BunWear,
+} from "../pets/Bun";
 
-/** A sprout on top marks your own peep; friends wear what their code picked for them. */
-export type TableWear = Wear | "sprout" | null;
+/** Friends wear what their code picked for them; your own peep has a sprout. */
+export type TableWear = BunWear;
 
 export interface Seat {
   key: string;
@@ -177,107 +184,6 @@ function useArrivals(keys: string[]): (key: string) => boolean {
   return (key) => Date.now() - (since.current.get(key) ?? 0) < ARRIVAL_MS;
 }
 
-const OUTLINE = "#86553d";
-
-function Worn({ wear }: { wear: TableWear }) {
-  switch (wear) {
-    case "bow":
-      return (
-        <g transform="translate(32 -110) rotate(17)">
-          <path
-            d="M0 0Q-32-29-35-2Q-27 22 0 6Q28 26 38-3Q35-28 0 0Z"
-            fill="#efb6bd"
-            stroke="#93634f"
-            strokeWidth="5"
-          />
-          <circle
-            cx="0"
-            cy="3"
-            r="8"
-            fill="#f6cfd0"
-            stroke="#93634f"
-            strokeWidth="3"
-          />
-        </g>
-      );
-    case "headphones":
-      return (
-        <>
-          <path
-            d="M-88-9V-44Q-90-114 3-117Q91-114 91-43V-9"
-            fill="none"
-            stroke="#806c61"
-            strokeWidth="13"
-          />
-          <rect
-            x="-102"
-            y="-28"
-            width="24"
-            height="54"
-            rx="12"
-            fill="#9baba4"
-            stroke="#77665c"
-            strokeWidth="5"
-          />
-          <rect
-            x="79"
-            y="-28"
-            width="24"
-            height="54"
-            rx="12"
-            fill="#9baba4"
-            stroke="#77665c"
-            strokeWidth="5"
-          />
-        </>
-      );
-    case "beanie":
-      return (
-        <>
-          <path
-            d="M-93-36Q-96-119-1-125Q95-119 94-36Z"
-            fill="#e6d7b6"
-            stroke="#947961"
-            strokeWidth="5"
-          />
-          <path
-            d="M-91-45Q0-54 93-45V-24Q0-36-91-24Z"
-            fill="#efe1c8"
-            stroke="#947961"
-            strokeWidth="4"
-          />
-          <path
-            d="M-45-100v42M-20-114v54M8-114v54M37-101v47"
-            stroke="#c7ad8e"
-            strokeWidth="3"
-          />
-          <circle
-            cx="0"
-            cy="-127"
-            r="12"
-            fill="#efdfc0"
-            stroke="#947961"
-            strokeWidth="4"
-          />
-        </>
-      );
-    case "sprout":
-      return (
-        <>
-          <path d="M0-105v-29" stroke="#6e976e" strokeWidth="5" />
-          <path
-            d="M0-124Q-27-155-42-134Q-36-109 0-124M0-124Q25-155 40-132Q36-110 0-124"
-            fill="#86aa7a"
-            stroke="#648961"
-            strokeWidth="4"
-          />
-        </>
-      );
-    default:
-      return null;
-  }
-}
-
 function Doing({ doing }: { doing: Doing }) {
   switch (doing) {
     case "book":
@@ -339,28 +245,7 @@ function Bun({
       transform={`translate(${slot.x} ${slot.y}) scale(${slot.scale})`}
     >
       <g className="bun__body">
-        <path
-          d="M-104 58Q-122 20-93-32Q-72-68-34-80Q-23-114-9-110Q4-128 19-109Q37-119 47-90Q101-70 111-13Q124 46 89 83Q66 102 0 104Q-66 102-90 85Q-101 76-104 58Z"
-          fill={`url(#${dough})`}
-          stroke={OUTLINE}
-          strokeWidth="5.5"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M-89 39Q-104 4-73-35"
-          stroke="#fffefa"
-          strokeWidth="11"
-          opacity=".75"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-24-85Q-37-66-43-46M0-109Q-12-80-9-49M20-100Q36-80 43-51"
-          stroke="#c69274"
-          strokeWidth="3.5"
-          fill="none"
-          strokeLinecap="round"
-        />
+        <BunBody dough={dough} />
         <ellipse
           cx="-51"
           cy="35"
@@ -376,6 +261,7 @@ function Bun({
           <circle cx="-27" cy="14" r="2" fill="#fff8eb" />
           <circle cx="29" cy="14" r="2" fill="#fff8eb" />
         </g>
+        <BunGlasses left={-25} right={31} y={17} r={16} />
         <path
           d="M-7 38q9 13 18 0"
           fill="none"
@@ -389,8 +275,8 @@ function Bun({
           cy="81"
           rx="30"
           ry="20"
-          fill="#fff7e4"
-          stroke={OUTLINE}
+          fill={BUN.paw}
+          stroke={BUN.line}
           strokeWidth="5"
         />
         <ellipse
@@ -398,8 +284,8 @@ function Bun({
           cy="81"
           rx="29"
           ry="20"
-          fill="#fff7e4"
-          stroke={OUTLINE}
+          fill={BUN.paw}
+          stroke={BUN.line}
           strokeWidth="5"
         />
         <Doing doing={slot.doing} />
@@ -409,7 +295,7 @@ function Bun({
           <path
             d="M70-118c-10-16-34-6-24 12l24 22 24-22c10-18-14-28-24-12z"
             fill="#f2a5a8"
-            stroke={OUTLINE}
+            stroke={BUN.line}
             strokeWidth="4"
           />
           <rect
@@ -472,11 +358,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
         aria-label={`At the table: ${shown.map((seat) => seat.name).join(", ")}`}
       >
         <defs>
-          <linearGradient id={dough} x1=".1" y1="0" x2=".8" y2="1">
-            <stop stopColor="#fffdf0" />
-            <stop offset=".72" stopColor="#fff5df" />
-            <stop offset="1" stopColor="#f5dcb8" />
-          </linearGradient>
+          <Dough id={dough} />
           <linearGradient id={wood} x1="0" y1="0" x2=".8" y2="1">
             <stop stopColor="#f9d7a5" />
             <stop offset="1" stopColor="#d99360" />

@@ -2,12 +2,12 @@ import { useId } from "react";
 
 import type { Accessory } from "../life/season";
 import type { Mood, PetKind } from "../lib/types";
+import { BUN, BunBody, BunGlasses, Dough, Worn } from "./Bun";
 import { limbsFor, type Hand, type Prop } from "./limbs";
-import shapes from "./shapes.json";
-import { edge, flushed, mix, soft } from "./tint";
 import { BASE, variantFor } from "./variant";
 
 interface Props {
+  /** Kept for callers; every peep is now the same cream bun. */
   kind: PetKind;
   color: string;
   mood: Mood;
@@ -22,8 +22,6 @@ interface Props {
   glasses?: boolean;
   /** Something the user dressed their peep in. */
   wear?: Wear | null;
-  /** Sitting at a table: its own arms, feet and props are left off, the table draws its hands. */
-  seated?: boolean;
   /** Extra classes for one-off motions such as a squish or hatching. */
   motion?: string;
 }
@@ -35,25 +33,14 @@ export type Wear = "bow" | "headphones" | "beanie";
 export type Expression = "dizzy" | "celebrate" | "love" | "eager" | "wave";
 type Look = Mood | Expression;
 
-interface Shape {
-  body: string;
-  creases: string;
-  highlight: number[];
-  /** Taller than the drawing, for shapes drawn squat. */
-  tall: number;
-  /** Moves the face down (or up) to sit where the shape is roundest. */
-  faceY: number;
-  /** A part drawn in its own colour on top, like an onigiri's seaweed. */
-  decor?: string;
-  fxOffset: number;
-  /** How far the pet rises in the steamer so its face peeks over the rim. */
-  napLift: number;
-  /** Where a hat sits on top of the shape. */
-  hatY: number;
-}
+/** The bun's drawing, scaled into this 120 × 100 box with its base on the ground line. */
+const GROUND = 86;
+const SCALE = 0.34;
+const PLACE = `translate(60 ${GROUND - BUN.ground * SCALE}) scale(${SCALE})`;
+/** Where a hat sits, and how far a napping pet rises so its face peeks over the steamer. */
+const HAT_Y = GROUND + (BUN.top - BUN.ground) * SCALE;
+const NAP_LIFT = 4;
 
-// The same shapes feed design/rive/generate.py, so Rive pets can replace these one for one.
-const SHAPES: Record<PetKind, Shape> = shapes;
 const EYE = "#3F2A20";
 
 const stroke = {
@@ -64,14 +51,15 @@ const stroke = {
   fill: "none",
 };
 
-/** Where the eyes sit: wide apart and a little below the middle, like a steamed bun's face. */
-const EL = 42;
-const ER = 78;
-const EY = 63;
+/** Where the eyes sit: close together, a little below the middle, like a steamed bun's face. */
+const EL = 51;
+const ER = 69;
+const EY = 57;
 
 /** One eye drawn around its own centre, so both sides share the drawing. */
 function Eye({ mood, x, right }: { mood: Look; x: number; right: boolean }) {
-  const at = `translate(${x} ${EY})`;
+  // Small dot eyes; every expression shrinks with them.
+  const at = `translate(${x} ${EY}) scale(0.75)`;
   switch (mood) {
     case "stalled":
       return <path transform={at} d="M-3.6 -.4q3.6 3 7.2 0" {...stroke} />;
@@ -148,117 +136,7 @@ function Eyes({ mood }: { mood: Look }) {
   );
 }
 
-const OUTLINE = {
-  stroke: "#4A2614",
-  strokeWidth: 1.8,
-  strokeLinejoin: "round" as const,
-};
-
-/** A bow, headphones or a beanie, drawn in the same sticker style as the pet. */
-function Dressed({ wear, top }: { wear: Wear; top: number }) {
-  switch (wear) {
-    case "bow":
-      return (
-        <g
-          className="dumpling__wear"
-          transform={`translate(77 ${top + 8}) rotate(18)`}
-        >
-          <path d="M0 0L-11-6.5q-3 6.5 0 13z" fill="#F8C6D1" {...OUTLINE} />
-          <path d="M0 0L11-6.5q3 6.5 0 13z" fill="#F8C6D1" {...OUTLINE} />
-          <circle r="3.4" fill="#F2A9BA" {...OUTLINE} />
-        </g>
-      );
-    case "beanie":
-      return (
-        <g className="dumpling__wear">
-          <path
-            d={`M33 ${top + 16}Q33 ${top - 8} 60 ${top - 8}Q87 ${top - 8} 87 ${top + 16}z`}
-            fill="#EADFCB"
-            {...OUTLINE}
-          />
-          <path
-            d={`M44 ${top - 2}v14M52 ${top - 6}v18M60 ${top - 7}v19M68 ${top - 6}v18M76 ${top - 2}v14`}
-            stroke="#4A2614"
-            strokeOpacity={0.25}
-            strokeWidth={1.4}
-            strokeLinecap="round"
-          />
-          <rect
-            x="30"
-            y={top + 12}
-            width="60"
-            height="9"
-            rx="4.5"
-            fill="#DCCDB3"
-            {...OUTLINE}
-          />
-          <circle cx="60" cy={top - 9} r="5" fill="#FFF8EF" {...OUTLINE} />
-        </g>
-      );
-    case "headphones":
-      return (
-        <g className="dumpling__wear">
-          <path
-            d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
-            fill="none"
-            stroke="#4A2614"
-            strokeWidth={5.6}
-            strokeLinecap="round"
-          />
-          <path
-            d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
-            fill="none"
-            stroke="#E6DED2"
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
-          <rect
-            x="12"
-            y="52"
-            width="12"
-            height="18"
-            rx="6"
-            fill="#D6CAB8"
-            {...OUTLINE}
-          />
-          <rect
-            x="96"
-            y="52"
-            width="12"
-            height="18"
-            rx="6"
-            fill="#D6CAB8"
-            {...OUTLINE}
-          />
-        </g>
-      );
-  }
-}
-
-/** Round frames over the eyes, clear lenses so the eyes read as they are. */
-function Glasses() {
-  const lens = {
-    r: 7,
-    fill: "none",
-    stroke: "#4A2E22",
-    strokeWidth: 1.3,
-  };
-  return (
-    <g className="dumpling__glasses">
-      <circle cx={EL} cy={EY} {...lens} />
-      <circle cx={ER} cy={EY} {...lens} />
-      <path
-        d={`M${EL + 7} ${EY - 1}q${(ER - EL - 14) / 2} -3.4 ${ER - EL - 14} 0`}
-        fill="none"
-        stroke="#4A2E22"
-        strokeWidth={1.3}
-        strokeLinecap="round"
-      />
-    </g>
-  );
-}
-
-/** Small mouths between the eyes: a :3 at rest, open and happy when pleased. */
+/** Small mouths between the eyes: a little smile at rest, open and happy when pleased. */
 function Mouth({ mood }: { mood: Look }) {
   const happy = (
     <>
@@ -308,7 +186,7 @@ function Mouth({ mood }: { mood: Look }) {
     case "wave":
       return happy;
     default:
-      return <path d="M56.4 69q1.8 2.4 3.6 0q1.8 2.4 3.6 0" {...stroke} />;
+      return <path d="M57.4 69q2.6 3.6 5.2 0" {...stroke} />;
   }
 }
 
@@ -505,10 +383,35 @@ function PropInFront({ mood }: { mood: Look }) {
 }
 
 const LIMB_LINE = {
-  stroke: "#4A2614",
-  strokeOpacity: 0.85,
-  strokeWidth: 1.6,
+  stroke: BUN.line,
+  strokeWidth: 1.7,
 };
+
+/** Round paws resting in front of the bun, as in the study table drawing. */
+function Paws() {
+  return (
+    <g transform={PLACE}>
+      <ellipse
+        cx="-75"
+        cy="81"
+        rx="30"
+        ry="20"
+        fill={BUN.paw}
+        stroke={BUN.line}
+        strokeWidth="5"
+      />
+      <ellipse
+        cx="77"
+        cy="81"
+        rx="29"
+        ry="20"
+        fill={BUN.paw}
+        stroke={BUN.line}
+        strokeWidth="5"
+      />
+    </g>
+  );
+}
 
 /** Stubby feet that stay on the ground while the body hops, and step when the pet walks. */
 function Feet({ fill, idle }: { fill: string; idle: boolean }) {
@@ -613,8 +516,9 @@ function Outfit({ accessory, hatY }: { accessory: Accessory; hatY: number }) {
       </g>
     );
   }
+  // The bun has no neck, so the scarf wraps it just above the paws.
   return (
-    <g>
+    <g transform="translate(0 -6)">
       <path d="M24 77q36 11 72 0v6q-36 11-72 0z" fill="#FF8FA0" />
       <path
         d="M24 80q36 11 72 0"
@@ -628,8 +532,6 @@ function Outfit({ accessory, hatY }: { accessory: Accessory; hatY: number }) {
 }
 
 export function Dumpling({
-  kind,
-  color,
   mood,
   heat,
   size = 64,
@@ -638,24 +540,18 @@ export function Dumpling({
   accessory,
   glasses = false,
   wear = null,
-  seated = false,
   motion,
 }: Props) {
   const look: Look = expression ?? mood;
   // useId contains colons, which break url(#…) references.
   const id = useId().replace(/:/g, "");
-  const shape = SHAPES[kind];
   const build = seed ? variantFor(seed) : BASE;
   const blush = (1 + heat * 0.7) * build.blush;
   // Stretch from the base of the pet so it always sits on the ground.
-  const stretch = `translate(60 86) scale(${build.width} ${build.height * shape.tall}) translate(-60 -86)`;
-  // One warm brown outline for every pet, barely touched by its colour, so a table of peeps
-  // reads as one set rather than a rainbow of edges.
-  const line = mix(edge(color), "#5A3522", 0.88);
-  const spread = 1 + build.eyeSpread / 30;
-  const face = `${stretch} translate(60 ${shape.faceY}) scale(${spread} 1) translate(-60 0)`;
-  const skin = soft(flushed(color, heat));
-  const limbs = limbsFor(look, kind);
+  const stretch = `translate(60 ${GROUND}) scale(${build.width} ${build.height}) translate(-60 -${GROUND})`;
+  const spread = 1 + build.eyeSpread / 40;
+  const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
+  const limbs = limbsFor(look);
 
   return (
     <svg
@@ -667,111 +563,79 @@ export function Dumpling({
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id={`${id}shade`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0.72" stopColor="#C99470" stopOpacity={0} />
-          <stop offset="1" stopColor="#C99470" stopOpacity={0.2} />
-        </linearGradient>
-        <clipPath id={`${id}clip`}>
-          <path d={shape.body} />
-        </clipPath>
-        <radialGradient id={`${id}blush`}>
-          <stop offset="0" stopColor="#FFA98F" stopOpacity={0.8} />
-          <stop offset="1" stopColor="#FFA98F" stopOpacity={0} />
-        </radialGradient>
+        <Dough id={`${id}dough`} />
         <radialGradient id={`${id}shadow`}>
           <stop offset="0" stopColor="#000" stopOpacity={0.22} />
           <stop offset="1" stopColor="#000" stopOpacity={0} />
         </radialGradient>
       </defs>
       <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
-      {!seated && <PropBehind mood={look} />}
-      {!limbs.napping && !seated && (
+      <PropBehind mood={look} />
+      {!limbs.napping && (
         <g transform={stretch}>
-          <Feet fill={skin} idle={Boolean(limbs.hidden)} />
+          <Feet fill={BUN.paw} idle={Boolean(limbs.hidden)} />
         </g>
       )}
       <g
-        transform={
-          look === "stalled" ? `translate(0 ${-shape.napLift})` : undefined
-        }
+        transform={look === "stalled" ? `translate(0 ${-NAP_LIFT})` : undefined}
       >
         <g className="dumpling__body">
           <g transform={stretch}>
-            <path d={shape.body} fill={skin} />
-            {/* A flat sticker finish: only a soft warm band where the bun meets the plate. */}
-            <path d={shape.body} fill={`url(#${id}shade)`} />
-            {shape.decor && (
-              <path
-                d={shape.decor}
-                fill="#6E8670"
-                clipPath={`url(#${id}clip)`}
-              />
-            )}
-            {/* Pleats gathered at the top, like a real bun, in the same brown as the outline. */}
-            <path
-              d={shape.creases}
-              stroke={line}
-              strokeOpacity={0.5}
-              strokeWidth={1.3}
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* A firm, warm brown outline, the sticker look, drawn last so it stays crisp. */}
-            <path
-              d={shape.body}
-              fill="none"
-              stroke={line}
-              strokeWidth={2.1}
-              strokeLinejoin="round"
-            />
+            <g transform={PLACE}>
+              <BunBody dough={`${id}dough`} />
+            </g>
           </g>
           <g transform={face}>
             <ellipse
-              cx={EL - 4}
-              cy={EY + 6}
-              rx={5.4 * blush}
-              ry={3.3 * blush}
-              fill="#F7A3A0"
-              opacity={0.7}
+              cx={42}
+              cy={62.5}
+              rx={5.8 * blush}
+              ry={3.4 * blush}
+              fill={BUN.blush}
+              opacity={0.68}
             />
             <ellipse
-              cx={ER + 4}
-              cy={EY + 6}
-              rx={5.4 * blush}
-              ry={3.3 * blush}
-              fill="#F7A3A0"
-              opacity={0.7}
+              cx={78}
+              cy={62.5}
+              rx={5.8 * blush}
+              ry={3.4 * blush}
+              fill={BUN.blush}
+              opacity={0.68}
             />
             <Eyes mood={look} />
-            {glasses && <Glasses />}
+            {glasses && <BunGlasses left={EL} right={ER} y={EY} r={5.4} />}
             <Brows mood={look} />
-            {/* Mouths were drawn for eyes 3 lower; moving the group keeps every expression in step. */}
-            <g transform={`translate(0 ${EY - 66})`}>
+            {/* Mouths were drawn around y = 70; this sits them just under the eyes, a little smaller. */}
+            <g
+              transform={`translate(60 ${EY + 7}) scale(0.8) translate(-60 -70)`}
+            >
               <Mouth mood={look} />
             </g>
           </g>
-          {!limbs.hidden && !seated && (
-            <g transform={stretch}>
-              {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
-              {/* A shade deeper than the body, so a hand reads even when it overlaps it. */}
-              <HandShape
-                hand={limbs.left}
-                fill={mix(skin, edge(color), 0.16)}
-              />
-              <HandShape
-                hand={limbs.right}
-                fill={mix(skin, edge(color), 0.16)}
-              />
-            </g>
-          )}
-          {wear && <Dressed wear={wear} top={shape.hatY} />}
-          {accessory && !wear && (
-            <Outfit accessory={accessory} hatY={shape.hatY} />
-          )}
+          <g transform={stretch}>
+            {limbs.hidden ? (
+              !limbs.napping && <Paws />
+            ) : (
+              <>
+                {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
+                <HandShape hand={limbs.left} fill={BUN.paw} />
+                <HandShape hand={limbs.right} fill={BUN.paw} />
+              </>
+            )}
+            {wear && (
+              <g transform={PLACE}>
+                <Worn wear={wear} />
+              </g>
+            )}
+            {accessory && !wear && (
+              <Outfit accessory={accessory} hatY={HAT_Y} />
+            )}
+          </g>
         </g>
       </g>
-      {!seated && <PropInFront mood={look} />}
-      <g transform={`translate(0 ${shape.fxOffset})`}>
+      <PropInFront mood={look} />
+      {/* Steam rises from above the top knot rather than over it. */}
+      <g transform={look === "steaming" ? "translate(0 -8)" : undefined}>
         <Effects mood={look} />
       </g>
     </svg>

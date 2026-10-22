@@ -1,4 +1,4 @@
-import type { Mood, PetKind } from "../lib/types";
+import type { Mood } from "../lib/types";
 import type { Expression } from "./Dumpling";
 
 export type Look = Mood | Expression;
@@ -23,15 +23,8 @@ export interface Limbs {
   napping?: boolean;
 }
 
-/** Where each shape's sides are at hand height, in the 120 by 100 drawing. */
-const SIDE: Record<PetKind, number> = {
-  bao: 19,
-  xiaolongbao: 24,
-  gyoza: 17,
-  mochi: 15,
-  onigiri: 22,
-  wonton: 19,
-};
+/** Where the bun's sides are at hand height, in the 120 by 100 drawing. */
+const SIDE = 26;
 
 const mirror = (hand: Hand): Hand => ({ ...hand, x: 120 - hand.x });
 
@@ -39,8 +32,8 @@ const mirror = (hand: Hand): Hand => ({ ...hand, x: 120 - hand.x });
  * Hands for a mood or a passing expression: waving for attention, arms up to celebrate or catch,
  * a pencil while working. At rest they stay tucked away, so the pet reads cleanly at a glance.
  */
-export function limbsFor(look: Look, kind: PetKind): Limbs {
-  const rest: Hand = { x: SIDE[kind], y: 74 };
+export function limbsFor(look: Look): Limbs {
+  const rest: Hand = { x: SIDE, y: 74 };
   const both = (left: Hand, prop?: Prop): Limbs => ({
     left,
     right: mirror(left),
@@ -63,7 +56,7 @@ export function limbsFor(look: Look, kind: PetKind): Limbs {
     case "dizzy":
       return both({ x: 11, y: 64, motion: "limb-flail" });
     case "steaming":
-      return both({ x: SIDE[kind] - 1, y: 64, motion: "limb-shake" });
+      return both({ x: SIDE - 1, y: 64, motion: "limb-shake" });
     case "love":
       return both({ x: 52, y: 82 }, "heart");
     case "failing":
