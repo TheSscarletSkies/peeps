@@ -1121,6 +1121,23 @@ li[data-done] .started__check {
   margin-top: 0;
 }
 
+/* A new version, waiting for the user to restart into it. */
+.update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.update__text {
+  flex: 1 1 240px;
+}
+
+.update h2 {
+  margin: 0 0 4px;
+}
+
 .section__sub {
   margin: 28px 0 12px;
   font-size: 15px;

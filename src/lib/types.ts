@@ -184,6 +184,8 @@ export interface Snapshot {
   calendars: CalendarStatus[];
   reminders: Reminders;
   sync: SyncStatus;
+  /** A newer peeps waiting for a restart; null when up to date, unchecked or in the browser. */
+  update: UpdateReady | null;
   /** Whether the user has told peeps anything about themselves yet. */
   knowsYou: boolean;
   /** A focus session or its break, while one is going. */
@@ -205,6 +207,14 @@ export interface SyncStatus {
   lastSynced: string | null;
   /** Other computers seen in the folder, with when they last wrote. */
   computers: { name: string; seenAt: string }[];
+  error: string | null;
+}
+
+export interface UpdateReady {
+  version: string;
+  /** Downloading and installing after the user pressed Restart. */
+  installing: boolean;
+  /** Why the last attempt failed, so they can try again. */
   error: string | null;
 }
 

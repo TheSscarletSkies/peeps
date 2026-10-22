@@ -16,7 +16,7 @@ use tauri::{Manager, State, WebviewWindow};
 
 use crate::assistant;
 use crate::state::{App, AppSnapshot};
-use crate::{secrets, window};
+use crate::{secrets, updates, window};
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -530,4 +530,10 @@ pub async fn react(
     tauri::async_runtime::spawn_blocking(move || app.friends.react(&code, reaction))
         .await
         .map_err(|error| error.to_string())?
+}
+
+/// Downloads the update the user chose to install and restarts into it.
+#[tauri::command]
+pub async fn install_update(app: State<'_, Arc<App>>, handle: tauri::AppHandle) -> Result<()> {
+    updates::install(app.inner().clone(), handle).await
 }

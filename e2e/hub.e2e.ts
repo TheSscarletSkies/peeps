@@ -91,6 +91,15 @@ test("UC14: without Claude Code, one click installs it", async ({ page }) => {
   );
 });
 
+test("UC29: the preview has no app to update, so Settings offers none", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByText("When to remind")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Update" })).toHaveCount(0);
+  await expect(page.getByText("Restart to update")).toHaveCount(0);
+});
+
 test("UC17: Nudges switch on stretch, water and eye breaks", async ({
   page,
 }) => {

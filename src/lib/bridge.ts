@@ -521,3 +521,10 @@ export function setAreas(areas: string[]): Promise<void> {
   updatePreview((snapshot) => ({ ...snapshot, areas: clean }));
   return Promise.resolve();
 }
+
+/** Downloads the update on the Settings card and restarts into it. Only the app has updates. */
+export function installUpdate(): Promise<void> {
+  return inApp()
+    ? invoke("install_update").then(() => undefined)
+    : Promise.resolve();
+}

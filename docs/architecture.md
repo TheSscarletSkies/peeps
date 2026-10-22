@@ -28,6 +28,10 @@ needs you › failing › steaming › hungry › litter box › sweating › wo
 
 Set `PEEPS_HOME` to use another directory.
 
+## Updates
+
+`src-tauri/src/updates.rs` asks the updater plugin for `latest.json` from the newest GitHub release on launch and every 6 hours. `peeps_core::updates` decides what counts as newer (semantic versioning, pre-releases before their release), keeps a found update on screen through failed checks (offline, nothing released yet), and allows one notification per version. Settings shows the card; the download and install start only when the user presses Restart to update, then the app restarts.
+
 ## Adding an agent
 
 Any agent that can run a command with a JSON payload on stdin can feed peeps. Map its events to the names in `peeps_core::protocol::HookEvent` and send `session_id`, `hook_event_name` and `cwd`.

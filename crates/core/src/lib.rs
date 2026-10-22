@@ -29,4 +29,5 @@ pub mod sync;
 pub mod todos;
 pub mod tools;
 pub mod tracker;
+pub mod updates;
 pub mod usage;

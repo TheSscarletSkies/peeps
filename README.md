@@ -24,6 +24,7 @@ peeps is a desktop companion for Mac and Windows. It sits at the top of your scr
 - **Calendars.** Paste the private iCal link from Google, Outlook or iCloud and peeps reminds you before classes and calls. Links live in your keychain.
 - **Every computer, no account.** Choose a folder in iCloud Drive, OneDrive, Dropbox or Google Drive and your Mac and PC stay in step.
 - **Light or dark, quiet or not.** Theme and an optional boop live in the sidebar.
+- **Updates itself, when you say so.** peeps checks for a new version when it starts and every 6 hours. When one is out, Settings shows it with a Restart to update button; nothing installs until you press it.
 
 ## Install
 
@@ -84,6 +85,18 @@ npm test
 npm run e2e            # each use case in docs/use-cases.md, in a real browser
 ```
 
+## Releases and updates
+
+Pushing a `v*` tag builds every platform and publishes a GitHub release with `latest.json`, which installed copies read from `releases/latest/download/latest.json`. Releases are published straight away (not drafts or pre-releases), because `releases/latest` skips both.
+
+Update bundles must be signed, so the release workflow needs two repository secrets. Without `TAURI_SIGNING_PRIVATE_KEY` the build stops before uploading anything.
+
+1. Make a key pair once: `npm run tauri signer generate -- -w ~/.tauri/peeps.key`.
+2. Put the private key in the `TAURI_SIGNING_PRIVATE_KEY` secret and its password in `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+3. Put the public key in `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, in place of `REPLACE_WITH_UPDATER_PUBLIC_KEY`.
+
+Keep the private key safe: copies already installed only accept updates signed with it.
+
 ## Roadmap
 
 - Focus together: start a session with a friend
@@ -91,7 +104,7 @@ npm run e2e            # each use case in docs/use-cases.md, in a real browser
 
 ## Privacy
 
-No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are your calendar links, the chats you start (through your own Claude) and, if you add friends, sealed messages through ntfy.sh.
+No account, no telemetry, no server. Data stays in `~/.peeps`. Secrets live in your OS keychain. The only network calls are your calendar links, the chats you start (through your own Claude), a look at the latest GitHub release for updates and, if you add friends, sealed messages through ntfy.sh.
 
 ## License
 

@@ -137,6 +137,13 @@ Tested by `e2e/hub.e2e.ts`, `src/hub/setupSteps.test.ts`, `crates/core/src/progr
 
 Tested by `e2e/hub.e2e.ts`, `crates/core/src/sync.rs`.
 
+### UC29. Updates when they say so
+
+**When** a new version of peeps is released.
+**Then** within a few hours (or at the next launch) a notification says it is ready, once, and Settings shows "peeps 0.2.0 is ready" with Restart to update. Nothing downloads or restarts until they press it. Offline, or before any release exists, nothing shows. The browser preview never shows the card.
+
+Tested by `e2e/hub.e2e.ts`, `src/hub/update.test.ts`, `crates/core/src/updates.rs`.
+
 ### UC15. Light or dark
 
 **When** they prefer a light window.

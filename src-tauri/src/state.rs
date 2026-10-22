@@ -42,6 +42,8 @@ pub struct World {
     /// Calendar feeds by name, as last downloaded.
     pub feeds: HashMap<String, Feed>,
     pub sync: SyncStatus,
+    /// A newer peeps, once a check has found one.
+    pub update: Option<peeps_core::updates::Ready>,
 }
 
 /// How syncing is going, for the Devices page.
@@ -101,6 +103,8 @@ pub struct AppSnapshot {
     pub calendars: Vec<CalendarStatus>,
     pub reminders: Reminders,
     pub sync: SyncStatus,
+    /// A newer peeps ready to restart into; None when up to date or not yet checked.
+    pub update: Option<peeps_core::updates::Ready>,
     /// Whether the user has told peeps anything about themselves yet.
     pub knows_you: bool,
     pub focus: Option<peeps_core::focus::FocusView>,
@@ -435,6 +439,7 @@ impl App {
                 .collect(),
             reminders: config.reminders.clone(),
             sync: world.sync.clone(),
+            update: world.update.clone(),
             knows_you,
             focus,
             one_thing: self.one_thing(),
@@ -636,6 +641,7 @@ provider = "gmail"
                 now,
             )
             .unwrap();
+        app.world().update = Some(peeps_core::updates::Ready::new("0.2.0"));
 
         let (done, waited) = mpsc::channel();
         let worker = app.clone();
@@ -650,6 +656,10 @@ provider = "gmail"
         assert_eq!(snapshot.snapshot.pets[0].id, "funderly");
         assert_eq!(snapshot.helper.todos.len(), 1);
         assert_eq!(snapshot.helper.chat.len(), 1);
+        assert_eq!(
+            snapshot.update.map(|ready| ready.version).as_deref(),
+            Some("0.2.0")
+        );
         app.publish();
     }
 }

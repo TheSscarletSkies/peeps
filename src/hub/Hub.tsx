@@ -33,6 +33,7 @@ import { DevicesPage } from "./DevicesPage";
 import { RemindersPage } from "./RemindersPage";
 import { savedTheme, saveTheme, type Theme } from "./theme";
 import { Tour, tourSeen } from "./Tour";
+import { UpdateCard } from "./UpdateCard";
 import logo from "../assets/logo.png";
 import "./hub.css";
 
@@ -174,6 +175,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               title="Settings"
               lead={`How big ${helper.name} is, where it lives, and what it can see.`}
             >
+              <UpdateCard update={snapshot.update} />
               <div className="reminders">
                 <section className="card">
                   <Roster

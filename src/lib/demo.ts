@@ -220,6 +220,7 @@ export const demoSnapshot: Snapshot = {
     ],
   },
   configError: null,
+  update: null,
   knowsYou: false,
   focus: null,
   oneThing: false,
