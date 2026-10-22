@@ -80,6 +80,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           kind={helper.kind}
           color={helper.color}
           mood={mood}
+          glasses={snapshot.focus?.phase === "focus"}
           heat={0}
           size={size}
         />
@@ -104,6 +105,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
               mood="working"
               heat={0}
               size={size}
+              glasses
             />
           ),
         };

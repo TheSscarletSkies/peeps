@@ -107,7 +107,7 @@ const HEART =
   "M20 33C9 26 4.5 19.5 6.5 13.5 8.5 7.5 15.5 6.5 20 12.5 24.5 6.5 31.5 7.5 33.5 13.5 35.5 19.5 31 26 20 33Z";
 
 /** Reactions, plus the drawings reminders use. */
-export type StickerKind = Reaction | "water" | "bell";
+export type StickerKind = Reaction | "water" | "bell" | "laptop";
 
 /** Each drawing in a 40 by 40 box, like a little sticker. */
 export function Sticker({ kind }: { kind: StickerKind }) {
@@ -256,6 +256,26 @@ export function Sticker({ kind }: { kind: StickerKind }) {
             transform="rotate(25 15 20)"
           />
           <Face x={20} y={26} id={id} />
+        </>
+      )}
+      {kind === "laptop" && (
+        <>
+          <Soft
+            d="M9 9h22a2 2 0 0 1 2 2v15H7V11a2 2 0 0 1 2-2z"
+            fill="#E4E8F2"
+            edge="#7C86A0"
+            id={id}
+          />
+          <rect x="10" y="12" width="20" height="11" rx="1.5" fill="#BFE3FF" />
+          <path
+            d="M3 27h34l-2 4H5z"
+            fill="#CDD3E2"
+            stroke="#7C86A0"
+            strokeOpacity="0.45"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <circle cx="20" cy="16" r="2.2" fill="#FFB8CB" />
         </>
       )}
       {kind === "bell" && (

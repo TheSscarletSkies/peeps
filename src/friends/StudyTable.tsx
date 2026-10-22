@@ -43,6 +43,7 @@ export function StudyTable({
             heat={0}
             size={studying.length > 0 ? 80 : 96}
             chatty
+            glasses={focus?.phase === "focus"}
           />
           {studying.length > 0 && <span className="seat__tag">{you}</span>}
         </span>
@@ -57,6 +58,7 @@ export function StudyTable({
                 mood="working"
                 heat={0}
                 size={64}
+                glasses
               />
               <span className="seat__tag">{friend.name}</span>
             </span>

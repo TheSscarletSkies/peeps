@@ -18,6 +18,8 @@ interface Props {
   /** A short-lived look that wins over the mood. */
   expression?: Expression;
   accessory?: Accessory | null;
+  /** Round reading glasses, worn while studying or working together. */
+  glasses?: boolean;
   /** Extra classes for one-off motions such as a squish or hatching. */
   motion?: string;
 }
@@ -131,6 +133,46 @@ function Eyes({ mood }: { mood: Look }) {
         </g>
       );
   }
+}
+
+/** Round frames over the eyes, with a little shine on each lens. */
+function Glasses() {
+  return (
+    <g className="dumpling__glasses">
+      <circle
+        cx="45"
+        cy="68"
+        r="7.5"
+        fill="#FFFFFF"
+        fillOpacity={0.22}
+        stroke="#4A2E22"
+        strokeWidth={1.9}
+      />
+      <circle
+        cx="75"
+        cy="68"
+        r="7.5"
+        fill="#FFFFFF"
+        fillOpacity={0.22}
+        stroke="#4A2E22"
+        strokeWidth={1.9}
+      />
+      <path
+        d="M52.5 67q7.5-3 15 0"
+        fill="none"
+        stroke="#4A2E22"
+        strokeWidth={1.9}
+        strokeLinecap="round"
+      />
+      <path
+        d="M40.5 64.5q1.5-1.6 3.6-1.8M70.5 64.5q1.5-1.6 3.6-1.8"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+    </g>
+  );
 }
 
 function Mouth({ mood }: { mood: Look }) {
@@ -510,6 +552,7 @@ export function Dumpling({
   seed,
   expression,
   accessory,
+  glasses = false,
   motion,
 }: Props) {
   const look: Look = expression ?? mood;
@@ -613,6 +656,7 @@ export function Dumpling({
               fill={`url(#${id}blush)`}
             />
             <Eyes mood={look} />
+            {glasses && <Glasses />}
             <Brows mood={look} />
             <Mouth mood={look} />
           </g>

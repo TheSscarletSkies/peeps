@@ -47,3 +47,18 @@ test("UC7: the floating pet remembers where it was put", async ({ page }) => {
   const moved = await page.locator(".float__pet").boundingBox();
   expect(moved?.x ?? 0).toBeLessThan(start.x - 300);
 });
+
+test("UC26: studying with friends turns the peep into a little table", async ({
+  page,
+}) => {
+  const pet = page.locator(".float__pet");
+  await pet.dblclick();
+  await page.getByRole("tab", { name: "Today" }).click();
+  await page.getByRole("radio", { name: "Study" }).click();
+  await page.getByRole("button", { name: "Study", exact: true }).click();
+  await page.getByRole("button", { name: "Close" }).click();
+  const desk = page.getByLabel("At the table: Mariyam, Sara");
+  await expect(desk).toBeVisible();
+  await expect(desk.locator(".dumpling__glasses")).toHaveCount(2);
+  await expect(desk.locator(".desk__tag")).toHaveText(["Mariyam", "Sara"]);
+});

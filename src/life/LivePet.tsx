@@ -31,6 +31,7 @@ interface Props {
   waving?: boolean;
   /** Says something in a little bubble when patted or fed; only where there is room above it. */
   chatty?: boolean;
+  glasses?: boolean;
 }
 
 const PATTED = ["hehe!", "hi!", "boop!", "that tickles", "again!", "♥"];
@@ -56,6 +57,7 @@ export function LivePet({
   dropId,
   waving = false,
   chatty = false,
+  glasses = false,
 }: Props) {
   const [saying, setSaying] = useState<string | null>(null);
   const eager = useDropHover(dropId ?? id);
@@ -228,6 +230,7 @@ export function LivePet({
         size={size}
         expression={expression}
         accessory={accessoryForToday()}
+        glasses={glasses}
         motion={motion || undefined}
       />
     </span>

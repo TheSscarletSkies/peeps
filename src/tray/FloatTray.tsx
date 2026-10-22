@@ -24,6 +24,7 @@ import {
   type Resident,
 } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
+import { DESK_HEIGHT, DeskScene, deskWidth } from "../friends/DeskScene";
 import { giveFiles, useFileDrop } from "../life/drops";
 import { announceFed, onOpenChat, announcePat } from "../life/events";
 
@@ -82,6 +83,13 @@ export function FloatTray({
   const [prefs, setPrefs] = usePrefs();
   const box = boxFor(prefs.size);
   const [spot, setSpot] = useState(() => savedSpot(area, box));
+  const company = residents.filter((resident) =>
+    resident.id.startsWith(FRIEND),
+  );
+  // Focusing with friends turns the pet into a little table everyone sits at.
+  const together = snapshot.focus?.phase === "focus" && company.length > 0;
+  const tall = together ? Math.max(box, DESK_HEIGHT) : box;
+  const wide = together ? deskWidth(company.length + 1) : box;
   const [openId, setOpenId] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const grab = useRef<{
@@ -107,11 +115,8 @@ export function FloatTray({
   });
 
   const helper = residents.find((resident) => resident.id === HELPER);
-  const company = residents.filter((resident) =>
-    resident.id.startsWith(FRIEND),
-  );
   const waiting = residents.filter((resident) => resident.urgent).length;
-  const rect = openRect(spot, panelHeight, area, box);
+  const rect = openRect(spot, panelHeight, area, tall, wide);
   const toggleCard = () => setOpenId((now) => (now === null ? HELPER : null));
 
   // Opening or closing moves and resizes the window, and the window and the page can't change
@@ -128,19 +133,19 @@ export function FloatTray({
     if (open && panelHeight > 0) {
       void floatTray(rect.x, rect.y, rect.width, rect.height).then(show);
     } else if (!open) {
-      const kept = clampSpot(spot, area, box);
+      const kept = clampSpot(spot, area, tall, wide);
       setSpot(kept);
-      void floatTray(kept.x, kept.y, box, box).then(show);
+      void floatTray(kept.x, kept.y, wide, tall).then(show);
     }
     // Moving while dragging is handled frame by frame below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, panelHeight, box]);
+  }, [open, panelHeight, tall, wide]);
 
   const move = (next: Spot) => {
     setSpot(next);
     cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
-      void floatTray(next.x, next.y, box, box);
+      void floatTray(next.x, next.y, wide, tall);
     });
   };
 
@@ -155,7 +160,7 @@ export function FloatTray({
       <button
         className="float__pet"
         data-drop={HELPER}
-        style={{ top: open ? rect.petTop : 0, width: box, height: box }}
+        style={{ top: open ? rect.petTop : 0, width: wide, height: tall }}
         data-waiting={waiting > 0 || undefined}
         aria-label={
           waiting > 0
@@ -184,7 +189,8 @@ export function FloatTray({
             clampSpot(
               { x: current.from.x + dx, y: current.from.y + dy },
               area,
-              box,
+              tall,
+              wide,
             ),
           );
         }}
@@ -205,10 +211,27 @@ export function FloatTray({
           if (event.detail === 0) toggleCard();
         }}
       >
-        {helper?.pet(FLOAT_PET[prefs.size])}
+        {together && helper ? (
+          <DeskScene
+            seats={[
+              {
+                key: HELPER,
+                name: snapshot.friends?.name || "You",
+                pet: helper.pet,
+              },
+              ...company.map((resident) => ({
+                key: resident.id,
+                name: resident.name,
+                pet: resident.pet,
+              })),
+            ]}
+          />
+        ) : (
+          helper?.pet(FLOAT_PET[prefs.size])
+        )}
         {waiting > 0 && <span className="float__badge">{waiting}</span>}
       </button>
-      {!open && company.length > 0 && (
+      {!open && !together && company.length > 0 && (
         <button
           className="float__friends"
           aria-label={`Focusing too: ${company.map((r) => r.name).join(", ")}`}

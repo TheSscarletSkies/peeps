@@ -32,11 +32,16 @@ const GAP = 8;
 const MARGIN = 8;
 
 /** Keeps the pet on screen, a little clear of the edges. */
-export function clampSpot(spot: Spot, area: Area, box = BOX): Spot {
+export function clampSpot(
+  spot: Spot,
+  area: Area,
+  box = BOX,
+  width = box,
+): Spot {
   return {
     x: Math.min(
       Math.max(spot.x, area.left + MARGIN),
-      area.left + area.width - box - MARGIN,
+      area.left + area.width - width - MARGIN,
     ),
     y: Math.min(
       Math.max(spot.y, area.top + MARGIN),
@@ -74,11 +79,12 @@ export function openRect(
   panelHeight: number,
   area: Area,
   box = BOX,
+  width = box,
 ): OpenRect {
-  const right = area.left + area.width - (spot.x + box);
+  const right = area.left + area.width - (spot.x + width);
   const left = spot.x - area.left;
   const side = right >= PANEL + GAP || right >= left ? "right" : "left";
-  const width = box + GAP + PANEL;
+  const total = width + GAP + PANEL;
   const height = Math.min(Math.max(box, panelHeight), area.height - MARGIN * 2);
   const y = Math.min(
     Math.max(spot.y, area.top + MARGIN),
@@ -87,7 +93,7 @@ export function openRect(
   return {
     x: side === "right" ? spot.x : spot.x - GAP - PANEL,
     y,
-    width,
+    width: total,
     height,
     side,
     petTop: spot.y - y,
