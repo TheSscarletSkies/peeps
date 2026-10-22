@@ -1158,5 +1158,5 @@ li[data-done] .started__check {
 
 .hero__table {
   flex-shrink: 0;
-  margin: -16px 0 14px;
+  margin: -16px 0 -6px;
 }

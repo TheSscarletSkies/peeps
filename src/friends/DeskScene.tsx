@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { soft } from "../pets/tint";
 
@@ -78,15 +78,35 @@ const LAYOUTS: Spot[][] = [
 ];
 
 export const MAX_SEATS = LAYOUTS.length;
-/** Room for the names: one row, or two once there are more than four. */
-function strip(seats: number): number {
-  return seats > 4 ? 56 : 32;
-}
-
-/** How big the scene is for this many people, names included, so the window can fit it. */
+/** How big the scene is for this many people, so the window can fit it. */
 export function deskSize(seats: number): { width: number; height: number } {
   const width = seats <= 1 ? 180 : seats <= 3 ? 240 : 300;
-  return { width, height: Math.round(width * 0.85) + strip(seats) };
+  return { width, height: Math.round(width * 0.85) };
+}
+
+const ARRIVAL_MS = 4000;
+
+/** Who just sat down, so their name shows by itself for a moment. */
+function useArrivals(keys: string[]): (key: string) => boolean {
+  const since = useRef(new Map<string, number>());
+  const [, redraw] = useState(0);
+  const joined = keys.join(",");
+  useEffect(() => {
+    const now = Date.now();
+    let added = false;
+    for (const key of joined.split(",").filter(Boolean)) {
+      if (!since.current.has(key)) {
+        since.current.set(key, now);
+        added = true;
+      }
+    }
+    if (!added) return;
+    redraw((n) => n + 1);
+    // Left running on purpose: redrawing a table that has gone is harmless, and cancelling it
+    // here would leave a name showing for good if the effect runs twice.
+    window.setTimeout(() => redraw((n) => n + 1), ARRIVAL_MS + 50);
+  }, [joined]);
+  return (key) => Date.now() - (since.current.get(key) ?? 0) < ARRIVAL_MS;
 }
 
 const LINE = {
@@ -180,12 +200,12 @@ function ThingArt({ thing, cover }: { thing: Thing; cover: string }) {
 
 const COVERS = ["#F2CFCC", "#E3D3BA", "#D9E2CD"];
 
-/** Everyone in a session together, around one low round table, with their names underneath. */
+/** Everyone in a session together around one low round table; hover a peep to see who it is. */
 export function DeskScene({ seats }: { seats: Seat[] }) {
   const shown = seats.slice(0, MAX_SEATS);
   const layout = LAYOUTS[shown.length - 1] ?? LAYOUTS[0] ?? [];
   const { width, height } = deskSize(shown.length);
-  const scene = height - strip(shown.length);
+  const arriving = useArrivals(shown.map((seat) => seat.key));
   const pet = Math.round(width * (shown.length <= 2 ? 0.38 : 0.3));
   const thing = Math.round(pet * 0.5);
   const hand = Math.max(7, Math.round(pet * 0.15));
@@ -197,10 +217,12 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
       <div
         key={seat.key}
         className="desk__person"
+        data-arriving={arriving(seat.key) || undefined}
         style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: pet }}
       >
         {spot.front && <span className="desk__cushion" />}
         <span className="desk__pet">{seat.pet(pet)}</span>
+        <span className="desk__label">{seat.name}</span>
       </div>
     );
   };
@@ -244,7 +266,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
       style={{ width, height }}
       aria-label={`At the table: ${shown.map((seat) => seat.name).join(", ")}`}
     >
-      <div className="desk__scene" style={{ height: scene }}>
+      <div className="desk__scene" style={{ height }}>
         {shown.map((seat, index) =>
           layout[index]?.front ? null : person(seat, index),
         )}
@@ -315,19 +337,6 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
         {shown.map((seat, index) =>
           layout[index]?.front ? person(seat, index) : null,
         )}
-      </div>
-      <div className="desk__names">
-        {shown.map((seat) => (
-          <span key={seat.key} className="desk__name">
-            <span
-              className="desk__avatar"
-              style={{ background: soft(seat.color) }}
-            >
-              {seat.pet(20)}
-            </span>
-            {seat.name}
-          </span>
-        ))}
       </div>
     </div>
   );
