@@ -70,6 +70,9 @@ function saveSpot(spot: Spot) {
  * For screens without a notch: the companion floats wherever it was dropped.
  * A click pats it; a double click, a right click or the little bubble opens its card beside it.
  */
+/** How long the bounce lasts after the pet is dropped. */
+const LAND_MS = 700;
+
 export function FloatTray({
   snapshot,
   residents,
@@ -123,6 +126,8 @@ export function FloatTray({
   // Opening or closing moves and resizes the window, and the window and the page can't change
   // in the same frame. Hiding the pet until the window is in place avoids a frame where it jumps.
   const [settled, setSettled] = useState(true);
+  // Dangling while dragged, then a squashy bounce where it is dropped.
+  const [carried, setCarried] = useState<"held" | "landing" | null>(null);
   const wasOpen = useRef(open);
   useLayoutEffect(() => {
     if (wasOpen.current !== open) setSettled(false);
@@ -163,6 +168,7 @@ export function FloatTray({
         data-drop={HELPER}
         style={{ top: open ? rect.petTop : 0, width: wide, height: tall }}
         data-waiting={waiting > 0 || undefined}
+        data-carried={carried ?? undefined}
         aria-label={
           waiting > 0
             ? `${snapshot.helper.name}: ${waiting} need${waiting === 1 ? "s" : ""} you`
@@ -184,7 +190,10 @@ export function FloatTray({
           const dx = event.screenX - current.x;
           const dy = event.screenY - current.y;
           if (!current.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-          if (!current.moved) setOpenId(null);
+          if (!current.moved) {
+            setOpenId(null);
+            setCarried("held");
+          }
           current.moved = true;
           move(
             clampSpot(
@@ -198,7 +207,11 @@ export function FloatTray({
         onPointerUp={() => {
           const current = grab.current;
           grab.current = null;
-          if (current?.moved) saveSpot(spot);
+          if (current?.moved) {
+            saveSpot(spot);
+            setCarried("landing");
+            window.setTimeout(() => setCarried(null), LAND_MS);
+          }
           // Capturing the pointer for dragging keeps the click from the pet, so pass the pat on.
           else if (current) announcePat(HELPER);
         }}

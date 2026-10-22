@@ -191,6 +191,8 @@ interface RoamerProps {
 
 /** A drop gets a longer rest, so a pet stays where it was put for a while. */
 const REST_AFTER_DROP_MS = 20000;
+/** How long the bounce lasts after the pet is dropped. */
+const LAND_MS = 700;
 const DRAG_THRESHOLD = 3;
 
 /**
@@ -220,6 +222,7 @@ function Roamer({
     rest: 0,
   }));
   const [held, setHeld] = useState<number | null>(null);
+  const [bouncing, setBouncing] = useState(false);
   const grab = useRef<{ offset: number; left: number; moved: boolean } | null>(
     null,
   );
@@ -249,6 +252,7 @@ function Roamer({
         "roamer",
         move.walking && held === null && "roamer--walking",
         held !== null && "roamer--held",
+        bouncing && "roamer--landing",
         selected && "roamer--selected",
       ]
         .filter(Boolean)
@@ -295,6 +299,8 @@ function Roamer({
           rest: REST_AFTER_DROP_MS,
         });
         setHeld(null);
+        setBouncing(true);
+        window.setTimeout(() => setBouncing(false), LAND_MS);
       }}
       onPointerCancel={() => {
         grab.current = null;

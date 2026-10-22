@@ -10,7 +10,7 @@ import { seasonalAccessory, type Accessory } from "./season";
 
 const DIZZY_MS = 3000;
 const LOVE_MS = 1600;
-const SQUISH_MS = 320;
+const SQUISH_MS = 620;
 const REACTION_MS = 2200;
 const GRUMPY_MS = 3000;
 const HOLD_MS = 600;

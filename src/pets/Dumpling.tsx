@@ -614,7 +614,14 @@ export function Dumpling({
           <stop offset="1" stopColor="#000" stopOpacity={0} />
         </radialGradient>
       </defs>
-      <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
+      <ellipse
+        className="dumpling__shadow"
+        cx="60"
+        cy="88"
+        rx="40"
+        ry="6"
+        fill={`url(#${id}shadow)`}
+      />
       <PropBehind mood={look} />
       {!limbs.napping && (
         <g transform={stretch}>
