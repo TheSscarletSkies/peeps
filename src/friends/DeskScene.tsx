@@ -37,16 +37,17 @@ function far(x: number, thing: Thing): Spot {
   return { x, y: edge + 4, front: false, thing, tx: x, ty: edge + 11 };
 }
 
-function near(x: number, thing: Thing): Spot {
-  // Leaning on the near edge, their things on the table right beside them.
-  const side = x < 50 ? 1 : -1;
+function near(x: number): Spot {
+  // Leaning on the near edge with just a mug at their elbow: anything bigger would sit across the
+  // table from them, or cover the people beside them.
+  const side = x <= 50 ? 1 : -1;
   return {
     x,
     y: x === 50 ? 94 : 88,
     front: true,
-    thing,
-    tx: x === 50 ? 63 : x + side * 12,
-    ty: x === 50 ? TOP.cy + 9 : TOP.cy + 8,
+    thing: "mug",
+    tx: x + side * 11,
+    ty: TOP.cy + (x === 50 ? 9 : 10),
   };
 }
 
@@ -55,21 +56,15 @@ const LAYOUTS: Spot[][] = [
   [far(50, "book")],
   [far(33, "book"), far(67, "laptop")],
   [far(22, "book"), far(50, "laptop"), far(78, "book")],
-  [far(30, "book"), far(70, "laptop"), near(15, "notebook"), near(85, "mug")],
+  [far(30, "book"), far(70, "laptop"), near(15), near(85)],
+  [far(22, "book"), far(50, "laptop"), far(78, "book"), near(16), near(84)],
   [
     far(22, "book"),
     far(50, "laptop"),
     far(78, "book"),
-    near(16, "notebook"),
-    near(84, "mug"),
-  ],
-  [
-    far(22, "book"),
-    far(50, "laptop"),
-    far(78, "book"),
-    near(15, "notebook"),
-    near(50, "book"),
-    near(85, "mug"),
+    near(15),
+    near(50),
+    near(85),
   ],
 ];
 
@@ -226,6 +221,8 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
   const holding = (seat: Seat, index: number) => {
     const spot = layout[index];
     if (!spot) return null;
+    // A mug is small next to a book or a laptop.
+    const size = spot.thing === "mug" ? Math.round(thing * 0.75) : thing;
     return (
       <div
         key={seat.key}
@@ -235,7 +232,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
         <svg
           viewBox="0 0 40 40"
           aria-hidden="true"
-          style={{ width: thing, height: thing }}
+          style={{ width: size, height: size }}
         >
           <ThingArt
             thing={spot.thing}
