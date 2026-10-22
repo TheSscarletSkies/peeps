@@ -30,7 +30,6 @@ export function Chat({
 }) {
   return (
     <Conversation
-      scope="helper"
       name={helper.name}
       kind={helper.kind}
       color={helper.color}
@@ -50,8 +49,6 @@ export function Chat({
 }
 
 interface ConversationProps {
-  /** "helper", or the product id whose pet is talking. */
-  scope: string;
   name: string;
   kind: PetKind;
   color: string;
@@ -67,8 +64,10 @@ interface ConversationProps {
 }
 
 /** One conversation with a pet, run through the user's own agent. */
+/** Files dropped on the helper are filed under its id. */
+const SCOPE = "helper";
+
 export function Conversation({
-  scope,
   name,
   kind,
   color,
@@ -90,7 +89,7 @@ export function Conversation({
   const eat = useRef<(paths: string[]) => void>(() => undefined);
   const typed = useRef("");
   typed.current = text;
-  useGivenFiles(scope, (paths) => {
+  useGivenFiles(SCOPE, (paths) => {
     if (typed.current.trim() === "") eat.current(paths);
     else
       setFiles((now) => [
@@ -125,7 +124,7 @@ export function Conversation({
       },
     ]);
     try {
-      const reply = await sendChat(trimmed, scope);
+      const reply = await sendChat(trimmed);
       setPending((now) => [...now, reply]);
     } catch (error) {
       setPending((now) => [
@@ -146,11 +145,10 @@ export function Conversation({
   const ask = useRef(send);
   ask.current = send;
   useEffect(() => {
-    if (scope !== "helper") return;
     const waiting = takeAsk();
     if (waiting) void ask.current(waiting);
     return onAsk((message) => void ask.current(message));
-  }, [scope]);
+  }, []);
 
   return (
     <div className="chat" style={{ ["--pet" as string]: color }}>
@@ -255,11 +253,11 @@ export function Conversation({
           void send(text);
         }}
       >
-        <label className="visually-hidden" htmlFor={`chat-${scope}`}>
+        <label className="visually-hidden" htmlFor={`chat-${SCOPE}`}>
           Message {name}
         </label>
         <textarea
-          id={`chat-${scope}`}
+          id={`chat-${SCOPE}`}
           rows={1}
           value={text}
           placeholder={`Ask ${name}…`}
@@ -290,7 +288,7 @@ export function Conversation({
           className="tray__link chat__new"
           onClick={() => {
             setPending([]);
-            void newChat(scope);
+            void newChat();
           }}
         >
           New chat

@@ -162,12 +162,6 @@ export const demoSnapshot: Snapshot = {
       },
     ],
     done: [],
-    drafts: [],
-    draftKinds: [
-      { id: "linkedin", label: "LinkedIn post" },
-      { id: "x", label: "post for X" },
-    ],
-    drafting: false,
     week: {
       products: [
         { productId: "funderly", tokens: 412000, activeMinutes: 640 },
@@ -177,7 +171,6 @@ export const demoSnapshot: Snapshot = {
       busiestDay: "Wednesday",
     },
     todosDoneThisWeek: 9,
-    draftsThisWeek: 3,
     chat: [
       {
         id: 1,
@@ -188,21 +181,11 @@ export const demoSnapshot: Snapshot = {
       {
         id: 2,
         from: "helper",
-        text: "Marketing class at 6 pm in Room 4, and Funderly has 7 sign-ups waiting on a reply. Want me to draft that reply?",
+        text: "Marketing class at 6 pm in Room 4, and Funderly has 7 sign-ups waiting on a reply. Want me to put that on your list?",
         at: "2026-10-20T07:58:20Z",
       },
     ],
     chatting: false,
-    schedules: [
-      {
-        id: 1,
-        kind: "linkedin",
-        topic: "What I shipped this week",
-        repeat: "weekly",
-        time: "09:00:00",
-        nextAt: "2026-10-26T04:00:00Z",
-      },
-    ],
     permission: null,
     model: null,
     effort: null,
@@ -237,188 +220,7 @@ export const demoSnapshot: Snapshot = {
     ],
   },
   configError: null,
-  mail: {
-    accounts: [
-      {
-        address: "hello@funderly.app",
-        provider: "gmail",
-        name: "Mariyam at Funderly",
-        login: "",
-        ready: true,
-      },
-      {
-        address: "mariyam@icloud.com",
-        provider: "icloud",
-        name: "",
-        login: "",
-        ready: false,
-      },
-    ],
-    outbox: [
-      {
-        id: 1,
-        from: "hello@funderly.app",
-        to: "sara@brightfund.org",
-        subject: "Welcome to Funderly",
-        body: "Hi Sara,\n\nThanks for signing up! Most teams launch their first campaign in about ten minutes; this short video walks through it.\n\nReply here if anything gets in the way.\n\nMariyam",
-        inReplyTo: null,
-        status: "pending",
-        messageId: null,
-        createdAt: "2026-10-20T08:01:00Z",
-        sentAt: null,
-        repliedAt: null,
-        error: null,
-      },
-    ],
-    awaiting: [
-      {
-        id: 2,
-        from: "hello@funderly.app",
-        to: "tom@greenhope.org",
-        subject: "Your Funderly trial",
-        body: "",
-        inReplyTo: null,
-        status: "sent",
-        messageId: "<a1@funderly.app>",
-        createdAt: "2026-10-14T09:00:00Z",
-        sentAt: "2026-10-14T09:00:00Z",
-        repliedAt: null,
-        error: null,
-      },
-    ],
-  },
-  numbers: {
-    products: [
-      {
-        productId: "funderly",
-        youtubeChannel: null,
-        week: {
-          revenue: { USD: 14700 },
-          payments: 3,
-          posts: {},
-          lastPostAt: null,
-        },
-        recent: [
-          {
-            uid: "paypal:7XK41",
-            product: "funderly",
-            kind: "payment",
-            amountCents: 4900,
-            currency: "USD",
-            channel: "paypal",
-            note: "Sara Bright",
-            at: "2026-10-19T09:00:00Z",
-          },
-          {
-            uid: "m-1",
-            product: "funderly",
-            kind: "payment",
-            amountCents: 9800,
-            currency: "USD",
-            channel: "manual",
-            note: "Green Hope, bank transfer",
-            at: "2026-10-17T14:00:00Z",
-          },
-        ],
-      },
-      {
-        productId: "enigma-archives",
-        youtubeChannel: "UCabcdefghijklmnopqrstuv",
-        week: {
-          revenue: {},
-          payments: 0,
-          posts: { youtube: 1, tiktok: 2 },
-          lastPostAt: "2026-10-18T18:00:00Z",
-        },
-        recent: [
-          {
-            uid: "youtube:dQw4",
-            product: "enigma-archives",
-            kind: "post",
-            amountCents: null,
-            currency: null,
-            channel: "youtube",
-            note: "The Lighthouse Letters, part 3",
-            at: "2026-10-18T18:00:00Z",
-          },
-        ],
-      },
-      {
-        productId: "kaiveni-hiya",
-        youtubeChannel: null,
-        week: { revenue: {}, payments: 0, posts: {}, lastPostAt: null },
-        recent: [],
-      },
-    ],
-    paypal: { product: "funderly", sandbox: false },
-    paypalReady: true,
-    youtubeReady: true,
-    lastChecked: "2026-10-20T08:30:00Z",
-    error: null,
-  },
-  roles: [
-    {
-      id: "sales",
-      name: "Sana",
-      title: "Sales co-chair",
-      summary: "Follows up sign-ups and payers, drafts outreach, owns revenue.",
-      repeat: "weekdays",
-      time: "09:00",
-      playbook:
-        "## What I own\n\nRevenue. Every new sign-up gets a welcome, every trial gets a nudge before it ends, every payer gets a thank-you.\n\n## Each shift\n\n1. Check product_numbers and peeps_overview.\n2. Draft today's emails with draft_email.\n3. Follow up anyone quiet for 4 days.\n",
-    },
-    {
-      id: "growth",
-      name: "Gio",
-      title: "Growth marketer",
-      summary:
-        "Plans the week's content and channels, drafts posts in your voice.",
-      repeat: "weekly",
-      time: "10:00",
-      playbook:
-        "## What I own\n\nGetting the right people to notice the product.\n",
-    },
-    {
-      id: "showrunner",
-      name: "Remy",
-      title: "Showrunner",
-      summary:
-        "Plans episodes and writes scripts for TikTok, Reels and Shorts.",
-      repeat: "weekly",
-      time: "11:00",
-      playbook:
-        "## What I own\n\nThe story: what comes next, and how each episode hooks the viewer.\n",
-    },
-    {
-      id: "launch",
-      name: "Lina",
-      title: "Launch marketer",
-      summary: "Runs the countdown: daily launch tasks, posts and outreach.",
-      repeat: "daily",
-      time: "09:30",
-      playbook:
-        "## What I own\n\nThe launch, from now until launch day and the week after.\n",
-    },
-    {
-      id: "analyst",
-      name: "Ada",
-      title: "Numbers analyst",
-      summary:
-        "A weekly read of the numbers: what moved, why, and what to try.",
-      repeat: "weekly",
-      time: "16:00",
-      playbook: "## What I own\n\nKnowing what is working.\n",
-    },
-    {
-      id: "custom",
-      name: "Pip",
-      title: "Teammate",
-      summary: "Start blank and write the playbook yourself.",
-      repeat: "weekly",
-      time: "09:00",
-      playbook: "## What I own\n\n\n## Each shift\n\n1. \n",
-    },
-  ],
+  update: null,
   knowsYou: false,
   focus: null,
   oneThing: false,
@@ -473,64 +275,6 @@ export const demoSnapshot: Snapshot = {
       },
     ],
   },
-  teammates: [
-    {
-      productId: "funderly",
-      id: "sana",
-      name: "Sana",
-      role: "sales",
-      title: "Sales co-chair",
-      scope: "funderly/sana",
-      schedule: {
-        id: 41,
-        kind: "teammate",
-        topic: "funderly/sana",
-        repeat: "weekdays",
-        time: "09:00:00",
-        nextAt: "2026-10-21T04:00:00Z",
-      },
-      messages: [
-        {
-          id: 51,
-          from: "helper",
-          text: "**Done**: drafted welcomes for 3 new sign-ups; a nudge for Tom, whose trial ends Friday.\n**Waiting for you**: 4 emails in Mail.\n**One question**: can I offer annual pricing to teams over 10?",
-          at: "2026-10-20T04:02:00Z",
-        },
-      ],
-      chatting: false,
-    },
-    {
-      productId: "enigma-archives",
-      id: "remy",
-      name: "Remy",
-      role: "showrunner",
-      title: "Showrunner",
-      scope: "enigma-archives/remy",
-      schedule: null,
-      messages: [],
-      chatting: false,
-    },
-  ],
-  productChats: [
-    {
-      productId: "funderly",
-      messages: [
-        {
-          id: 101,
-          from: "you",
-          text: "Where are we losing people?",
-          at: "2026-10-20T08:00:00Z",
-        },
-        {
-          id: 102,
-          from: "helper",
-          text: "Most drop between sign-up and the first campaign. 7 people signed up last week and none launched. A welcome email with a 3-minute setup video is the cheapest fix. Want me to add it to your list?",
-          at: "2026-10-20T08:00:30Z",
-        },
-      ],
-      chatting: false,
-    },
-  ],
   sync: {
     folder: null,
     thisComputer: "Mariyam's MacBook",

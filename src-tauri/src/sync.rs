@@ -1,4 +1,4 @@
-//! Writes this computer's to-dos, schedules and ledger to the sync folder and takes in the other computers'.
+//! Writes this computer's to-dos to the sync folder and takes in the other computers'.
 
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -65,8 +65,6 @@ fn once(app: &App, config_seen: Option<SystemTime>) -> Result<(bool, Option<Syst
         name: name.clone(),
         written_at: Utc::now(),
         todos: app.todos().records().map_err(|e| e.to_string())?,
-        schedules: app.schedules().records().map_err(|e| e.to_string())?,
-        ledger: app.ledger().records().map_err(|e| e.to_string())?,
     };
     layout
         .write(&mine)
@@ -76,14 +74,6 @@ fn once(app: &App, config_seen: Option<SystemTime>) -> Result<(bool, Option<Syst
     let mut changed = 0;
     for other in &others {
         changed += app.todos().apply(&other.todos).map_err(|e| e.to_string())?;
-        changed += app
-            .schedules()
-            .apply(&other.schedules)
-            .map_err(|e| e.to_string())?;
-        changed += app
-            .ledger()
-            .apply(&other.ledger)
-            .map_err(|e| e.to_string())?;
     }
 
     let modified = std::fs::metadata(layout.config())

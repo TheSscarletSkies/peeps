@@ -160,8 +160,8 @@ pub fn context(
     format!(
         "You are {name}, the user's helper in the peeps app. Be brief and warm. Today is {today}.\n\
          Their products: {}.\n\nOpen to-dos:\n{}\n\nComing up:\n{}\n\n\
-         Use the peeps tools to act: add to-dos and reminders, schedule drafts, leave notes for \
-         products, and read or update product briefs. Log decisions the user makes.\n\
+         Use the peeps tools to act: add, change and tick off to-dos and reminders, and remember \
+         what the user tells you about themselves.\n\
          Before sending anything to anyone, show the user exactly what will be sent and ask first.",
         if products.is_empty() {
             "none".to_owned()
@@ -171,43 +171,6 @@ pub fn context(
         list(todos),
         list(events),
     )
-}
-
-/// What a product's pet knows when the user talks to it: its brief and how it is doing right now.
-pub fn product_context(name: &str, id: &str, today: &str, status: &str, brief: &str) -> String {
-    format!(
-        "You are the peeps pet for {name} (product id `{id}`), acting as the user's product and \
-         marketing strategist for it. Today is {today}.\n\n\
-         How it is doing right now:\n{status}\n\n\
-         Its brief, which the user keeps up to date:\n<brief>\n{brief}\n</brief>\n\n\
-         Be specific and practical. Tie advice to the brief's goal, audience and numbers; when a \
-         number you need is missing, ask for it rather than guessing. When the user agrees on next \
-         steps, add them as to-dos tagged #{id} with add_todo. When they make a decision, record it \
-         with log_decision. Hand coding work to the product's own agent with leave_note. Update \
-         the brief with write_brief only when they ask.\n\
-         Before sending anything to anyone, show the user exactly what will be sent and ask first."
-    )
-}
-
-/// What a product's pet is asked each week. The answer lands in its conversation.
-pub fn review_prompt(id: &str) -> String {
-    format!(
-        "It's time for this week's review. Use peeps_overview, read_brief for `{id}`, and what you \
-         can see in the project. Write it short: what happened since last week, the numbers that \
-         matter (say which ones you could not see so I can add them), and the three moves that \
-         would help most this week, best first. Add those three as to-dos tagged #{id}, due by \
-         Friday, then finish with a one-line summary."
-    )
-}
-
-/// Lets Claude Code read a product's folder from the strategy chat.
-pub fn with_dirs(base: &[String], dirs: &[String]) -> Vec<String> {
-    let mut command = base.to_vec();
-    if is_claude(base) && !dirs.is_empty() {
-        command.push("--add-dir".to_owned());
-        command.extend(dirs.iter().cloned());
-    }
-    command
 }
 
 const SCHEMA: &str = "
@@ -227,7 +190,7 @@ const SCHEMA: &str = "
     );
 ";
 
-/// The helper's own conversation; products talk under their ids.
+/// The helper's conversation. Messages are stored by scope; older versions also kept one per product.
 pub const HELPER: &str = "helper";
 
 pub struct ChatStore {
@@ -396,12 +359,12 @@ mod tests {
 
     #[test]
     fn model_and_effort_go_before_the_prompt() {
-        let drafts = args(&["claude", "-p", "{prompt}"]);
+        let plain = args(&["claude", "-p", "{prompt}"]);
         assert_eq!(
-            with_agent(&drafts, Some("opus"), Some("high")),
+            with_agent(&plain, Some("opus"), Some("high")),
             args(&["claude", "--model", "opus", "--effort", "high", "-p", "{prompt}"])
         );
-        assert_eq!(with_agent(&drafts, None, None), drafts);
+        assert_eq!(with_agent(&plain, None, None), plain);
         let other = args(&["codex", "exec"]);
         assert_eq!(with_agent(&other, Some("opus"), None), other);
     }
@@ -434,38 +397,6 @@ mod tests {
         let store = ChatStore::init(db).unwrap();
         assert_eq!(store.recent(HELPER, 5).unwrap()[0].text, "old");
         assert_eq!(store.session(HELPER).unwrap().as_deref(), Some("kept"));
-    }
-
-    #[test]
-    fn product_chats_know_the_brief_and_can_read_the_repo() {
-        let text = product_context(
-            "Funderly",
-            "funderly",
-            "Tuesday",
-            "Hungry: 7 sign-ups waiting",
-            "## Goal\n100 paying teams",
-        );
-        assert!(text.contains("strategist"));
-        assert!(text.contains("<brief>\n## Goal\n100 paying teams\n</brief>"));
-        assert!(text.contains("tagged #funderly"));
-        let claude = args(&["claude", "-p"]);
-        assert_eq!(
-            with_dirs(&claude, &["/code/funderly".into()]),
-            args(&["claude", "-p", "--add-dir", "/code/funderly"])
-        );
-        assert_eq!(with_dirs(&claude, &[]), claude);
-        assert_eq!(
-            with_dirs(&args(&["codex"]), &["/x".into()]),
-            args(&["codex"])
-        );
-    }
-
-    #[test]
-    fn the_weekly_review_asks_for_three_moves_as_to_dos() {
-        let prompt = review_prompt("kaiveni-hiya");
-        assert!(prompt.contains("read_brief for `kaiveni-hiya`"));
-        assert!(prompt.contains("three moves"));
-        assert!(prompt.contains("tagged #kaiveni-hiya"));
     }
 
     #[test]

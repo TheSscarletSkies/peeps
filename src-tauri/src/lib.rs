@@ -5,13 +5,12 @@ mod focus;
 mod friends;
 mod frontmost;
 mod hopping;
-mod mailbox;
-mod numbers;
 mod remind;
 mod secrets;
 mod state;
 mod sync;
 mod tools;
+mod updates;
 mod watch;
 mod window;
 
@@ -36,6 +35,8 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(updates::Pending::default())
         .invoke_handler(tauri::generate_handler![
             commands::snapshot,
             commands::decide,
@@ -54,39 +55,14 @@ pub fn run() {
             commands::set_todo_done,
             commands::edit_todo,
             commands::delete_todo,
-            commands::write_draft,
-            commands::delete_draft,
             commands::send_chat,
             commands::new_chat,
             commands::set_helper_agent,
-            commands::read_brief,
-            commands::write_brief,
-            commands::add_mail_account,
-            commands::remove_mail_account,
-            commands::compose_email,
-            commands::send_email,
-            commands::discard_email,
-            commands::log_payment,
-            commands::log_post,
-            commands::remove_entry,
-            commands::connect_paypal,
-            commands::disconnect_paypal,
-            commands::set_youtube_key,
-            commands::set_youtube_channel,
-            commands::refresh_numbers,
-            commands::add_teammate,
-            commands::remove_teammate,
-            commands::read_playbook,
-            commands::write_playbook,
-            commands::run_teammate,
-            commands::suggest_team,
             commands::read_profile,
             commands::install_claude,
             commands::write_profile,
             commands::set_sync_folder,
             commands::add_product_path,
-            commands::add_schedule,
-            commands::delete_schedule,
             commands::hooks_status,
             commands::install_hooks,
             commands::uninstall_hooks,
@@ -99,6 +75,7 @@ pub fn run() {
             commands::add_calendar,
             commands::remove_calendar,
             commands::set_reminders,
+            commands::install_update,
         ])
         .setup(|tauri_app| {
             let app = Arc::new(App::load(tauri_app.handle().clone())?);
@@ -134,9 +111,7 @@ pub fn run() {
             let listener = app.clone();
             std::thread::spawn(move || friends::listen(listener));
             tauri::async_runtime::spawn(sync::run(app.clone()));
-            tauri::async_runtime::spawn(mailbox::run(app.clone()));
-            tauri::async_runtime::spawn(numbers::run(app.clone()));
-            tauri::async_runtime::spawn(assistant::run_schedules(app.clone()));
+            tauri::async_runtime::spawn(updates::run(app.clone(), tauri_app.handle().clone()));
             tauri::async_runtime::spawn(watch::run(app));
             Ok(())
         })

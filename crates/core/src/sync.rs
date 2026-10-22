@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::schedule::ScheduleRecord;
 use crate::todos::TodoRecord;
 
 /// What one computer shares.
@@ -20,10 +19,6 @@ pub struct DeviceFile {
     pub written_at: DateTime<Utc>,
     #[serde(default)]
     pub todos: Vec<TodoRecord>,
-    #[serde(default)]
-    pub schedules: Vec<ScheduleRecord>,
-    #[serde(default)]
-    pub ledger: Vec<crate::numbers::Entry>,
 }
 
 /// Where things live inside the chosen folder.
@@ -169,8 +164,6 @@ mod tests {
             name: format!("{device} laptop"),
             written_at: Utc::now(),
             todos: store.records().unwrap(),
-            schedules: Vec::new(),
-            ledger: Vec::new(),
         }
     }
 
@@ -187,6 +180,22 @@ mod tests {
         assert_eq!(seen_by_mac.len(), 1);
         assert_eq!(seen_by_mac[0].todos[0].todo.title, "From Windows");
         assert_eq!(layout.others("windows")[0].name, "mac laptop");
+    }
+
+    /// Older peeps also shared scheduled drafts and a ledger; their files still read.
+    #[test]
+    fn files_from_older_computers_still_read() {
+        let old = r#"{
+            "device": "mac",
+            "name": "mac laptop",
+            "writtenAt": "2026-10-19T09:00:00Z",
+            "todos": [],
+            "schedules": [{ "uid": "s1", "kind": "linkedin" }],
+            "ledger": [{ "uid": "paypal:1", "product": "shop" }]
+        }"#;
+        let file: DeviceFile = serde_json::from_str(old).unwrap();
+        assert_eq!(file.name, "mac laptop");
+        assert!(file.todos.is_empty());
     }
 
     #[test]

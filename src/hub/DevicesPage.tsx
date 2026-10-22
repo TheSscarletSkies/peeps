@@ -75,9 +75,8 @@ export function DevicesPage({ snapshot }: { snapshot: Snapshot }) {
           <h2>Use peeps on all your computers</h2>
           <p className="setup__hint">
             Pick a folder in a cloud drive you already use, then pick the same
-            folder on your other computers. Your to-dos, habits, scheduled
-            drafts, products and settings stay in step. No account, nothing to
-            pay for.
+            folder on your other computers. Your to-dos, habits and settings
+            stay in step. No account, nothing to pay for.
           </p>
           <div className="drives">
             {DRIVES.map((drive) => (

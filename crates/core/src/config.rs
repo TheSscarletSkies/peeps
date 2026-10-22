@@ -1,6 +1,7 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+use serde::de::IgnoredAny;
 use serde::{Deserialize, Serialize};
 
 use crate::checks::CheckSpec;
@@ -34,12 +35,12 @@ pub struct Config {
     pub calendars: Vec<CalendarFeed>,
     #[serde(default)]
     pub reminders: Reminders,
-    /// Mail accounts the helper may send from, after the user approves each email.
-    #[serde(default)]
-    pub mail: Vec<crate::mail::Account>,
-    /// The PayPal account whose payments count as one product's revenue.
-    #[serde(default)]
-    pub paypal: Option<crate::paypal::Settings>,
+    // Sections from features peeps no longer has. Config files written by older versions still
+    // carry them; they are read and dropped so those files keep loading.
+    #[serde(default, rename = "mail")]
+    _mail: IgnoredAny,
+    #[serde(default, rename = "paypal")]
+    _paypal: IgnoredAny,
 }
 
 /// A private iCal link, such as Google's "secret address in iCal format".
@@ -89,18 +90,12 @@ pub struct ReminderRule {
     pub mute: bool,
 }
 
-/// The assistant pet: to-dos, drafts and the weekly token report.
+/// The assistant pet: to-dos, chat and the weekly token report.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Helper {
     pub name: String,
     pub pet: Pet,
-    /// The agent command that writes drafts. `{prompt}` is replaced with the request;
-    /// without it, the request is sent on stdin.
-    pub command: Vec<String>,
-    pub timeout_seconds: u64,
-    /// Draft kinds offered in the Write tab, each with an optional voice guide file.
-    pub voices: BTreeMap<String, String>,
     /// The agent the helper chats through. Each message goes in on stdin; Claude Code resumes the
     /// same conversation and is told about your day.
     pub chat_command: Vec<String>,
@@ -111,6 +106,13 @@ pub struct Helper {
     pub effort: Option<String>,
     /// The parts of life to-dos are grouped into, as tags: `work`, `study`, `play` and any the user adds.
     pub areas: Vec<String>,
+    // Settings of the old Write tab, kept readable for config files that still have them.
+    #[serde(rename = "command")]
+    _command: IgnoredAny,
+    #[serde(rename = "timeout_seconds")]
+    _timeout_seconds: IgnoredAny,
+    #[serde(rename = "voices")]
+    _voices: IgnoredAny,
 }
 
 impl Default for Helper {
@@ -121,12 +123,6 @@ impl Default for Helper {
                 kind: PetKind::Bao,
                 color: "#FFD9C4".into(),
             },
-            command: vec!["claude".into(), "-p".into(), "{prompt}".into()],
-            timeout_seconds: 240,
-            voices: BTreeMap::from([
-                ("linkedin".into(), String::new()),
-                ("x".into(), String::new()),
-            ]),
             chat_command: ["claude", "-p", "--output-format", "json"]
                 .map(String::from)
                 .to_vec(),
@@ -134,6 +130,9 @@ impl Default for Helper {
             model: None,
             effort: None,
             areas: ["work", "study", "play"].map(String::from).to_vec(),
+            _command: IgnoredAny,
+            _timeout_seconds: IgnoredAny,
+            _voices: IgnoredAny,
         }
     }
 }
@@ -176,11 +175,11 @@ pub struct Product {
     pub expect_activity_every_hours: Option<i64>,
     #[serde(default, rename = "check")]
     pub checks: Vec<CheckSpec>,
-    /// Its YouTube channel id (`UC…`); each upload is logged as a post.
-    #[serde(default)]
-    pub youtube_channel: Option<String>,
+    // From the removed numbers and teammates features; ignored so older files still load.
+    #[serde(default, rename = "youtube_channel")]
+    _youtube_channel: IgnoredAny,
     #[serde(default, rename = "teammate")]
-    pub teammates: Vec<crate::teammates::Teammate>,
+    _teammates: IgnoredAny,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -342,20 +341,63 @@ mod tests {
     #[test]
     fn helper_has_useful_defaults_and_can_be_overridden() {
         let config = Config::parse("").unwrap();
-        assert_eq!(config.helper.command, ["claude", "-p", "{prompt}"]);
-        assert!(config.helper.voices.contains_key("linkedin"));
+        assert_eq!(config.helper.chat_command[0], "claude");
+        assert_eq!(config.helper.name, "Helper");
 
         let custom = Config::parse(
             r#"
             [helper]
-            command = ["codex", "exec", "{prompt}"]
-            voices = { linkedin = "~/voice.md" }
+            chat_command = ["codex", "exec"]
+            model = "sonnet"
             "#,
         )
         .unwrap();
-        assert_eq!(custom.helper.command[0], "codex");
-        assert_eq!(custom.helper.voices["linkedin"], "~/voice.md");
+        assert_eq!(custom.helper.chat_command, ["codex", "exec"]);
+        assert_eq!(custom.helper.model.as_deref(), Some("sonnet"));
         assert_eq!(custom.helper.name, "Helper");
+    }
+
+    /// A file from before mail, numbers, teammates and the Write tab were taken out.
+    #[test]
+    fn settings_of_removed_features_are_ignored() {
+        let config = Config::parse(
+            r##"
+            [helper]
+            name = "Bao"
+            command = ["claude", "-p", "{prompt}"]
+            timeout_seconds = 240
+            voices = { linkedin = "~/.peeps/voice/linkedin.md", x = "" }
+
+            [paypal]
+            product = "shop"
+            sandbox = true
+
+            [[mail]]
+            address = "hello@shop.app"
+            provider = "gmail"
+            name = "Shop"
+
+            [[mail]]
+            address = "me@icloud.com"
+            provider = "icloud"
+
+            [[product]]
+            id = "shop"
+            name = "Shop"
+            youtube_channel = "UCabcdefghijklmnopqrstuv"
+
+            [[product.teammate]]
+            id = "sana"
+            name = "Sana"
+            role = "sales"
+            "##,
+        )
+        .unwrap();
+        assert_eq!(config.helper.name, "Bao");
+        assert_eq!(config.products[0].id, "shop");
+        // Only those names are let through; a typo still points at the mistake.
+        assert!(Config::parse("[helper]\nvoice = {}").is_err());
+        assert!(Config::parse("[[product]]\nid = \"a\"\nname = \"A\"\nteammates = []").is_err());
     }
 
     #[test]

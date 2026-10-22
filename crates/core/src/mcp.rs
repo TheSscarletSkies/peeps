@@ -41,7 +41,7 @@ pub fn handle(
                 .unwrap_or(LATEST),
             "capabilities": { "tools": {} },
             "serverInfo": { "name": "peeps", "version": env!("CARGO_PKG_VERSION") },
-            "instructions": "peeps keeps the user's products, to-dos, reminders, scheduled drafts, product briefs, email, payments and teammates, and an About me page on the user. Use these tools to act on what the user asks, then say briefly what you did. Emails are only drafted; the user reads and sends them in peeps.",
+            "instructions": "peeps keeps the user's to-dos, reminders and habits, a pet for each of their products, and an About me page on the user. Use these tools to act on what the user asks, then say briefly what you did.",
         }),
         "ping" => json!({}),
         "tools/list" => json!({ "tools": tools::definitions() }),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CalendarEvent } from "../lib/types";
-import { eventCountdown, eventTime, scheduleLabel } from "./when";
+import { eventCountdown, eventTime } from "./when";
 
 const event = (
   start: Date,
@@ -44,31 +44,6 @@ describe("event times", () => {
     );
     expect(eventTime(event(new Date(2026, 9, 21, 0, 0), 1440, true), now)).toBe(
       "Wed All day",
-    );
-  });
-});
-
-describe("schedule labels", () => {
-  const base = {
-    id: 1,
-    kind: "linkedin",
-    topic: "Shipped",
-    time: "09:00:00",
-    nextAt: new Date(2026, 9, 26, 9, 0).toISOString(),
-  };
-
-  it("reads like a sentence", () => {
-    expect(scheduleLabel({ ...base, repeat: "weekly" })).toBe(
-      "Every Mon, 9:00 AM",
-    );
-    expect(scheduleLabel({ ...base, repeat: "daily" })).toBe(
-      "Every day, 9:00 AM",
-    );
-    expect(scheduleLabel({ ...base, repeat: "monthly" })).toBe(
-      "Monthly on the 26th, 9:00 AM",
-    );
-    expect(scheduleLabel({ ...base, repeat: "never" })).toBe(
-      "Mon, Oct 26, 9:00 AM",
     );
   });
 });

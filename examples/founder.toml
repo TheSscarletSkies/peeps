@@ -54,8 +54,7 @@ kind = "script"
 command = "~/.peeps/checks/overdue-tasks.py"
 args = ["~/code/kaiveni-hiya/LAUNCH.md"]
 
-# The helper pet: to-dos, drafts in your voice and the weekly token report.
-# Drafts run your own agent, so they use your existing subscription.
+# The helper pet: to-dos and chat. Chat runs your own agent, so it uses your existing subscription.
 [helper]
-command = ["claude", "-p", "{prompt}"]
-voices = { linkedin = "~/.peeps/voice/linkedin.md", x = "~/.peeps/voice/x.md" }
+name = "Bao"
+model = "sonnet"
