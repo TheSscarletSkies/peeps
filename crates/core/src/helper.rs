@@ -8,9 +8,7 @@ use serde::Serialize;
 use crate::calendar::Event;
 use crate::chat::Message;
 use crate::config::{Helper, PetKind};
-use crate::drafts::{self, Draft};
 use crate::mood::Mood;
-use crate::schedule::Schedule;
 use crate::snapshot::PermissionView;
 use crate::todos::{Due, Todo};
 use crate::usage::Usage;
@@ -25,18 +23,13 @@ pub struct HelperView {
     pub headline: String,
     pub todos: Vec<TodoView>,
     pub done: Vec<Todo>,
-    pub drafts: Vec<Draft>,
-    pub draft_kinds: Vec<DraftKind>,
-    pub drafting: bool,
     pub week: Week,
     pub todos_done_this_week: usize,
-    pub drafts_this_week: usize,
     /// The next few calendar events, soonest first.
     pub upcoming: Vec<Event>,
     pub chat: Vec<Message>,
     /// True while the agent is answering a chat message.
     pub chatting: bool,
-    pub schedules: Vec<Schedule>,
     /// The helper's own agent asking to use a tool.
     pub permission: Option<PermissionView>,
     /// The model and effort the user picked, if any.
@@ -54,13 +47,6 @@ pub struct TodoView {
     pub live_streak: i64,
     /// Ticked off today; a daily repeat shows as done until tomorrow.
     pub done_today: bool,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DraftKind {
-    pub id: String,
-    pub label: String,
 }
 
 /// The last seven days of agent work.
@@ -86,11 +72,8 @@ pub struct HelperInputs<'a> {
     pub config: &'a Helper,
     pub open: Vec<Todo>,
     pub done: Vec<Todo>,
-    pub drafts: Vec<Draft>,
-    pub drafting: bool,
     pub week: Week,
     pub todos_done_this_week: usize,
-    pub drafts_this_week: usize,
     pub today: NaiveDate,
     /// Ids of to-dos ticked off since the start of today.
     pub done_today: Vec<i64>,
@@ -98,7 +81,6 @@ pub struct HelperInputs<'a> {
     pub now: DateTime<Utc>,
     pub chat: Vec<Message>,
     pub chatting: bool,
-    pub schedules: Vec<Schedule>,
     pub permission: Option<PermissionView>,
 }
 
@@ -132,8 +114,6 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
     } else if let Some(event) = next {
         let minutes = (event.start - inputs.now).num_minutes().max(1);
         (Mood::NeedsYou, format!("{} in {minutes} min", event.title))
-    } else if inputs.drafting {
-        (Mood::Working, "Writing a draft…".to_owned())
     } else if overdue > 0 {
         // Its own to-dos make the helper peckish, not alarmed; only asks and imminent events need you.
         (
@@ -162,24 +142,11 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         headline,
         todos,
         done: inputs.done,
-        drafts: inputs.drafts,
-        draft_kinds: inputs
-            .config
-            .voices
-            .keys()
-            .map(|id| DraftKind {
-                id: id.clone(),
-                label: drafts::label(id),
-            })
-            .collect(),
-        drafting: inputs.drafting,
         week: inputs.week,
         todos_done_this_week: inputs.todos_done_this_week,
-        drafts_this_week: inputs.drafts_this_week,
         upcoming: inputs.upcoming,
         chat: inputs.chat,
         chatting: inputs.chatting,
-        schedules: inputs.schedules,
         permission: inputs.permission,
         model: inputs.config.model.clone(),
         effort: inputs.config.effort.clone(),
@@ -262,24 +229,20 @@ mod tests {
         }
     }
 
-    fn mood(open: Vec<Todo>, drafting: bool) -> (Mood, String) {
+    fn mood(open: Vec<Todo>, chatting: bool) -> (Mood, String) {
         let config = Helper::default();
         let helper = view(HelperInputs {
             config: &config,
             open,
             done: Vec::new(),
-            drafts: Vec::new(),
-            drafting,
             week: Week::default(),
             todos_done_this_week: 0,
-            drafts_this_week: 0,
             today: "2026-10-19".parse().unwrap(),
             done_today: Vec::new(),
             upcoming: Vec::new(),
             now: Utc::now(),
             chat: Vec::new(),
-            chatting: false,
-            schedules: Vec::new(),
+            chatting,
             permission: None,
         });
         (helper.mood, helper.headline)
@@ -307,35 +270,6 @@ mod tests {
             (Mood::Hungry, "1 to-do overdue".into())
         );
         assert_eq!(mood(vec![todo(Some("2026-10-01"))], true).0, Mood::Working);
-    }
-
-    #[test]
-    fn offers_configured_draft_kinds() {
-        let config = Helper::default();
-        let helper = view(HelperInputs {
-            config: &config,
-            open: Vec::new(),
-            done: Vec::new(),
-            drafts: Vec::new(),
-            drafting: false,
-            week: Week::default(),
-            todos_done_this_week: 0,
-            drafts_this_week: 0,
-            today: "2026-10-19".parse().unwrap(),
-            done_today: Vec::new(),
-            upcoming: Vec::new(),
-            now: Utc::now(),
-            chat: Vec::new(),
-            chatting: false,
-            schedules: Vec::new(),
-            permission: None,
-        });
-        let labels: Vec<_> = helper
-            .draft_kinds
-            .iter()
-            .map(|k| k.label.as_str())
-            .collect();
-        assert_eq!(labels, ["LinkedIn post", "post for X"]);
     }
 
     #[test]
@@ -412,18 +346,14 @@ mod tests {
             config: &config,
             open: Vec::new(),
             done: Vec::new(),
-            drafts: Vec::new(),
-            drafting: false,
             week: Week::default(),
             todos_done_this_week: 0,
-            drafts_this_week: 0,
             today: now.date_naive(),
             done_today: Vec::new(),
             upcoming: vec![class],
             now,
             chat: Vec::new(),
             chatting: false,
-            schedules: Vec::new(),
             permission: None,
         });
         assert_eq!(helper.mood, Mood::NeedsYou);

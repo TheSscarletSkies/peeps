@@ -1,90 +1,34 @@
-//! The helper's own work: chatting through the user's agent and writing drafts, now or on a schedule.
+//! The helper's own work: chatting through the user's agent.
 
 use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::{Local, TimeDelta, Utc};
-use peeps_core::chat::{self, Message, Speaker};
-use peeps_core::drafts::{self, Draft};
+use peeps_core::chat::{self, Message, Speaker, HELPER};
 use peeps_core::intent::{self, Intent};
 use peeps_core::todos::{Repeat, TodoInput};
-use peeps_core::{briefs, focus, paths, quick, teammates};
+use peeps_core::{agent, focus, paths, quick};
 
 use crate::state::App;
 
 type Result<T> = std::result::Result<T, String>;
 
-const SCHEDULE_TICK: Duration = Duration::from_secs(30);
-
-/// Writes a draft with the configured agent and keeps it.
-pub async fn draft(app: Arc<App>, kind: String, topic: String) -> Result<Draft> {
-    if topic.trim().is_empty() {
-        return Err("tell the helper what to write about".into());
-    }
-    if !app.start_drafting() {
-        return Err("the helper is already writing a draft".into());
-    }
-    app.publish();
-
-    let config = app.config();
-    let helper = &config.helper;
-    let voice = helper
-        .voices
-        .get(&kind)
-        .filter(|path| !path.is_empty())
-        .map(|path| std::fs::read_to_string(paths::expand_home(path)))
-        .transpose()
-        .map_err(|error| format!("could not read the voice guide: {error}"));
-    let command = chat::with_agent(
-        &helper.command,
-        helper.model.as_deref(),
-        helper.effort.as_deref(),
-    );
-    let timeout = Duration::from_secs(helper.timeout_seconds);
-
-    let result = match voice {
-        Ok(voice) => {
-            let prompt = drafts::prompt(&kind, &topic, voice.as_deref());
-            tauri::async_runtime::spawn_blocking(move || drafts::run(&command, &prompt, timeout))
-                .await
-                .map_err(|error| error.to_string())
-                .and_then(|outcome| outcome.map_err(|error| error.to_string()))
-        }
-        Err(error) => Err(error),
-    };
-
-    let saved = result.and_then(|text| {
-        app.drafts()
-            .add(&kind, &topic, &text, Utc::now())
-            .map_err(|error| error.to_string())
-    });
-    app.finish_drafting();
-    app.publish();
-    saved
-}
-
-/// Sends one message to the helper, or to a product's pet when `scope` is a product id, and waits
-/// for the answer, keeping that conversation going.
-pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message> {
+/// Sends one message to the helper and waits for the answer, keeping the conversation going.
+pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
     let text = text.trim().to_owned();
     if text.is_empty() {
         return Err("say something first".into());
     }
-    if !known_scope(&app, &scope) {
-        return Err(format!("unknown product or teammate `{scope}`"));
-    }
-    if let Some(reply) = quick_reminder(&app, &scope, &text)? {
+    if let Some(reply) = quick_reminder(&app, &text)? {
         return Ok(reply);
     }
-    if scope == chat::HELPER {
-        if let Some(reply) = local_intent(&app, &text)? {
-            return Ok(reply);
-        }
+    if let Some(reply) = local_intent(&app, &text)? {
+        return Ok(reply);
     }
-    if !app.start_chatting(&scope) {
+    if !app.start_chatting() {
         return Err("still answering another message; one moment".into());
     }
-    let outcome = turn(&app, &scope, &text).await;
+    let outcome = turn(&app, &text).await;
     app.finish_chatting();
     let reply = match outcome {
         Ok(reply) => reply,
@@ -97,30 +41,20 @@ pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message>
     };
     let message = app
         .chat()
-        .add(&scope, Speaker::Helper, &reply, Utc::now())
+        .add(HELPER, Speaker::Helper, &reply, Utc::now())
         .map_err(|error| error.to_string());
     app.publish();
     message
 }
 
-fn known_scope(app: &App, scope: &str) -> bool {
-    let config = app.config();
-    match teammates::parse_scope(scope) {
-        Some((product, teammate)) => config
-            .product(product)
-            .is_some_and(|p| p.teammates.iter().any(|t| t.id == teammate)),
-        None => scope == chat::HELPER || config.product(scope).is_some(),
-    }
-}
-
 /// "Remind me to …" is understood here and added straight away, without waking the agent.
-fn quick_reminder(app: &App, scope: &str, text: &str) -> Result<Option<Message>> {
+fn quick_reminder(app: &App, text: &str) -> Result<Option<Message>> {
     let Some(quick) = quick::parse(text, Local::now().fixed_offset()) else {
         return Ok(None);
     };
     let now = Utc::now();
     app.chat()
-        .add(scope, Speaker::You, text, now)
+        .add(HELPER, Speaker::You, text, now)
         .map_err(|error| error.to_string())?;
     app.todos()
         .add(&quick.input, now)
@@ -133,7 +67,7 @@ fn quick_reminder(app: &App, scope: &str, text: &str) -> Result<Option<Message>>
     };
     let message = app
         .chat()
-        .add(scope, Speaker::Helper, &reply, Utc::now())
+        .add(HELPER, Speaker::Helper, &reply, Utc::now())
         .map_err(|error| error.to_string())?;
     app.publish();
     Ok(Some(message))
@@ -232,11 +166,11 @@ fn local_intent(app: &App, text: &str) -> Result<Option<Message>> {
         }
     };
     app.chat()
-        .add(chat::HELPER, Speaker::You, text, now)
+        .add(HELPER, Speaker::You, text, now)
         .map_err(|e| e.to_string())?;
     let message = app
         .chat()
-        .add(chat::HELPER, Speaker::Helper, &reply, Utc::now())
+        .add(HELPER, Speaker::Helper, &reply, Utc::now())
         .map_err(|e| e.to_string())?;
     app.publish();
     Ok(Some(message))
@@ -250,9 +184,9 @@ fn lowercase_first(text: &str) -> String {
     }
 }
 
-async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
+async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     app.chat()
-        .add(scope, Speaker::You, text, Utc::now())
+        .add(HELPER, Speaker::You, text, Utc::now())
         .map_err(|error| error.to_string())?;
     app.publish();
 
@@ -260,13 +194,13 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
     // The message just added is today's; what counts is the one before it.
     let before = app
         .chat()
-        .recent(scope, 2)
+        .recent(HELPER, 2)
         .map_err(|error| error.to_string())?
         .first()
         .map(|message| message.at);
     let session = chat::resume_today(
         app.chat()
-            .session(scope)
+            .session(HELPER)
             .map_err(|error| error.to_string())?,
         before,
         crate::state::start_of_today(),
@@ -286,41 +220,16 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
         Ok(hook) => chat::with_tools(&base, &hook),
         Err(_) => base,
     };
-    let teammate = teammates::parse_scope(scope).and_then(|(product, id)| {
-        config
-            .product(product)
-            .and_then(|p| p.teammates.iter().find(|t| t.id == id))
-    });
-    let (context, dirs) = match config.product(teammates::product_of(scope)) {
-        Some(product) => (
-            match teammate {
-                Some(teammate) => teammates::context(
-                    teammate,
-                    &product_context(app, &product.id, &product.name),
-                    &teammates::read(&paths::config_file(), &product.id, teammate),
-                ),
-                None => product_context(app, &product.id, &product.name),
-            },
-            product
-                .paths
-                .iter()
-                .map(|path| paths::expand_home(path))
-                .filter(|path| path.is_dir())
-                .map(|path| path.display().to_string())
-                .collect(),
-        ),
-        None => (context(app), Vec::new()),
-    };
     let about = peeps_core::profile::context(&peeps_core::profile::read(&paths::config_file()));
-    let context = format!("{about}\n\n{context}");
-    let command = chat::with_dirs(&chat::command(&base, session.as_deref(), &context), &dirs);
+    let context = format!("{about}\n\n{}", context(app));
+    let command = chat::command(&base, session.as_deref(), &context);
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
 
     let prompt = text.to_owned();
     let stdout = tauri::async_runtime::spawn_blocking(move || {
-        drafts::run_in(&command, &prompt, timeout, Some(&dir))
+        agent::run_in(&command, &prompt, timeout, Some(&dir))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -329,44 +238,10 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
     let reply = chat::parse_reply(&stdout)?;
     if let Some(session) = &reply.session {
         app.chat()
-            .set_session(scope, session)
+            .set_session(HELPER, session)
             .map_err(|error| error.to_string())?;
     }
     Ok(reply.text)
-}
-
-/// A product's brief and live status, so its pet can advise on it.
-fn product_context(app: &App, id: &str, name: &str) -> String {
-    let snapshot = app.snapshot();
-    let status = snapshot
-        .snapshot
-        .pets
-        .iter()
-        .find(|pet| pet.id == id)
-        .map(|pet| {
-            let mut lines = vec![format!("{:?}: {}", pet.mood, pet.headline)];
-            lines.extend(
-                pet.needs
-                    .iter()
-                    .map(|need| format!("Needs: {}", need.message)),
-            );
-            lines.join("\n")
-        })
-        .unwrap_or_else(|| "No news.".to_owned());
-    let numbers = app
-        .ledger()
-        .summary(id, Utc::now() - TimeDelta::days(7))
-        .map(|week| format!("\nLast 7 days: {}", peeps_core::numbers::describe(&week)))
-        .unwrap_or_default();
-    let status = status + &numbers;
-    let brief = briefs::read(&paths::config_file(), id, name);
-    chat::product_context(
-        name,
-        id,
-        &Local::now().format("%A %-d %B %Y").to_string(),
-        &status,
-        &brief,
-    )
 }
 
 /// Today's to-dos, events and products, so the agent can answer "what's on today?".
@@ -414,82 +289,4 @@ fn context(app: &App) -> String {
         &events,
         &products,
     )
-}
-
-/// Runs a product's weekly review in its conversation and lets the user know it is ready.
-async fn review(app: &Arc<App>, product_id: &str) {
-    let Some(name) = app.config().product(product_id).map(|p| p.name.clone()) else {
-        return;
-    };
-    match send(
-        app.clone(),
-        product_id.to_owned(),
-        chat::review_prompt(product_id),
-    )
-    .await
-    {
-        Ok(_) => app.notify(
-            &format!("{name}'s weekly review is ready"),
-            "Three moves for this week are on your list.",
-        ),
-        Err(error) => app.notify(&format!("Couldn't run {name}'s weekly review"), &error),
-    }
-}
-
-/// Runs a teammate's shift in its own conversation and lets the user know its report is in.
-pub async fn shift(app: &Arc<App>, scope: &str) {
-    let Some((product, id)) = teammates::parse_scope(scope) else {
-        return;
-    };
-    let config = app.config();
-    let Some(product) = config.product(product) else {
-        return;
-    };
-    let Some(name) = product
-        .teammates
-        .iter()
-        .find(|t| t.id == id)
-        .map(|t| t.name.clone())
-    else {
-        return;
-    };
-    match send(app.clone(), scope.to_owned(), teammates::shift_prompt()).await {
-        Ok(_) => app.notify(
-            &format!("{name} finished a shift for {}", product.name),
-            "The report and anything to approve are on its Team tab.",
-        ),
-        Err(error) => app.notify(&format!("{name} couldn't work today"), &error),
-    }
-}
-
-/// Writes scheduled drafts when they come due and lets the user know.
-pub async fn run_schedules(app: Arc<App>) {
-    let mut interval = tokio::time::interval(SCHEDULE_TICK);
-    loop {
-        interval.tick().await;
-        let now = Utc::now();
-        let due = app.schedules().due(now, app.device()).unwrap_or_default();
-        for schedule in due {
-            let zone = *Local::now().offset();
-            // Move on first, so a failing agent can't make the same schedule fire every tick.
-            if let Err(error) = app.schedules().advance(schedule.id, zone, now) {
-                eprintln!("peeps: could not move schedule {}: {error}", schedule.id);
-                continue;
-            }
-            if schedule.kind == drafts::REVIEW {
-                review(&app, &schedule.topic).await;
-                continue;
-            }
-            if schedule.kind == teammates::SHIFT {
-                shift(&app, &schedule.topic).await;
-                continue;
-            }
-            let label = drafts::label(&schedule.kind);
-            match draft(app.clone(), schedule.kind.clone(), schedule.topic.clone()).await {
-                Ok(_) => app.notify(&format!("Your {label} is ready"), &schedule.topic),
-                Err(error) => app.notify(&format!("Couldn't write your {label}"), &error),
-            }
-        }
-        app.publish();
-    }
 }

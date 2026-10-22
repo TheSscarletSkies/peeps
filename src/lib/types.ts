@@ -104,14 +104,6 @@ export interface OpenTodo extends Todo {
   doneToday: boolean;
 }
 
-export interface Draft {
-  id: number;
-  kind: string;
-  topic: string;
-  text: string;
-  createdAt: string;
-}
-
 export interface ProductWeek {
   productId: string;
   tokens: number;
@@ -132,18 +124,13 @@ export interface Helper {
   headline: string;
   todos: OpenTodo[];
   done: Todo[];
-  drafts: Draft[];
-  draftKinds: { id: string; label: string }[];
-  drafting: boolean;
   week: Week;
   todosDoneThisWeek: number;
-  draftsThisWeek: number;
   /** The next few calendar events, soonest first. */
   upcoming: CalendarEvent[];
   chat: ChatMessage[];
   /** True while the agent is answering. */
   chatting: boolean;
-  schedules: Schedule[];
   /** The helper's own agent asking to use a tool. */
   permission: Permission | null;
   /** The model and effort the user picked; null means the agent's own default. */
@@ -156,23 +143,6 @@ export interface ChatMessage {
   from: "you" | "helper";
   text: string;
   at: string;
-}
-
-export interface NewSchedule {
-  kind: string;
-  topic: string;
-  repeat: Repeat;
-  start: string;
-  time: string;
-}
-
-export interface Schedule {
-  id: number;
-  kind: string;
-  topic: string;
-  repeat: Repeat;
-  time: string;
-  nextAt: string;
 }
 
 export interface CalendarEvent {
@@ -214,11 +184,6 @@ export interface Snapshot {
   calendars: CalendarStatus[];
   reminders: Reminders;
   sync: SyncStatus;
-  productChats: ProductChat[];
-  mail: MailView;
-  numbers: NumbersView;
-  teammates: Teammate[];
-  roles: Role[];
   /** Whether the user has told peeps anything about themselves yet. */
   knowsYou: boolean;
   /** A focus session or its break, while one is going. */
@@ -231,120 +196,6 @@ export interface Snapshot {
   areas: string[];
   /** The last week of every repeating to-do. */
   habits: HabitWeek[];
-}
-
-/** A starting point for a new teammate. */
-export interface Role {
-  id: string;
-  name: string;
-  title: string;
-  summary: string;
-  repeat: Repeat;
-  time: string;
-  playbook: string;
-}
-
-export interface Teammate {
-  productId: string;
-  id: string;
-  name: string;
-  role: string;
-  title: string;
-  /** Its conversation, which is also its shift schedule's topic. */
-  scope: string;
-  /** Its rhythm; none while it is off. */
-  schedule: Schedule | null;
-  messages: ChatMessage[];
-  chatting: boolean;
-}
-
-export interface LedgerEntry {
-  uid: string;
-  product: string;
-  kind: "payment" | "post";
-  /** Minor units, so 4950 is 49.50. */
-  amountCents: number | null;
-  currency: string | null;
-  /** manual, paypal, youtube, tiktok, instagram, linkedin, x or other. */
-  channel: string;
-  note: string;
-  at: string;
-}
-
-export interface NumbersSummary {
-  /** Cents per currency code. */
-  revenue: Record<string, number>;
-  payments: number;
-  posts: Record<string, number>;
-  lastPostAt: string | null;
-}
-
-export interface ProductNumbers {
-  productId: string;
-  youtubeChannel: string | null;
-  /** The last seven days. */
-  week: NumbersSummary;
-  recent: LedgerEntry[];
-}
-
-export interface NumbersView {
-  products: ProductNumbers[];
-  paypal: { product: string; sandbox: boolean } | null;
-  paypalReady: boolean;
-  youtubeReady: boolean;
-  lastChecked: string | null;
-  error: string | null;
-}
-
-export type MailProvider = "gmail" | "icloud";
-
-export interface MailAccount {
-  address: string;
-  provider: MailProvider;
-  name: string;
-  /** The mailbox that signs in when `address` is an alias of it; empty when it is the same. */
-  login: string;
-  /** False on a computer that synced the account but has no app password for it yet. */
-  ready: boolean;
-}
-
-export interface Email {
-  id: number;
-  from: string;
-  to: string;
-  subject: string;
-  body: string;
-  inReplyTo: string | null;
-  status: "pending" | "sent" | "failed" | "discarded";
-  messageId: string | null;
-  createdAt: string;
-  sentAt: string | null;
-  repliedAt: string | null;
-  error: string | null;
-}
-
-/** What goes out: the user's last edits to a draft. */
-export interface EmailDraft {
-  from: string;
-  to: string;
-  subject: string;
-  body: string;
-  inReplyTo?: string | null;
-}
-
-export interface MailView {
-  accounts: MailAccount[];
-  /** Drafts waiting for approval, and ones that failed to send. */
-  outbox: Email[];
-  /** Sent in the last 30 days with no reply yet. */
-  awaiting: Email[];
-}
-
-/** A product pet's conversation with the user. */
-export interface ProductChat {
-  productId: string;
-  messages: ChatMessage[];
-  chatting: boolean;
 }
 
 export interface SyncStatus {

@@ -421,14 +421,12 @@
 /* Shared pieces from the tray, adjusted for the light window. */
 
 .hub .setup__step,
-.hub .todos li,
-.hub .drafts li {
+.hub .todos li {
   background: var(--surface);
   box-shadow: var(--card-shadow);
 }
 
-.hub .card .todos li,
-.hub .card .drafts li {
+.hub .card .todos li {
   background: var(--field);
   box-shadow: none;
 }
@@ -915,10 +913,6 @@ li[data-done] .started__check {
   max-height: 52vh;
 }
 
-.hub .schedules li {
-  background: var(--field);
-}
-
 .hub .agent-picker {
   background: var(--field);
 }
@@ -1072,31 +1066,6 @@ li[data-done] .started__check {
   padding: 0;
 }
 
-/* Numbers */
-
-.ledger {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ledger__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  font-size: 14px;
-}
-
-.ledger__head span {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.hub .numbers__lines {
-  font-size: 14px;
-}
-
 .ask-page {
   display: flex;
   flex-direction: column;
@@ -1150,17 +1119,6 @@ li[data-done] .started__check {
 
 .nav__group:first-child {
   margin-top: 0;
-}
-
-.ledger__manual summary {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.ledger__manual[open] summary {
-  margin-bottom: 8px;
 }
 
 .section__sub {

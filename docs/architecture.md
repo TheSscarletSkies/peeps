@@ -21,8 +21,9 @@ needs you › failing › steaming › hungry › litter box › sweating › wo
 
 ## Storage
 
-- `~/.peeps/config.toml`: products and checks
-- `~/.peeps/peeps.db`: SQLite, notes only
+- `~/.peeps/config.toml`: the helper, areas, calendars, reminder rules, products and checks. Sections from removed features (`[[mail]]`, `[paypal]`, `[[product.teammate]]`, `youtube_channel`, and `command`, `timeout_seconds` and `voices` under `[helper]`) are read and ignored, so older files still load.
+- `~/.peeps/about-me.md`: what the user has told their peep about themselves
+- `~/.peeps/peeps.db`: SQLite: to-dos, chat and notes. Databases from older versions may still hold drafts, schedules, mail and ledger tables; nothing reads them.
 - OS keychain, service `peeps`: secrets referenced as `{secret:NAME}`
 
 Set `PEEPS_HOME` to use another directory.

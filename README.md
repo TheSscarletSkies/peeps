@@ -51,10 +51,13 @@ Everything is set in the app. Finer settings live in `~/.peeps/config.toml`; wha
 
 ```toml
 [helper]
-command = ["claude", "-p", "{prompt}"]   # or ["codex", "exec", "{prompt}"]
+name = "Bao"
+model = "sonnet"     # or opus, haiku; unset uses a quick model
+effort = "medium"    # low, medium or high
+chat_command = ["claude", "-p", "--output-format", "json"]
 ```
 
-Without `{prompt}` in the command, the request is sent on stdin.
+Each message goes to `chat_command` on stdin. Config files from older versions may still have `[[mail]]`, `[paypal]`, `[[product.teammate]]`, `youtube_channel`, `command` or `voices`; peeps ignores them.
 
 ## How it works
 

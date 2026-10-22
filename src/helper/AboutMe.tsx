@@ -24,8 +24,8 @@ export function AboutMe() {
     <div className="brief">
       <p className="setup__hint">
         Who you are, what you're building and how you like things done. Your
-        helper, every pet and every teammate read this. The helper adds to it
-        when you tell it something worth remembering.
+        helper and every pet read this. The helper adds to it when you tell it
+        something worth remembering.
       </p>
       <label className="visually-hidden" htmlFor="about-me">
         About me
