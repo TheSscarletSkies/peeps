@@ -233,12 +233,11 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
   }
 }
 
-/** Round frames over the eyes, with a little shine on each lens. */
+/** Round frames over the eyes, clear lenses so the eyes read as they are. */
 function Glasses() {
   const lens = {
     r: 7,
-    fill: "#FFFFFF",
-    fillOpacity: 0.25,
+    fill: "none",
     stroke: "#4A2E22",
     strokeWidth: 1.9,
   };
@@ -251,13 +250,6 @@ function Glasses() {
         fill="none"
         stroke="#4A2E22"
         strokeWidth={1.9}
-        strokeLinecap="round"
-      />
-      <path
-        d={`M${EL - 4} ${EY - 3.4}q1.4-1.6 3.4-1.8M${ER - 4} ${EY - 3.4}q1.4-1.6 3.4-1.8`}
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.4}
         strokeLinecap="round"
       />
     </g>
