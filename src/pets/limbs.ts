@@ -24,7 +24,14 @@ export interface Limbs {
 }
 
 /** Where each shape's sides are at hand height, in the 120 by 100 drawing. */
-const SIDE: Record<PetKind, number> = { bao: 19, gyoza: 17, wonton: 19 };
+const SIDE: Record<PetKind, number> = {
+  bao: 19,
+  xiaolongbao: 24,
+  gyoza: 17,
+  mochi: 15,
+  onigiri: 22,
+  wonton: 19,
+};
 
 const mirror = (hand: Hand): Hand => ({ ...hand, x: 120 - hand.x });
 

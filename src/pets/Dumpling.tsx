@@ -20,11 +20,16 @@ interface Props {
   accessory?: Accessory | null;
   /** Round reading glasses, worn while studying or working together. */
   glasses?: boolean;
+  /** Something the user dressed their peep in. */
+  wear?: Wear | null;
   /** Extra classes for one-off motions such as a squish or hatching. */
   motion?: string;
 }
 
 /** Dizzy after a poke spree, celebrating finished work, in love after a pat or a note. */
+/** What a peep can be dressed in, besides glasses. */
+export type Wear = "bow" | "headphones" | "beanie";
+
 export type Expression = "dizzy" | "celebrate" | "love" | "eager" | "wave";
 type Look = Mood | Expression;
 
@@ -34,6 +39,10 @@ interface Shape {
   highlight: number[];
   /** Taller than the drawing, for shapes drawn squat. */
   tall: number;
+  /** Moves the face down (or up) to sit where the shape is roundest. */
+  faceY: number;
+  /** A part drawn in its own colour on top, like an onigiri's seaweed. */
+  decor?: string;
   fxOffset: number;
   /** How far the pet rises in the steamer so its face peeks over the rim. */
   napLift: number;
@@ -135,6 +144,93 @@ function Eyes({ mood }: { mood: Look }) {
       )}
     </g>
   );
+}
+
+const OUTLINE = {
+  stroke: "#4A2614",
+  strokeWidth: 1.8,
+  strokeLinejoin: "round" as const,
+};
+
+/** A bow, headphones or a beanie, drawn in the same sticker style as the pet. */
+function Dressed({ wear, top }: { wear: Wear; top: number }) {
+  switch (wear) {
+    case "bow":
+      return (
+        <g
+          className="dumpling__wear"
+          transform={`translate(77 ${top + 8}) rotate(18)`}
+        >
+          <path d="M0 0L-11-6.5q-3 6.5 0 13z" fill="#FF9FB5" {...OUTLINE} />
+          <path d="M0 0L11-6.5q3 6.5 0 13z" fill="#FF9FB5" {...OUTLINE} />
+          <circle r="3.4" fill="#FF7F9E" {...OUTLINE} />
+        </g>
+      );
+    case "beanie":
+      return (
+        <g className="dumpling__wear">
+          <path
+            d={`M33 ${top + 16}Q33 ${top - 8} 60 ${top - 8}Q87 ${top - 8} 87 ${top + 16}z`}
+            fill="#9FD8C9"
+            {...OUTLINE}
+          />
+          <path
+            d={`M44 ${top - 2}v14M52 ${top - 6}v18M60 ${top - 7}v19M68 ${top - 6}v18M76 ${top - 2}v14`}
+            stroke="#4A2614"
+            strokeOpacity={0.25}
+            strokeWidth={1.4}
+            strokeLinecap="round"
+          />
+          <rect
+            x="30"
+            y={top + 12}
+            width="60"
+            height="9"
+            rx="4.5"
+            fill="#7FC7B5"
+            {...OUTLINE}
+          />
+          <circle cx="60" cy={top - 9} r="5" fill="#FFF8EF" {...OUTLINE} />
+        </g>
+      );
+    case "headphones":
+      return (
+        <g className="dumpling__wear">
+          <path
+            d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
+            fill="none"
+            stroke="#4A2614"
+            strokeWidth={5.6}
+            strokeLinecap="round"
+          />
+          <path
+            d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
+            fill="none"
+            stroke="#B9C2E6"
+            strokeWidth={3}
+            strokeLinecap="round"
+          />
+          <rect
+            x="12"
+            y="52"
+            width="12"
+            height="18"
+            rx="6"
+            fill="#8E9BD6"
+            {...OUTLINE}
+          />
+          <rect
+            x="96"
+            y="52"
+            width="12"
+            height="18"
+            rx="6"
+            fill="#8E9BD6"
+            {...OUTLINE}
+          />
+        </g>
+      );
+  }
 }
 
 /** Round frames over the eyes, with a little shine on each lens. */
@@ -547,6 +643,7 @@ export function Dumpling({
   expression,
   accessory,
   glasses = false,
+  wear = null,
   motion,
 }: Props) {
   const look: Look = expression ?? mood;
@@ -560,7 +657,7 @@ export function Dumpling({
   // The outline is a warm brown nudged towards the pet's own colour, so a blue bun gets a navy edge.
   const line = mix(edge(color), "#4A2614", 0.72);
   const spread = 1 + build.eyeSpread / 30;
-  const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
+  const face = `${stretch} translate(60 ${shape.faceY}) scale(${spread} 1) translate(-60 0)`;
   const skin = vivid(flushed(color, heat));
   const limbs = limbsFor(look, kind);
 
@@ -574,14 +671,13 @@ export function Dumpling({
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id={`${id}shade`} cx="0.42" cy="0.32" r="0.8">
-          <stop offset="0.55" stopColor="#C99470" stopOpacity={0} />
-          <stop offset="1" stopColor="#C99470" stopOpacity={0.22} />
-        </radialGradient>
-        <radialGradient id={`${id}glow`} cx="0.34" cy="0.28" r="0.42">
-          <stop offset="0" stopColor="#FFFFFF" stopOpacity={0.7} />
-          <stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-        </radialGradient>
+        <linearGradient id={`${id}shade`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0.72" stopColor="#C99470" stopOpacity={0} />
+          <stop offset="1" stopColor="#C99470" stopOpacity={0.2} />
+        </linearGradient>
+        <clipPath id={`${id}clip`}>
+          <path d={shape.body} />
+        </clipPath>
         <radialGradient id={`${id}blush`}>
           <stop offset="0" stopColor="#FFA98F" stopOpacity={0.8} />
           <stop offset="1" stopColor="#FFA98F" stopOpacity={0} />
@@ -606,8 +702,15 @@ export function Dumpling({
         <g className="dumpling__body">
           <g transform={stretch}>
             <path d={shape.body} fill={skin} />
+            {/* A flat sticker finish: only a soft warm band where the bun meets the plate. */}
             <path d={shape.body} fill={`url(#${id}shade)`} />
-            <path d={shape.body} fill={`url(#${id}glow)`} />
+            {shape.decor && (
+              <path
+                d={shape.decor}
+                fill="#2F4A3A"
+                clipPath={`url(#${id}clip)`}
+              />
+            )}
             {/* Pleats gathered at the top, like a real bun, in the same brown as the outline. */}
             <path
               d={shape.creases}
@@ -665,7 +768,10 @@ export function Dumpling({
               />
             </g>
           )}
-          {accessory && <Outfit accessory={accessory} hatY={shape.hatY} />}
+          {wear && <Dressed wear={wear} top={shape.hatY} />}
+          {accessory && !wear && (
+            <Outfit accessory={accessory} hatY={shape.hatY} />
+          )}
         </g>
       </g>
       <PropInFront mood={look} />
