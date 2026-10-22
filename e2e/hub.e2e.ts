@@ -186,6 +186,20 @@ test("UC27: areas can be added and removed in Settings", async ({ page }) => {
   await expect(areas).not.toContainText("#play");
 });
 
+test("UC30: you pick your peep's look, and the table shows it", async ({
+  page,
+}) => {
+  const table = page.locator(".hero .bun").first();
+  await expect(table.locator(".dumpling__wear")).toHaveCount(1);
+  await page.getByRole("button", { name: "Settings" }).click();
+  const looks = page.getByRole("radiogroup", { name: "Your peep's look" });
+  await expect(looks.getByRole("radio", { name: "Sprout" })).toBeChecked();
+  await looks.getByRole("radio", { name: "Nothing" }).click();
+  await expect(looks.getByRole("radio", { name: "Nothing" })).toBeChecked();
+  await page.getByRole("button", { name: "Today" }).click();
+  await expect(table.locator(".dumpling__wear")).toHaveCount(0);
+});
+
 test("UC23: a study session says so", async ({ page }) => {
   const bar = page.getByRole("form", { name: "Focus" });
   await bar.getByRole("radio", { name: "Study" }).click();

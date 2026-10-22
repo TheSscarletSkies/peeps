@@ -4,6 +4,7 @@ import { FocusBar } from "../focus/FocusBar";
 import { FriendsPanel } from "../friends/FriendsPanel";
 import { StudyTable } from "../friends/StudyTable";
 import { AreasEditor } from "../tracker/AreasEditor";
+import { LookPicker } from "./LookPicker";
 import { WeekCard } from "../tracker/WeekCard";
 import { useReactions } from "../friends/useReactions";
 import { Todos } from "../helper/HelperPanel";
@@ -188,6 +189,13 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                 <ClaudeStatus />
               </div>
               <section className="card">
+                <h2>Your peep's look</h2>
+                <p className="setup__hint">
+                  Your friends see the same look when you study together.
+                </p>
+                <LookPicker wear={snapshot.wear} />
+              </section>
+              <section className="card">
                 <h2>Your areas</h2>
                 <p className="setup__hint">
                   Today groups your list by these. Tag a to-do with one, or tell{" "}
@@ -263,6 +271,7 @@ function TodayPage({
           focus={snapshot.focus}
           friends={snapshot.friends}
           you={snapshot.friends?.name || "You"}
+          wear={snapshot.wear}
         />
       </section>
 

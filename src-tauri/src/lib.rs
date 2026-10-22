@@ -42,6 +42,7 @@ pub fn run() {
             commands::decide,
             commands::start_focus,
             commands::set_areas,
+            commands::set_wear,
             commands::stop_focus,
             commands::set_one_thing,
             commands::start_friends,

@@ -197,6 +197,8 @@ export interface Snapshot {
   friends: Friends | null;
   /** The parts of life to-dos are grouped into, as tags: work, study, play… */
   areas: string[];
+  /** What your peep wears, here and at your friends' tables. */
+  wear: PeepWear;
   /** The last week of every repeating to-do. */
   habits: HabitWeek[];
 }
@@ -249,12 +251,17 @@ export interface Focus {
 
 export type Reaction = "heart" | "poke" | "bonk" | "tea" | "study";
 
+/** What a peep wears on its head; "plain" is nothing. */
+export type PeepWear = "sprout" | "bow" | "headphones" | "beanie" | "plain";
+
 export interface FriendView {
   code: string;
   name: string;
   presence: "focusing" | "around" | "away";
   focusUntil: string | null;
   area: string | null;
+  /** What they picked; null from a peeps too old to say, so one is picked from their code. */
+  wear: PeepWear | null;
 }
 
 export interface Friends {

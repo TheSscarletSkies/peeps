@@ -199,6 +199,16 @@ pub fn set_areas(app: State<'_, Arc<App>>, areas: Vec<String>) -> Result<()> {
     Ok(())
 }
 
+/// Saves what your peep wears; friends see it with your next status.
+#[tauri::command]
+pub fn set_wear(app: State<'_, Arc<App>>, wear: peeps_core::config::Wear) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_helper_wear(&read_or_empty(&path)?, wear).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 /// Starts a fresh conversation with the helper.
 #[tauri::command]
 pub fn new_chat(app: State<'_, Arc<App>>) -> Result<()> {

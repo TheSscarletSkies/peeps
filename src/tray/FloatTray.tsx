@@ -25,6 +25,7 @@ import {
 } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
 import { DeskScene, deskSize } from "../friends/DeskScene";
+import { worn } from "../friends/look";
 import { giveFiles, useFileDrop } from "../life/drops";
 import { announceFed, onOpenChat, announcePat } from "../life/events";
 
@@ -231,7 +232,7 @@ export function FloatTray({
               {
                 key: HELPER,
                 name: snapshot.friends?.name || "You",
-                wear: "sprout",
+                wear: worn(snapshot.wear),
                 petId: HELPER,
               },
               ...company.map((resident) => ({

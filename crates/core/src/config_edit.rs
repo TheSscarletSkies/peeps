@@ -3,7 +3,7 @@
 use serde::Deserialize;
 use toml_edit::{value, Array, ArrayOfTables, DocumentMut, InlineTable, Item, Table};
 
-use crate::config::{Config, ConfigError, Pet, PetKind, Reminders};
+use crate::config::{Config, ConfigError, Pet, PetKind, Reminders, Wear};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -202,6 +202,20 @@ pub fn set_helper_areas(text: &str, areas: &[String]) -> Result<String, EditErro
     Ok(updated)
 }
 
+/// Saves what the user's peep wears.
+pub fn set_helper_wear(text: &str, wear: Wear) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let helper = doc
+        .entry("helper")
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .ok_or(EditError::Shape)?;
+    helper["wear"] = value(wear.as_str());
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// The keychain entry that holds a calendar's private link.
 pub fn calendar_secret(name: &str) -> String {
     format!("calendar-{}", slug(name))
@@ -317,6 +331,18 @@ mod tests {
         assert_eq!(product.paths, ["~/code/shop"]);
         assert_eq!(product.pet.kind, PetKind::Gyoza);
         assert_eq!(product.pet.color, "#FFD66B");
+    }
+
+    #[test]
+    fn saves_what_the_peep_wears_and_keeps_the_rest() {
+        let text = "[helper]\nname = \"Bun\" # mine\n";
+        assert_eq!(Config::parse(text).unwrap().helper.wear, Wear::Sprout);
+        let updated = set_helper_wear(text, Wear::Headphones).unwrap();
+        assert!(updated.contains("name = \"Bun\" # mine"));
+        let config = Config::parse(&updated).unwrap();
+        assert_eq!(config.helper.wear, Wear::Headphones);
+        let plain = set_helper_wear(&updated, Wear::Plain).unwrap();
+        assert_eq!(Config::parse(&plain).unwrap().helper.wear, Wear::Plain);
     }
 
     #[test]

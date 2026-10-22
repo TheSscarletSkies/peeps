@@ -2,7 +2,7 @@ import { useId } from "react";
 
 import type { Accessory } from "../life/season";
 import type { Mood, PetKind } from "../lib/types";
-import { BUN, BunBody, BunGlasses, Dough, Worn } from "./Bun";
+import { BUN, BunBody, BunGlasses, Dough, Worn, type BunWear } from "./Bun";
 import { limbsFor, type Hand, type Prop } from "./limbs";
 import { BASE, variantFor } from "./variant";
 
@@ -21,7 +21,7 @@ interface Props {
   /** Round reading glasses, worn while studying or working together. */
   glasses?: boolean;
   /** Something the user dressed their peep in. */
-  wear?: Wear | null;
+  wear?: BunWear;
   /** Extra classes for one-off motions such as a squish or hatching. */
   motion?: string;
 }

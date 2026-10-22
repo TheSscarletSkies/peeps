@@ -9,6 +9,7 @@ import type {
   Joined,
   NewProduct,
   Notch,
+  PeepWear,
   Nudge,
   Note,
   Reminders,
@@ -451,6 +452,7 @@ export function addFriend(code: string): Promise<void> {
                 presence: "away",
                 focusUntil: null,
                 area: null,
+                wear: null,
               },
             ],
           },
@@ -519,6 +521,13 @@ export function setAreas(areas: string[]): Promise<void> {
     ),
   ].slice(0, 8);
   updatePreview((snapshot) => ({ ...snapshot, areas: clean }));
+  return Promise.resolve();
+}
+
+/** Saves what your peep wears; friends see it with your next status. */
+export function setWear(wear: PeepWear): Promise<void> {
+  if (inApp()) return invoke("set_wear", { wear }).then(() => undefined);
+  updatePreview((snapshot) => ({ ...snapshot, wear }));
   return Promise.resolve();
 }
 

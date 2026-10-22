@@ -1,4 +1,5 @@
-import type { PetKind } from "../lib/types";
+import type { PeepWear, PetKind } from "../lib/types";
+import type { BunWear } from "../pets/Bun";
 import type { Wear } from "../pets/Dumpling";
 import { doing } from "../tracker/areas";
 
@@ -13,18 +14,29 @@ const COLORS = [
 const KINDS: PetKind[] = ["bao", "xiaolongbao", "gyoza", "mochi", "onigiri"];
 const WEAR: (Wear | null)[] = [null, "bow", "headphones", "beanie", null];
 
-/** A friend's peep looks the same every time, picked from their code. */
-export function friendLook(code: string): {
+/** What a peep wears, drawn: "plain" is nothing on its head. */
+export function worn(wear: PeepWear): BunWear {
+  return wear === "plain" ? null : wear;
+}
+
+/**
+ * A friend's peep looks the same every time: wearing what they picked, or, from a peeps too old
+ * to say, something picked from their code.
+ */
+export function friendLook(
+  code: string,
+  chosen: PeepWear | null = null,
+): {
   color: string;
   kind: PetKind;
-  wear: Wear | null;
+  wear: BunWear;
 } {
   let hash = 0;
   for (const char of code) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return {
     color: COLORS[hash % COLORS.length] ?? "#FFD2BC",
     kind: KINDS[(hash >>> 8) % KINDS.length] ?? "bao",
-    wear: WEAR[(hash >>> 16) % WEAR.length] ?? null,
+    wear: chosen ? worn(chosen) : (WEAR[(hash >>> 16) % WEAR.length] ?? null),
   };
 }
 

@@ -1,8 +1,8 @@
-import type { Focus, Friends, Helper } from "../lib/types";
+import type { Focus, Friends, Helper, PeepWear } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import { moodWith } from "../focus/clock";
 import { DeskScene, MAX_SEATS } from "./DeskScene";
-import { friendLook } from "./look";
+import { friendLook, worn } from "./look";
 
 /** Your peep on its steamer, or, while friends are focusing, everyone around one low table. */
 export function StudyTable({
@@ -10,11 +10,13 @@ export function StudyTable({
   focus,
   friends,
   you,
+  wear,
 }: {
   helper: Helper;
   focus: Focus | null;
   friends: Friends | null;
   you: string;
+  wear: PeepWear;
 }) {
   const studying = (friends?.friends ?? [])
     .filter((friend) => friend.presence === "focusing")
@@ -27,6 +29,7 @@ export function StudyTable({
       mood={moodWith(helper.mood, focus)}
       heat={0}
       size={size}
+      wear={worn(wear)}
       chatty
       glasses={focus?.phase === "focus" || studying.length > 0}
     />
@@ -40,14 +43,14 @@ export function StudyTable({
             {
               key: "you",
               name: you,
-              wear: "sprout",
+              wear: worn(wear),
               petId: "helper",
               pattable: true,
             },
             ...studying.map((friend) => ({
               key: friend.code,
               name: friend.name,
-              wear: friendLook(friend.code).wear,
+              wear: friendLook(friend.code, friend.wear).wear,
             })),
           ]}
         />

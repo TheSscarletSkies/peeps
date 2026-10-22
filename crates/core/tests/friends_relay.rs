@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use chrono::{TimeDelta, Utc};
+use peeps_core::config::Wear;
 use peeps_core::friends::{self, Circle, Heard, Message, Presence, Reaction, Received};
 
 #[derive(Default)]
@@ -137,6 +138,7 @@ impl Peep {
             name: self.circle.name.clone(),
             focus_until: focus_minutes.map(|m| Utc::now() + TimeDelta::minutes(m)),
             area: Some("study".into()),
+            wear: Some(Wear::Bow),
         };
         let topic = friends::status(&self.circle.code);
         friends::post_to(relay, &topic, &self.circle.code, &message).unwrap();
@@ -218,6 +220,7 @@ fn two_friends_study_together() {
         name: "Mariyam".into(),
         focus_until: None,
         area: None,
+        wear: None,
     };
     friends::post_to(&relay, &friends::inbox(&sara_code), &sara_code, &fake).unwrap();
     assert!(sara.check(&relay).is_empty());

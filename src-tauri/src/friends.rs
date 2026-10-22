@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
+use peeps_core::config::Wear;
 use peeps_core::friends::{
     self, Circle, FriendView, Heard, Incoming, Message, Reaction, Received, HEARTBEAT,
 };
@@ -86,6 +87,7 @@ impl Friends {
                         presence: seen.presence(now),
                         focus_until: seen.focus_until.filter(|until| *until > now),
                         area: seen.area,
+                        wear: seen.wear,
                     }
                 })
                 .collect(),
@@ -209,10 +211,18 @@ pub fn listen(app: Arc<App>) {
     }
 }
 
+/// The last status that reached your friends.
+struct Sent {
+    at: DateTime<Utc>,
+    focus_until: Option<DateTime<Utc>>,
+    generation: u64,
+    wear: Wear,
+}
+
 /// Tells friends whether you are focusing: at once when it changes, and every few minutes to say you're here.
 pub async fn heartbeat(app: Arc<App>) {
     let mut interval = tokio::time::interval(Duration::from_secs(10));
-    let mut last: Option<(DateTime<Utc>, Option<DateTime<Utc>>, u64)> = None;
+    let mut last: Option<Sent> = None;
     loop {
         interval.tick().await;
         let Some(circle) = app.friends.circle() else {
@@ -226,12 +236,17 @@ pub async fn heartbeat(app: Arc<App>) {
             .filter(|view| view.phase == peeps_core::focus::Phase::Focus);
         let focus_until = focusing.as_ref().map(|view| view.ends_at);
         let area = focusing.and_then(|view| view.area);
+        let wear = app.config().helper.wear;
         // A new friend hears your name and focus at once, not at the next heartbeat.
         let generation = app.friends.generation.load(Ordering::Relaxed);
-        let due = match last {
+        let due = match &last {
             None => true,
-            Some((at, until, seen)) => {
-                until != focus_until || seen != generation || now - at >= HEARTBEAT
+            // A new look reaches friends at once too.
+            Some(sent) => {
+                sent.focus_until != focus_until
+                    || sent.generation != generation
+                    || sent.wear != wear
+                    || now - sent.at >= HEARTBEAT
             }
         };
         if !due {
@@ -241,12 +256,18 @@ pub async fn heartbeat(app: Arc<App>) {
             name: circle.name.clone(),
             focus_until,
             area,
+            wear: Some(wear),
         };
         let topic = friends::status(&circle.code);
         let code = circle.code.clone();
         let sent = tokio::task::spawn_blocking(move || send(&topic, &code, &message)).await;
         if matches!(sent, Ok(Ok(()))) {
-            last = Some((now, focus_until, generation));
+            last = Some(Sent {
+                at: now,
+                focus_until,
+                generation,
+                wear,
+            });
         }
     }
 }

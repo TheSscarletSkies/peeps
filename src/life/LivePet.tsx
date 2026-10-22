@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ReactionArt } from "../friends/ReactionArt";
 import type { Mood, PetKind, Reaction } from "../lib/types";
+import type { BunWear } from "../pets/Bun";
 import { Dumpling, type Expression } from "../pets/Dumpling";
 import { useDropHover } from "./drops";
 import { onFed, onPat, onReactionShown } from "./events";
@@ -32,6 +33,7 @@ interface Props {
   /** Says something in a little bubble when patted or fed; only where there is room above it. */
   chatty?: boolean;
   glasses?: boolean;
+  wear?: BunWear;
 }
 
 const PATTED = ["hehe!", "hi!", "boop!", "that tickles", "again!", "♥"];
@@ -58,6 +60,7 @@ export function LivePet({
   waving = false,
   chatty = false,
   glasses = false,
+  wear = null,
 }: Props) {
   const [saying, setSaying] = useState<string | null>(null);
   const eager = useDropHover(dropId ?? id);
@@ -231,6 +234,7 @@ export function LivePet({
         expression={expression}
         accessory={accessoryForToday()}
         glasses={glasses}
+        wear={wear}
         motion={motion || undefined}
       />
     </span>

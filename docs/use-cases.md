@@ -117,9 +117,16 @@ Tested by `e2e/helper.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/frie
 ### UC26. Study together
 
 **When** Sara starts a focus session.
-**Then** on the desktop, once they're focusing too, their floating peep becomes a low round table with books, a pencil cup and sticky notes: everyone in the session sits around it on a coloured cushion, glasses on, holding a book or a laptop, each with a name tag. Up to six fit, the far side first. Each friend's peep keeps its own shape (bao, xiaolongbao, gyoza, mochi or onigiri), colour and accessory. On Today, the same table replaces their steamer, next to theirs, each with a little name tag; more friends make more seats. "Sara is studying, 18:00 left. Pull up a chair?" with Join starts their own session ending when hers does, so they break together. Saving someone a seat (the open book) invites them.
+**Then** on the desktop, once they're focusing too, their floating peep becomes a low wooden table with laptops, a lamp, tea and a plate of dumplings. Everyone in the session is the same cream bun with thin glasses, sitting on a cushion: the back row peeks over the table and the front row holds a book or a pencil. Up to seven fit. A name shows on hover, and for a few seconds when someone sits down. On Today, the same table replaces their steamer. "Sara is studying, 18:00 left. Pull up a chair?" with Join starts their own session ending when hers does, so they break together. Saving someone a seat (the open book) invites them.
 
 Tested by `e2e/hub.e2e.ts`.
+
+### UC30. Their own look
+
+**When** they want their peep to be recognisably theirs.
+**Then** Settings shows the bun in a sprout, a bow, headphones, a beanie or nothing, and they pick one. Their peep wears it on the desktop, in the hub and at the table, and friends see the same look at theirs as soon as the status reaches them. A friend on an older peeps gets a look picked from their code.
+
+Tested by `e2e/hub.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/friends.rs`, `crates/core/src/config_edit.rs`.
 
 ## Getting going
 

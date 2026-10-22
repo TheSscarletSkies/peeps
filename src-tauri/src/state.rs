@@ -114,6 +114,8 @@ pub struct AppSnapshot {
     pub friends: Option<crate::friends::FriendsView>,
     /// The parts of life to-dos are grouped into, as tags.
     pub areas: Vec<String>,
+    /// What your peep wears.
+    pub wear: peeps_core::config::Wear,
     /// The last week of every repeating to-do, a dot per day.
     pub habits: Vec<peeps_core::tracker::HabitWeek>,
 }
@@ -446,6 +448,7 @@ impl App {
             friends: self.friends.view(now),
             habits,
             areas: config.helper.areas.clone(),
+            wear: config.helper.wear,
         }
     }
 

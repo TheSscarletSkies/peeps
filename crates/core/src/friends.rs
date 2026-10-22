@@ -3,6 +3,7 @@
 //! ntfy is a free public relay, so everything is sealed with a key made from the code. The relay
 //! sees random-looking channel names and noise; anyone without the code sees nothing useful.
 
+use crate::config::Wear;
 use base64::Engine;
 use chrono::{DateTime, TimeDelta, Utc};
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305, NONCE_LEN};
@@ -63,6 +64,9 @@ pub enum Message {
         /// "study" or "work" while focusing; older peeps leave it out.
         #[serde(default)]
         area: Option<String>,
+        /// What their peep wears; older peeps leave it out and get a look picked from their code.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        wear: Option<Wear>,
     },
 }
 
@@ -114,6 +118,7 @@ pub struct FriendView {
     pub presence: Presence,
     pub focus_until: Option<DateTime<Utc>>,
     pub area: Option<String>,
+    pub wear: Option<Wear>,
 }
 
 /// The last thing heard from a friend.
@@ -122,6 +127,7 @@ pub struct Heard {
     pub at: Option<DateTime<Utc>>,
     pub focus_until: Option<DateTime<Utc>>,
     pub area: Option<String>,
+    pub wear: Option<Wear>,
 }
 
 impl Heard {
@@ -371,6 +377,7 @@ impl Circle {
                 name,
                 focus_until,
                 area,
+                wear,
             } => {
                 // A status is only trusted on the channel of the friend it describes.
                 if key == self.code {
@@ -387,6 +394,7 @@ impl Circle {
                             at: Some(incoming.at),
                             focus_until,
                             area: area.map(|a| clean_name(&a)),
+                            wear,
                         },
                     );
                 }
@@ -501,6 +509,37 @@ mod tests {
     }
 
     #[test]
+    fn hears_what_a_friend_wears_and_reads_older_statuses() {
+        let mut circle = Circle::new("Mariyam");
+        circle.code = "ABCDE-FGHJK".into();
+        circle.befriend("ZYXWV-UTSRQ", "Sara");
+        let now = Utc::now();
+        let mut heard = std::collections::HashMap::new();
+        let status = Message::Status {
+            name: "Sara".into(),
+            focus_until: None,
+            area: None,
+            wear: Some(Wear::Beanie),
+        };
+        let incoming = Incoming {
+            id: "1".into(),
+            at: now,
+            topic: super::status("ZYXWV-UTSRQ"),
+            text: seal("ZYXWV-UTSRQ", &status),
+        };
+        assert_eq!(
+            circle.receive(&mut heard, &incoming, now),
+            Some(Received::Updated)
+        );
+        assert_eq!(heard["ZYXWV-UTSRQ"].wear, Some(Wear::Beanie));
+
+        // A peeps from before looks were shared sends no wear at all.
+        let older: Message =
+            serde_json::from_str(r#"{"kind":"status","name":"Sara","focusUntil":null}"#).unwrap();
+        assert!(matches!(older, Message::Status { wear: None, .. }));
+    }
+
+    #[test]
     fn channels_differ_and_hide_the_code() {
         let code = "ABCDE-FGHJK";
         assert_ne!(inbox(code), status(code));
@@ -574,6 +613,7 @@ mod tests {
             name: "Sara".into(),
             focus_until: None,
             area: None,
+            wear: None,
         };
         post_to(&url, "peeps-x", "ABCDE-FGHJK", &message).unwrap();
         let request = relay.join().unwrap();
@@ -617,6 +657,7 @@ mod tests {
             at: Some(now - TimeDelta::minutes(2)),
             focus_until: Some(now + TimeDelta::minutes(10)),
             area: None,
+            wear: None,
         };
         assert_eq!(heard.presence(now), Presence::Focusing);
         assert_eq!(

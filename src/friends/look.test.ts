@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { friendLook, presenceLine } from "./look";
+import { friendLook, presenceLine, worn } from "./look";
 
 describe("friends", () => {
   it("gives each friend the same look every time", () => {
@@ -11,6 +11,16 @@ describe("friends", () => {
       ),
     );
     expect(looks.size).toBeGreaterThan(1);
+  });
+
+  it("wears what a friend picked, and something from their code if they can't say", () => {
+    expect(friendLook("S4RAH-B9K2T", "beanie").wear).toBe("beanie");
+    expect(friendLook("S4RAH-B9K2T", "plain").wear).toBeNull();
+    expect(friendLook("S4RAH-B9K2T", null).wear).toBe(
+      friendLook("S4RAH-B9K2T").wear,
+    );
+    expect(worn("sprout")).toBe("sprout");
+    expect(worn("plain")).toBeNull();
   });
 
   it("says what a friend is up to", () => {

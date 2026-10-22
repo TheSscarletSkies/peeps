@@ -106,6 +106,8 @@ pub struct Helper {
     pub effort: Option<String>,
     /// The parts of life to-dos are grouped into, as tags: `work`, `study`, `play` and any the user adds.
     pub areas: Vec<String>,
+    /// What your peep wears, here and on your friends' study tables.
+    pub wear: Wear,
     // Settings of the old Write tab, kept readable for config files that still have them.
     #[serde(rename = "command")]
     _command: IgnoredAny,
@@ -130,6 +132,7 @@ impl Default for Helper {
             model: None,
             effort: None,
             areas: ["work", "study", "play"].map(String::from).to_vec(),
+            wear: Wear::default(),
             _command: IgnoredAny,
             _timeout_seconds: IgnoredAny,
             _voices: IgnoredAny,
@@ -194,6 +197,31 @@ impl Default for Pet {
         Self {
             kind: PetKind::Bao,
             color: "#FFF3E3".into(),
+        }
+    }
+}
+
+/// What a peep wears on its head. The sprout is every peep's own until they pick something else.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Wear {
+    #[default]
+    Sprout,
+    Bow,
+    Headphones,
+    Beanie,
+    /// Nothing on its head.
+    Plain,
+}
+
+impl Wear {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Sprout => "sprout",
+            Self::Bow => "bow",
+            Self::Headphones => "headphones",
+            Self::Beanie => "beanie",
+            Self::Plain => "plain",
         }
     }
 }

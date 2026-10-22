@@ -115,7 +115,7 @@ export function FriendsPanel({
       ) : (
         <ul className="friends__list" aria-label="Friends">
           {friends.friends.map((friend) => {
-            const look = friendLook(friend.code);
+            const look = friendLook(friend.code, friend.wear);
             return (
               <li key={friend.code} data-presence={friend.presence}>
                 <Dumpling
@@ -131,6 +131,7 @@ export function FriendsPanel({
                   }
                   heat={0}
                   size={36}
+                  wear={look.wear}
                 />
                 <span className="friends__who">
                   <strong>{friend.name}</strong>

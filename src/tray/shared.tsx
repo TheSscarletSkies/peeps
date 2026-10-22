@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
 import { moodWith } from "../focus/clock";
-import { friendLook } from "../friends/look";
-import { Dumpling, type Wear } from "../pets/Dumpling";
+import { friendLook, worn } from "../friends/look";
+import type { BunWear } from "../pets/Bun";
+import { Dumpling } from "../pets/Dumpling";
 import { HelperPanel } from "../helper/HelperPanel";
 import { openHome } from "../lib/bridge";
 import type { Mood, Nudge, ReactionEvent, Snapshot } from "../lib/types";
@@ -59,8 +60,8 @@ export interface Resident {
   name: string;
   mood: Mood;
   urgent: boolean;
-  /** What it wears at the study table. */
-  wear: Wear | null;
+  /** What it wears, here and at the study table. */
+  wear: BunWear;
   pet: (size: number) => ReactNode;
 }
 
@@ -75,7 +76,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
       mood,
       // It interrupts for a permission or a reminder, never for its own to-dos.
       urgent: helper.mood === "needsYou" || waving,
-      wear: null,
+      wear: worn(snapshot.wear),
       pet: (size: number) => (
         <LivePet
           dropId={HELPER}
@@ -84,6 +85,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           color={helper.color}
           mood={mood}
           glasses={snapshot.focus?.phase === "focus"}
+          wear={worn(snapshot.wear)}
           heat={0}
           size={size}
         />
@@ -94,7 +96,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
       .filter((friend) => friend.presence === "focusing")
       .slice(0, 3)
       .map((friend) => {
-        const look = friendLook(friend.code);
+        const look = friendLook(friend.code, friend.wear);
         return {
           id: `${FRIEND}${friend.code}`,
           name: friend.name,

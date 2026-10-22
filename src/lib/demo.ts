@@ -225,6 +225,7 @@ export const demoSnapshot: Snapshot = {
   focus: null,
   oneThing: false,
   areas: ["work", "study", "play"],
+  wear: "sprout",
   habits: [
     {
       id: 4,
@@ -258,6 +259,7 @@ export const demoSnapshot: Snapshot = {
         presence: "focusing",
         focusUntil: new Date(Date.now() + 18 * 60_000).toISOString(),
         area: "study",
+        wear: "bow",
       },
       {
         code: "AL1Q7-M3NVW",
@@ -265,6 +267,7 @@ export const demoSnapshot: Snapshot = {
         presence: "around",
         focusUntil: null,
         area: null,
+        wear: "headphones",
       },
       {
         code: "Z0EEP-QW8RT",
@@ -272,6 +275,7 @@ export const demoSnapshot: Snapshot = {
         presence: "away",
         focusUntil: null,
         area: null,
+        wear: null,
       },
     ],
   },
