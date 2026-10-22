@@ -1,7 +1,6 @@
 import type { Focus, Friends, Helper } from "../lib/types";
 import { LivePet } from "../life/LivePet";
 import { moodWith } from "../focus/clock";
-import { Dumpling } from "../pets/Dumpling";
 import { DeskScene, MAX_SEATS } from "./DeskScene";
 import { friendLook } from "./look";
 
@@ -20,9 +19,8 @@ export function StudyTable({
   const studying = (friends?.friends ?? [])
     .filter((friend) => friend.presence === "focusing")
     .slice(0, MAX_SEATS - 1);
-  const mine = (size: number, seated = false) => (
+  const mine = (size: number) => (
     <LivePet
-      seated={seated}
       dropId="helper"
       kind={helper.kind}
       color={helper.color}
@@ -42,28 +40,15 @@ export function StudyTable({
             {
               key: "you",
               name: you,
-              pet: (size: number) => mine(size, true),
+              wear: "sprout",
+              petId: "helper",
+              pattable: true,
             },
-            ...studying.map((friend) => {
-              const look = friendLook(friend.code);
-              return {
-                key: friend.code,
-                name: friend.name,
-                pet: (size: number) => (
-                  <Dumpling
-                    seated
-                    kind={look.kind}
-                    seed={friend.code}
-                    color={look.color}
-                    mood="working"
-                    heat={0}
-                    size={size}
-                    glasses
-                    wear={look.wear}
-                  />
-                ),
-              };
-            }),
+            ...studying.map((friend) => ({
+              key: friend.code,
+              name: friend.name,
+              wear: friendLook(friend.code).wear,
+            })),
           ]}
         />
       </div>

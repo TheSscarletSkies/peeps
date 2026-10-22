@@ -2894,86 +2894,191 @@ form.focus {
   max-width: 100%;
 }
 
-/* Studying together: a low round table, everyone's hands on it, their names in a row beneath. */
+/* Studying together: cream buns around one low wooden table, drawn as a single picture. */
 .desk {
-  display: flex;
-  flex-direction: column;
   margin: 0 auto;
-  animation: seat-in 0.4s ease-out;
 }
 
-.desk__scene {
-  position: relative;
+.desk > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.desk__table {
-  position: absolute;
-  left: 8%;
-  top: 30%;
-  width: 84%;
-  height: auto;
-  filter: drop-shadow(0 6px 8px rgba(90, 45, 30, 0.14));
+/* Each bun breathes and blinks on its own clock, pops in when it sits down, and wobbles on hover. */
+.bun__body {
+  transform-box: fill-box;
+  transform-origin: center 82%;
+  animation:
+    bun-pop 0.65s cubic-bezier(0.2, 1.4, 0.25, 1),
+    bun-breathe 3.4s ease-in-out 0.65s infinite;
 }
 
-.desk__person {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -100%);
+.bun:hover .bun__body {
+  animation: bun-wobble 0.65s ease;
 }
 
-.desk__pet {
-  position: relative;
-  z-index: 1;
-  display: flex;
+.bun[data-moment] .bun__body {
+  animation: bun-wobble 0.65s ease;
 }
 
-/* A soft shadow on the floor, not a mat: one less shape and colour in the scene. */
-.desk__shadow {
-  position: absolute;
-  bottom: -5%;
-  width: 92%;
-  height: 16%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(90, 53, 34, 0.2), transparent);
+.bun__say {
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: bun-say 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
-.desk__holding {
-  position: absolute;
-  z-index: 2;
-  display: flex;
-  transform: translate(-50%, -50%);
+.bun__say rect {
+  fill: #fffaf6;
+  stroke: #eedaca;
+  stroke-width: 1.5;
+}
+
+.bun__say text {
+  fill: #5a3522;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+@keyframes bun-say {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.bun__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bun-blink 6s infinite;
+}
+
+.bun__arm {
+  transform-box: fill-box;
+  transform-origin: 20% 20%;
+  animation: bun-scribble 2.3s ease-in-out infinite alternate;
+}
+
+/* Every other bun is out of step, so the table never moves in unison. */
+.bun:nth-of-type(even) .bun__body {
+  animation-duration: 0.65s, 3.9s;
+}
+
+.bun:nth-of-type(even) .bun__eyes {
+  animation-delay: 2.2s;
 }
 
 /* A name bubble above the head: on hover, and by itself for a moment when someone sits down. */
 .desk__label {
-  position: absolute;
-  bottom: 100%;
-  z-index: 4;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: #fffaf2;
-  box-shadow: 0 1px 3px rgba(90, 45, 30, 0.22);
-  color: #5a3522;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
   opacity: 0;
-  transform: translateY(4px);
-  transition:
-    opacity 0.15s ease-out,
-    transform 0.15s ease-out;
+  transition: opacity 0.2s;
   pointer-events: none;
 }
 
-.desk__person:hover .desk__label,
-.desk__person[data-arriving] .desk__label {
+.desk__label rect {
+  fill: #fffdf9;
+  stroke: #eedaca;
+  stroke-width: 1.5;
+}
+
+.desk__label text {
+  fill: #765641;
+  font-size: 38px;
+  font-weight: 800;
+}
+
+.bun:hover .desk__label,
+.bun[data-arriving] .desk__label {
   opacity: 1;
-  transform: none;
+}
+
+.desk__steam {
+  opacity: 0.55;
+  animation: desk-steam 2.8s ease-in-out infinite;
+}
+
+.desk__steam + .desk__steam {
+  animation-delay: 1.2s;
+}
+
+@keyframes bun-breathe {
+  50% {
+    transform: scale(1.012, 0.981);
+  }
+}
+
+@keyframes bun-blink {
+  0%,
+  43%,
+  46%,
+  100% {
+    transform: scaleY(1);
+  }
+  44%,
+  45% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes bun-scribble {
+  from {
+    transform: rotate(-5deg);
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes bun-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.65, 0.75);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-11px) scale(1.08, 0.91);
+  }
+  75% {
+    transform: translateY(6px) scale(0.97, 1.04);
+  }
+}
+
+@keyframes bun-wobble {
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes desk-steam {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  to {
+    transform: translateY(-13px);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .bun__body,
+  .bun:hover .bun__body,
+  .bun[data-moment] .bun__body,
+  .bun__say,
+  .bun__eyes,
+  .bun__arm,
+  .desk__steam {
+    animation: none;
+  }
+
   .desk__label {
     transition: none;
   }

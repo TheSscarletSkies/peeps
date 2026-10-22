@@ -120,7 +120,9 @@ test("UC1: ticking a to-do on Today feeds the pet", async ({ page }) => {
   const box = page.getByLabel("Done: Read chapter 4");
   await box.click();
   await expect(
-    page.locator(".hero .dumpling--love, .hero .pet-say").first(),
+    page
+      .locator(".hero .dumpling--love, .hero .pet-say, .hero .bun__say")
+      .first(),
   ).toBeVisible();
 });
 
