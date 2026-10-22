@@ -40,6 +40,12 @@ const PLACE = `translate(60 ${GROUND - BUN.ground * SCALE}) scale(${SCALE})`;
 /** Where a hat sits, and how far a napping pet rises so its face peeks over the steamer. */
 const HAT_Y = GROUND + (BUN.top - BUN.ground) * SCALE;
 const NAP_LIFT = 4;
+/**
+ * Below this size the pleats, shine and resting paws turn into specks, so a small peep is drawn
+ * as one soft shape with a lighter outline and bigger eyes, and its hands float out only to gesture.
+ */
+const SIMPLE_BELOW = 90;
+const SOFT_LINE = "#c9a084";
 
 const EYE = "#3F2A20";
 
@@ -57,9 +63,19 @@ const ER = 69;
 const EY = 57;
 
 /** One eye drawn around its own centre, so both sides share the drawing. */
-function Eye({ mood, x, right }: { mood: Look; x: number; right: boolean }) {
+function Eye({
+  mood,
+  x,
+  right,
+  scale,
+}: {
+  mood: Look;
+  x: number;
+  right: boolean;
+  scale: number;
+}) {
   // Small dot eyes; every expression shrinks with them.
-  const at = `translate(${x} ${EY}) scale(0.75)`;
+  const at = `translate(${x} ${EY}) scale(${scale})`;
   switch (mood) {
     case "stalled":
       return <path transform={at} d="M-3.6 -.4q3.6 3 7.2 0" {...stroke} />;
@@ -109,11 +125,11 @@ function Eye({ mood, x, right }: { mood: Look; x: number; right: boolean }) {
   }
 }
 
-function Eyes({ mood }: { mood: Look }) {
+function Eyes({ mood, scale }: { mood: Look; scale: number }) {
   return (
     <g className="dumpling__eyes">
-      <Eye mood={mood} x={EL} right={false} />
-      <Eye mood={mood} x={ER} right />
+      <Eye mood={mood} x={EL} right={false} scale={scale} />
+      <Eye mood={mood} x={ER} right scale={scale} />
       {mood === "failing" && (
         <>
           <path
@@ -382,10 +398,13 @@ function PropInFront({ mood }: { mood: Look }) {
   );
 }
 
-const LIMB_LINE = {
-  stroke: BUN.line,
-  strokeWidth: 1.7,
-};
+interface Line {
+  stroke: string;
+  strokeWidth: number;
+}
+
+const LIMB_LINE: Line = { stroke: BUN.line, strokeWidth: 1.7 };
+const SOFT_LIMB_LINE: Line = { stroke: SOFT_LINE, strokeWidth: 1.4 };
 
 /** Round paws resting in front of the bun, as in the study table drawing. */
 function Paws() {
@@ -414,7 +433,15 @@ function Paws() {
 }
 
 /** Stubby feet that stay on the ground while the body hops, and step when the pet walks. */
-function Feet({ fill, idle }: { fill: string; idle: boolean }) {
+function Feet({
+  fill,
+  idle,
+  line,
+}: {
+  fill: string;
+  idle: boolean;
+  line: Line;
+}) {
   return (
     <g className={`dumpling__feet${idle ? " dumpling__feet--idle" : ""}`}>
       {[46, 74].map((cx, index) => (
@@ -426,14 +453,22 @@ function Feet({ fill, idle }: { fill: string; idle: boolean }) {
           rx={7}
           ry={3.6}
           fill={fill}
-          {...LIMB_LINE}
+          {...line}
         />
       ))}
     </g>
   );
 }
 
-function HandShape({ hand, fill }: { hand: Hand; fill: string }) {
+function HandShape({
+  hand,
+  fill,
+  line,
+}: {
+  hand: Hand;
+  fill: string;
+  line: Line;
+}) {
   // Gestures swing from where the arm would meet the body, nearer the middle and lower down.
   const pivotX = hand.x + (hand.x < 60 ? 8 : -8);
   return (
@@ -445,7 +480,7 @@ function HandShape({ hand, fill }: { hand: Hand; fill: string }) {
       rx={5.6}
       ry={4.8}
       fill={fill}
-      {...LIMB_LINE}
+      {...line}
     />
   );
 }
@@ -552,6 +587,12 @@ export function Dumpling({
   const spread = 1 + build.eyeSpread / 40;
   const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
   const limbs = limbsFor(look);
+  const simple = size < SIMPLE_BELOW;
+  const limbLine = simple ? SOFT_LIMB_LINE : LIMB_LINE;
+  const paw = simple ? "#fff8ee" : BUN.paw;
+  const cheek = simple
+    ? { x: 16, y: 64, rx: 6.5, ry: 3.8, opacity: 0.6 }
+    : { x: 18, y: 62.5, rx: 5.8, ry: 3.4, opacity: 0.68 };
 
   return (
     <svg
@@ -564,6 +605,10 @@ export function Dumpling({
     >
       <defs>
         <Dough id={`${id}dough`} />
+        <radialGradient id={`${id}soft`} cx=".4" cy=".35" r=".75">
+          <stop offset=".55" stopColor="#fffaf0" />
+          <stop offset="1" stopColor="#f6e2c8" />
+        </radialGradient>
         <radialGradient id={`${id}shadow`}>
           <stop offset="0" stopColor="#000" stopOpacity={0.22} />
           <stop offset="1" stopColor="#000" stopOpacity={0} />
@@ -573,7 +618,7 @@ export function Dumpling({
       <PropBehind mood={look} />
       {!limbs.napping && (
         <g transform={stretch}>
-          <Feet fill={BUN.paw} idle={Boolean(limbs.hidden)} />
+          <Feet fill={paw} idle={Boolean(limbs.hidden)} line={limbLine} />
         </g>
       )}
       <g
@@ -582,28 +627,35 @@ export function Dumpling({
         <g className="dumpling__body">
           <g transform={stretch}>
             <g transform={PLACE}>
-              <BunBody dough={`${id}dough`} />
+              {simple ? (
+                <path
+                  d={BUN.body}
+                  fill={`url(#${id}soft)`}
+                  stroke={SOFT_LINE}
+                  strokeWidth="7"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <BunBody dough={`${id}dough`} />
+              )}
             </g>
           </g>
           <g transform={face}>
-            <ellipse
-              cx={42}
-              cy={62.5}
-              rx={5.8 * blush}
-              ry={3.4 * blush}
-              fill={BUN.blush}
-              opacity={0.68}
-            />
-            <ellipse
-              cx={78}
-              cy={62.5}
-              rx={5.8 * blush}
-              ry={3.4 * blush}
-              fill={BUN.blush}
-              opacity={0.68}
-            />
-            <Eyes mood={look} />
-            {glasses && <BunGlasses left={EL} right={ER} y={EY} r={5.4} />}
+            {[60 - cheek.x, 60 + cheek.x].map((cx) => (
+              <ellipse
+                key={cx}
+                cx={cx}
+                cy={cheek.y}
+                rx={cheek.rx * blush}
+                ry={cheek.ry * blush}
+                fill={BUN.blush}
+                opacity={cheek.opacity}
+              />
+            ))}
+            <Eyes mood={look} scale={simple ? 0.9 : 0.75} />
+            {glasses && (
+              <BunGlasses left={EL} right={ER} y={EY} r={simple ? 6 : 5.4} />
+            )}
             <Brows mood={look} />
             {/* Mouths were drawn around y = 70; this sits them just under the eyes, a little smaller. */}
             <g
@@ -614,12 +666,12 @@ export function Dumpling({
           </g>
           <g transform={stretch}>
             {limbs.hidden ? (
-              !limbs.napping && <Paws />
+              !limbs.napping && !simple && <Paws />
             ) : (
               <>
                 {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
-                <HandShape hand={limbs.left} fill={BUN.paw} />
-                <HandShape hand={limbs.right} fill={BUN.paw} />
+                <HandShape hand={limbs.left} fill={paw} line={limbLine} />
+                <HandShape hand={limbs.right} fill={paw} line={limbLine} />
               </>
             )}
             {wear && (
