@@ -32,6 +32,8 @@ interface Shape {
   body: string;
   creases: string;
   highlight: number[];
+  /** Taller than the drawing, for shapes drawn squat. */
+  tall: number;
   fxOffset: number;
   /** How far the pet rises in the steamer so its face peeks over the rim. */
   napLift: number;
@@ -45,22 +47,78 @@ const EYE = "#3F2A20";
 
 const stroke = {
   stroke: EYE,
-  strokeWidth: 2,
+  strokeWidth: 2.2,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   fill: "none",
 };
 
-function Eyes({ mood }: { mood: Look }) {
+/** Where the eyes sit: wide apart and a little below the middle, like a steamed bun's face. */
+const EL = 42;
+const ER = 78;
+const EY = 63;
+
+/** One eye drawn around its own centre, so both sides share the drawing. */
+function Eye({ mood, x, right }: { mood: Look; x: number; right: boolean }) {
+  const at = `translate(${x} ${EY})`;
   switch (mood) {
     case "stalled":
-      return <path d="M42 68q3 2.6 6 0M72 68q3 2.6 6 0" {...stroke} />;
+      return <path transform={at} d="M-3.6 -.4q3.6 3 7.2 0" {...stroke} />;
+    case "celebrate":
+      return <path transform={at} d="M-3.6 1.6q3.6-4.4 7.2 0" {...stroke} />;
     case "failing":
+      return <path transform={at} d="M-3.6 1.4q3.6-3 7.2 0" {...stroke} />;
+    case "litterBox":
       return (
+        <path
+          transform={at}
+          d={right ? "M2.6-2.6l-4.4 2.6 4.4 2.6" : "M-2.6-2.6l4.4 2.6-4.4 2.6"}
+          {...stroke}
+        />
+      );
+    case "dizzy":
+      return (
+        <path
+          transform={at}
+          d="M-3 0a3 3 0 1 0 3-3a1.8 1.8 0 1 0 1.8 1.8"
+          {...stroke}
+        />
+      );
+    case "love":
+      return (
+        <path
+          transform={at}
+          d="M0 4.6l-4.6-4.4c-2.4-2.4.8-6 3.4-3.8l1.2 1 1.2-1c2.6-2.2 5.8 1.4 3.4 3.8z"
+          fill="#FF7F95"
+        />
+      );
+    case "eager":
+      return (
+        <g transform={at}>
+          <ellipse rx="3.9" ry="4.4" fill={EYE} />
+          <circle cx="-1.3" cy="-1.7" r="1.5" fill="#FFFFFF" />
+          <circle cx="1.4" cy="1.6" r=".7" fill="#FFFFFF" />
+        </g>
+      );
+    default:
+      return (
+        <g transform={at}>
+          <ellipse rx="3.5" ry="4.2" fill={EYE} />
+          <circle cx="-1.1" cy="-1.6" r="1.2" fill="#FFFFFF" />
+        </g>
+      );
+  }
+}
+
+function Eyes({ mood }: { mood: Look }) {
+  return (
+    <g className="dumpling__eyes">
+      <Eye mood={mood} x={EL} right={false} />
+      <Eye mood={mood} x={ER} right />
+      {mood === "failing" && (
         <>
-          <path d="M41.5 69.5q3.5-2.6 7 0M71.5 69.5q3.5-2.6 7 0" {...stroke} />
           <path
-            d="M43 72.5q-1 6 .5 12M77 72.5q1 6-.5 12"
+            d={`M${EL + 1} ${EY + 3}q-1 6 .5 12M${ER - 1} ${EY + 3}q1 6-.5 12`}
             stroke="#A8DAF7"
             strokeWidth={3}
             strokeLinecap="round"
@@ -68,104 +126,39 @@ function Eyes({ mood }: { mood: Look }) {
             opacity={0.9}
           />
           <g className="fx-tear">
-            <path
-              d="M43.6 80c-2.7 3.75-3.45 5.55-3.45 6.75a3.45 3.45 0 0 0 6.9 0c0-1.2-1-3-3.45-6.75z"
-              fill="#9FD3F5"
-            />
-            <circle
-              cx="42.4"
-              cy="86.15"
-              r="0.825"
-              fill="#FFFFFF"
-              opacity="0.85"
-            />
+            <circle cx={EL + 1} cy={EY + 16} r="2.6" fill="#9FD3F5" />
           </g>
           <g className="fx-tear fx-late">
-            <path
-              d="M76.4 80c-2.7 3.75-3.45 5.55-3.45 6.75a3.45 3.45 0 0 0 6.9 0c0-1.2-1-3-3.45-6.75z"
-              fill="#9FD3F5"
-            />
-            <circle
-              cx="75.2"
-              cy="86.15"
-              r="0.825"
-              fill="#FFFFFF"
-              opacity="0.85"
-            />
+            <circle cx={ER - 1} cy={EY + 16} r="2.6" fill="#9FD3F5" />
           </g>
         </>
-      );
-    case "dizzy":
-      return (
-        <path
-          d="M45 68m-3 0a3 3 0 1 0 3-3a1.8 1.8 0 1 0 1.8 1.8M75 68m-3 0a3 3 0 1 0 3-3a1.8 1.8 0 1 0 1.8 1.8"
-          {...stroke}
-        />
-      );
-    case "celebrate":
-      return <path d="M42 69q3-3.4 6 0M72 69q3-3.4 6 0" {...stroke} />;
-    case "eager":
-      return (
-        <>
-          <circle cx="45" cy="67.5" r="3.4" fill={EYE} />
-          <circle cx="75" cy="67.5" r="3.4" fill={EYE} />
-        </>
-      );
-    case "love":
-      return (
-        <path
-          d="M45 73l-4.6-4.4c-2.4-2.4.8-6 3.4-3.8l1.2 1 1.2-1c2.6-2.2 5.8 1.4 3.4 3.8zM75 73l-4.6-4.4c-2.4-2.4.8-6 3.4-3.8l1.2 1 1.2-1c2.6-2.2 5.8 1.4 3.4 3.8z"
-          fill="#FF7F95"
-        />
-      );
-    case "litterBox":
-      return (
-        <path
-          d="M42.5 65.8l4.5 2.2-4.5 2.2M77.5 65.8l-4.5 2.2 4.5 2.2"
-          {...stroke}
-        />
-      );
-    default:
-      return (
-        <g className="dumpling__eyes">
-          <circle cx="45" cy="68" r="2.7" fill={EYE} />
-          <circle cx="75" cy="68" r="2.7" fill={EYE} />
-        </g>
-      );
-  }
+      )}
+    </g>
+  );
 }
 
 /** Round frames over the eyes, with a little shine on each lens. */
 function Glasses() {
+  const lens = {
+    r: 7,
+    fill: "#FFFFFF",
+    fillOpacity: 0.25,
+    stroke: "#4A2E22",
+    strokeWidth: 1.9,
+  };
   return (
     <g className="dumpling__glasses">
-      <circle
-        cx="45"
-        cy="68"
-        r="7.5"
-        fill="#FFFFFF"
-        fillOpacity={0.22}
-        stroke="#4A2E22"
-        strokeWidth={1.9}
-      />
-      <circle
-        cx="75"
-        cy="68"
-        r="7.5"
-        fill="#FFFFFF"
-        fillOpacity={0.22}
-        stroke="#4A2E22"
-        strokeWidth={1.9}
-      />
+      <circle cx={EL} cy={EY} {...lens} />
+      <circle cx={ER} cy={EY} {...lens} />
       <path
-        d="M52.5 67q7.5-3 15 0"
+        d={`M${EL + 7} ${EY - 1}q${(ER - EL - 14) / 2} -3.4 ${ER - EL - 14} 0`}
         fill="none"
         stroke="#4A2E22"
         strokeWidth={1.9}
         strokeLinecap="round"
       />
       <path
-        d="M40.5 64.5q1.5-1.6 3.6-1.8M70.5 64.5q1.5-1.6 3.6-1.8"
+        d={`M${EL - 4} ${EY - 3.4}q1.4-1.6 3.4-1.8M${ER - 4} ${EY - 3.4}q1.4-1.6 3.4-1.8`}
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.4}
@@ -175,65 +168,66 @@ function Glasses() {
   );
 }
 
+/** Small mouths between the eyes: a :3 at rest, open and happy when pleased. */
 function Mouth({ mood }: { mood: Look }) {
+  const happy = (
+    <>
+      <path d="M56.6 68.6h6.8q-.6 4.6-3.4 4.6t-3.4-4.6z" fill={EYE} />
+      <path d="M58 71.8q2-1.3 4 0q-.9 1.2-2 1.2t-2-1.2z" fill="#FF8FA3" />
+    </>
+  );
   switch (mood) {
     case "needsYou":
-      return <ellipse cx="60" cy="71.5" rx="1.6" ry="2" fill={EYE} />;
+      return <ellipse cx="60" cy="70.4" rx="1.8" ry="2.2" fill={EYE} />;
     case "sweating":
-      return <path d="M57.5 71.5h5" {...stroke} />;
+      return <path d="M57.4 70.4h5.2" {...stroke} />;
     case "failing":
-      return <path d="M56.5 73.5q3.5-2.6 7 0" {...stroke} />;
+      return <path d="M56.6 72q3.4-2.6 6.8 0" {...stroke} />;
     case "steaming":
-      return <path d="M55.5 72q1.1-1.4 2.2 0t2.2 0t2.2 0t2.2 0" {...stroke} />;
+    case "dizzy":
+      return (
+        <path d="M55.4 70.6q1.15-1.4 2.3 0t2.3 0t2.3 0t2.3 0" {...stroke} />
+      );
     case "litterBox":
-      return <path d="M57 72.5q3-2.4 6 0" {...stroke} />;
+      return <path d="M57 71.4q3-2.4 6 0" {...stroke} />;
     case "stalled":
-      return null;
+      return (
+        <ellipse cx="60" cy="70.6" rx="1.4" ry="1.1" fill={EYE} opacity={0.7} />
+      );
     case "hungry":
       return (
         <>
-          <path d="M57 70h6q-.5 4.2-3 4.2t-3-4.2z" fill={EYE} />
+          {happy}
           <path
-            d="M58.3 73q1.7-1.2 3.4 0q-.8 1.2-1.7 1.2t-1.7-1.2z"
-            fill="#FF9AAA"
-          />
-          <path
-            d="M62.5 73.5v4"
+            d="M62.8 72.4v4"
             stroke="#A8DAF7"
             strokeWidth={2}
             strokeLinecap="round"
           />
         </>
       );
-    case "dizzy":
-      return <path d="M55.5 72q1.1-1.4 2.2 0t2.2 0t2.2 0t2.2 0" {...stroke} />;
     case "eager":
       return (
         <>
-          <ellipse cx="60" cy="73.5" rx="4" ry="4.6" fill={EYE} />
-          <ellipse cx="60" cy="76" rx="2.6" ry="1.7" fill="#FF9AAA" />
+          <ellipse cx="60" cy="71.4" rx="3.6" ry="4.2" fill={EYE} />
+          <ellipse cx="60" cy="73.6" rx="2.4" ry="1.6" fill="#FF8FA3" />
         </>
       );
     case "celebrate":
     case "love":
     case "wave":
-      return (
-        <>
-          <path d="M57 70h6q-.5 4.2-3 4.2t-3-4.2z" fill={EYE} />
-          <path
-            d="M58.3 73q1.7-1.2 3.4 0q-.8 1.2-1.7 1.2t-1.7-1.2z"
-            fill="#FF9AAA"
-          />
-        </>
-      );
+      return happy;
     default:
-      return <path d="M57.5 70.5q2.5 2.6 5 0" {...stroke} />;
+      return <path d="M56.4 69q1.8 2.4 3.6 0q1.8 2.4 3.6 0" {...stroke} />;
   }
 }
 
 function Brows({ mood }: { mood: Look }) {
   return mood === "sweating" || mood === "steaming" ? (
-    <path d="M41.5 62l5 1.6M78.5 62l-5 1.6" {...stroke} />
+    <path
+      d={`M${EL - 4} ${EY - 7}l5 1.6M${ER + 4} ${EY - 7}l-5 1.6`}
+      {...stroke}
+    />
   ) : null;
 }
 
@@ -421,9 +415,9 @@ function PropInFront({ mood }: { mood: Look }) {
 }
 
 const LIMB_LINE = {
-  stroke: "#B5785A",
-  strokeOpacity: 0.35,
-  strokeWidth: 1.2,
+  stroke: "#4A2614",
+  strokeOpacity: 0.85,
+  strokeWidth: 1.6,
 };
 
 /** Stubby feet that stay on the ground while the body hops, and step when the pet walks. */
@@ -559,11 +553,12 @@ export function Dumpling({
   // useId contains colons, which break url(#…) references.
   const id = useId().replace(/:/g, "");
   const shape = SHAPES[kind];
-  const [hx = 36, hy = 50, hr = -30] = shape.highlight;
   const build = seed ? variantFor(seed) : BASE;
   const blush = (1 + heat * 0.7) * build.blush;
   // Stretch from the base of the pet so it always sits on the ground.
-  const stretch = `translate(60 86) scale(${build.width} ${build.height}) translate(-60 -86)`;
+  const stretch = `translate(60 86) scale(${build.width} ${build.height * shape.tall}) translate(-60 -86)`;
+  // The outline is a warm brown nudged towards the pet's own colour, so a blue bun gets a navy edge.
+  const line = mix(edge(color), "#4A2614", 0.72);
   const spread = 1 + build.eyeSpread / 30;
   const face = `${stretch} translate(60 0) scale(${spread} 1) translate(-60 0)`;
   const skin = vivid(flushed(color, heat));
@@ -580,8 +575,8 @@ export function Dumpling({
     >
       <defs>
         <radialGradient id={`${id}shade`} cx="0.42" cy="0.32" r="0.8">
-          <stop offset="0.5" stopColor="#B5785A" stopOpacity={0} />
-          <stop offset="1" stopColor="#B5785A" stopOpacity={0.32} />
+          <stop offset="0.55" stopColor="#C99470" stopOpacity={0} />
+          <stop offset="1" stopColor="#C99470" stopOpacity={0.22} />
         </radialGradient>
         <radialGradient id={`${id}glow`} cx="0.34" cy="0.28" r="0.42">
           <stop offset="0" stopColor="#FFFFFF" stopOpacity={0.7} />
@@ -610,55 +605,51 @@ export function Dumpling({
       >
         <g className="dumpling__body">
           <g transform={stretch}>
-            {/* An edge in the pet's own colour keeps the shape clear on white pages without the
-                hard look of a dark line. */}
-            <path
-              d={shape.body}
-              fill={skin}
-              stroke={edge(color)}
-              strokeOpacity={0.35}
-              strokeWidth={1.6}
-              strokeLinejoin="round"
-            />
+            <path d={shape.body} fill={skin} />
             <path d={shape.body} fill={`url(#${id}shade)`} />
             <path d={shape.body} fill={`url(#${id}glow)`} />
-            <ellipse
-              cx={hx}
-              cy={hy}
-              rx="4.5"
-              ry="2"
-              fill="#FFFFFF"
-              opacity={0.8}
-              transform={`rotate(${hr} ${hx} ${hy})`}
-            />
+            {/* Pleats gathered at the top, like a real bun, in the same brown as the outline. */}
             <path
               d={shape.creases}
-              stroke="#B5785A"
-              strokeOpacity={0.28}
-              strokeWidth={1.6}
+              stroke={line}
+              strokeOpacity={0.5}
+              strokeWidth={1.3}
               strokeLinecap="round"
               fill="none"
+            />
+            {/* A firm, warm brown outline, the sticker look, drawn last so it stays crisp. */}
+            <path
+              d={shape.body}
+              fill="none"
+              stroke={line}
+              strokeWidth={2.1}
+              strokeLinejoin="round"
             />
           </g>
           <g transform={face}>
             <ellipse
-              cx="38"
-              cy="73"
-              rx={9 * blush}
-              ry={5.5 * blush}
-              fill={`url(#${id}blush)`}
+              cx={EL - 4}
+              cy={EY + 6}
+              rx={5.4 * blush}
+              ry={3.3 * blush}
+              fill="#F7A3A0"
+              opacity={0.7}
             />
             <ellipse
-              cx="82"
-              cy="73"
-              rx={9 * blush}
-              ry={5.5 * blush}
-              fill={`url(#${id}blush)`}
+              cx={ER + 4}
+              cy={EY + 6}
+              rx={5.4 * blush}
+              ry={3.3 * blush}
+              fill="#F7A3A0"
+              opacity={0.7}
             />
             <Eyes mood={look} />
             {glasses && <Glasses />}
             <Brows mood={look} />
-            <Mouth mood={look} />
+            {/* Mouths were drawn for eyes 3 lower; moving the group keeps every expression in step. */}
+            <g transform={`translate(0 ${EY - 66})`}>
+              <Mouth mood={look} />
+            </g>
           </g>
           {!limbs.hidden && (
             <g transform={stretch}>
