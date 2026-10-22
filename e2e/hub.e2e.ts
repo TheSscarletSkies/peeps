@@ -147,7 +147,7 @@ test("UC24: one thing at a time is off until switched on", async ({ page }) => {
 test("UC26: friends studying sit at the table and can be joined", async ({
   page,
 }) => {
-  await expect(page.locator(".hero .desk__tag")).toHaveText([
+  await expect(page.locator(".hero .desk__name")).toHaveText([
     "Mariyam",
     "Sara",
   ]);

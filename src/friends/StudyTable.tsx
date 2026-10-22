@@ -20,8 +20,9 @@ export function StudyTable({
   const studying = (friends?.friends ?? [])
     .filter((friend) => friend.presence === "focusing")
     .slice(0, MAX_SEATS - 1);
-  const mine = (size: number) => (
+  const mine = (size: number, seated = false) => (
     <LivePet
+      seated={seated}
       dropId="helper"
       kind={helper.kind}
       color={helper.color}
@@ -38,14 +39,21 @@ export function StudyTable({
       <div className="hero__table">
         <DeskScene
           seats={[
-            { key: "you", name: you, pet: mine },
+            {
+              key: "you",
+              name: you,
+              color: helper.color,
+              pet: (size: number) => mine(size, true),
+            },
             ...studying.map((friend) => {
               const look = friendLook(friend.code);
               return {
                 key: friend.code,
                 name: friend.name,
+                color: look.color,
                 pet: (size: number) => (
                   <Dumpling
+                    seated
                     kind={look.kind}
                     seed={friend.code}
                     color={look.color}

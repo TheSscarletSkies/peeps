@@ -59,7 +59,9 @@ export interface Resident {
   name: string;
   mood: Mood;
   urgent: boolean;
-  pet: (size: number) => ReactNode;
+  color: string;
+  /** The pet at any size; seated at the study table it leaves its arms to the table. */
+  pet: (size: number, seated?: boolean) => ReactNode;
 }
 
 /** The one companion, able to draw itself at any size. Project pets stay out of the way. */
@@ -73,8 +75,10 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
       mood,
       // It interrupts for a permission or a reminder, never for its own to-dos.
       urgent: helper.mood === "needsYou" || waving,
-      pet: (size: number) => (
+      color: helper.color,
+      pet: (size: number, seated = false) => (
         <LivePet
+          seated={seated}
           dropId={HELPER}
           waving={waving}
           kind={helper.kind}
@@ -97,8 +101,10 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           name: friend.name,
           mood: "working" as Mood,
           urgent: false,
-          pet: (size: number) => (
+          color: look.color,
+          pet: (size: number, seated = false) => (
             <Dumpling
+              seated={seated}
               kind={look.kind}
               seed={friend.code}
               color={look.color}

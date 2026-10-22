@@ -1,81 +1,194 @@
 import type { ReactNode } from "react";
 
-import { Sticker, type StickerKind } from "./ReactionArt";
+import { soft } from "../pets/tint";
 
 export interface Seat {
   key: string;
   name: string;
-  /** The pet, drawn at the size it is given. */
+  /** The pet's own colour, for its hands on the table. */
+  color: string;
+  /** The pet at this size, seated: no arms of its own, the table draws its hands. */
   pet: (size: number) => ReactNode;
 }
 
+const INK = "#5A3522";
+
+/** The table's top, in percent of the scene: x of its width, y of its height. */
+const TOP = { cx: 50, cy: 60.6, rx: 38.6, ry: 16.8 };
+
+/** Where the far edge of the table is at this x. */
+function farEdge(x: number): number {
+  const t = (x - TOP.cx) / TOP.rx;
+  return TOP.cy - TOP.ry * Math.sqrt(Math.max(0, 1 - t * t));
+}
+
+type Thing = "book" | "laptop" | "notebook" | "mug";
+
 interface Spot {
-  /** Centre of the pet's bottom edge, in percent of the scene. */
+  /** Centre of the pet's bottom edge. */
   x: number;
   y: number;
   front: boolean;
+  /** What is in front of them on the table, and where. */
+  thing: Thing;
+  tx: number;
+  ty: number;
 }
 
-/** Where people sit as more join: the far side fills first, then the near side, like friends at a low table. */
+function far(x: number, thing: Thing): Spot {
+  const edge = farEdge(x);
+  // Sitting up behind the far edge, their things just in front of them, below their faces.
+  return { x, y: edge + 4, front: false, thing, tx: x, ty: edge + 11 };
+}
+
+function near(x: number, thing: Thing): Spot {
+  // Leaning on the near edge, their things on the table right beside them.
+  const side = x < 50 ? 1 : -1;
+  return {
+    x,
+    y: x === 50 ? 94 : 88,
+    front: true,
+    thing,
+    tx: x === 50 ? 63 : x + side * 12,
+    ty: x === 50 ? TOP.cy + 9 : TOP.cy + 8,
+  };
+}
+
+/** Where people sit as more join: the far side fills first, then the near side. */
 const LAYOUTS: Spot[][] = [
-  [{ x: 50, y: 49, front: false }],
+  [far(50, "book")],
+  [far(33, "book"), far(67, "laptop")],
+  [far(22, "book"), far(50, "laptop"), far(78, "book")],
+  [far(30, "book"), far(70, "laptop"), near(15, "notebook"), near(85, "mug")],
   [
-    { x: 32, y: 51, front: false },
-    { x: 68, y: 51, front: false },
+    far(22, "book"),
+    far(50, "laptop"),
+    far(78, "book"),
+    near(16, "notebook"),
+    near(84, "mug"),
   ],
   [
-    { x: 20, y: 55, front: false },
-    { x: 50, y: 47, front: false },
-    { x: 80, y: 55, front: false },
-  ],
-  [
-    { x: 30, y: 49, front: false },
-    { x: 70, y: 49, front: false },
-    { x: 22, y: 99, front: true },
-    { x: 78, y: 99, front: true },
-  ],
-  [
-    { x: 18, y: 55, front: false },
-    { x: 50, y: 47, front: false },
-    { x: 82, y: 55, front: false },
-    { x: 28, y: 99, front: true },
-    { x: 72, y: 99, front: true },
-  ],
-  [
-    { x: 18, y: 55, front: false },
-    { x: 50, y: 47, front: false },
-    { x: 82, y: 55, front: false },
-    { x: 17, y: 97, front: true },
-    { x: 50, y: 100, front: true },
-    { x: 83, y: 97, front: true },
+    far(22, "book"),
+    far(50, "laptop"),
+    far(78, "book"),
+    near(15, "notebook"),
+    near(50, "book"),
+    near(85, "mug"),
   ],
 ];
 
 export const MAX_SEATS = LAYOUTS.length;
-/** Every cushion the same oat, so the peeps are what you notice. */
-const CUSHIONS = ["#EFE1CB"];
-/** What each person is busy with: a book held up, a laptop, a notebook. */
-const BUSY: StickerKind[] = [
-  "study",
-  "laptop",
-  "study",
-  "laptop",
-  "study",
-  "study",
-];
-
-/** How big the scene is for this many people, so the window can fit it. */
-export function deskSize(seats: number): { width: number; height: number } {
-  const width = seats <= 1 ? 170 : seats <= 3 ? 240 : 300;
-  return { width, height: Math.round(width * 0.85) };
+/** Room for the names: one row, or two once there are more than four. */
+function strip(seats: number): number {
+  return seats > 4 ? 56 : 32;
 }
 
-/** Everyone in a session together, around one low round table, each on a cushion with a name tag. */
+/** How big the scene is for this many people, names included, so the window can fit it. */
+export function deskSize(seats: number): { width: number; height: number } {
+  const width = seats <= 1 ? 180 : seats <= 3 ? 240 : 300;
+  return { width, height: Math.round(width * 0.85) + strip(seats) };
+}
+
+const LINE = {
+  stroke: INK,
+  strokeWidth: 1.4,
+  strokeLinejoin: "round" as const,
+};
+
+/** Plain things on the table, in paper and kraft tones; no faces, so only the peeps are characters. */
+function ThingArt({ thing, cover }: { thing: Thing; cover: string }) {
+  switch (thing) {
+    case "book":
+      return (
+        <>
+          <path d="M3 13l17 3 17-3v17l-17 4-17-4z" fill={cover} {...LINE} />
+          <path d="M5 11l15 3v18l-15-3z" fill="#FFFBF4" {...LINE} />
+          <path d="M35 11l-15 3v18l15-3z" fill="#FFFBF4" {...LINE} />
+          <path
+            d="M8 16l9 1.6M8 20l9 1.6M8 24l7 1.2M23 17.6l9-1.6M23 21.6l9-1.6"
+            stroke={INK}
+            strokeOpacity={0.3}
+            strokeWidth={1}
+            strokeLinecap="round"
+          />
+        </>
+      );
+    case "laptop":
+      // Seen from across the table: the back of the lid, with a little bun on it.
+      return (
+        <>
+          <path d="M6 8h28l2 20H4z" fill="#ECE4D8" {...LINE} />
+          <path d="M2 28h36v4H2z" fill="#DDD2C2" {...LINE} />
+          <path
+            d="M20 15c-1 0-1.6.6-2 1.4-2.4.6-4 2.2-4 4.4 0 2 2.6 3 6 3s6-1 6-3c0-2.2-1.6-3.8-4-4.4-.4-.8-1-1.4-2-1.4z"
+            fill="#FFF7EC"
+            stroke={INK}
+            strokeWidth={0.9}
+          />
+        </>
+      );
+    case "notebook":
+      return (
+        <>
+          <rect
+            x="7"
+            y="8"
+            width="26"
+            height="26"
+            rx="2.5"
+            fill="#FFFBF4"
+            {...LINE}
+          />
+          <path
+            d="M12 15h16M12 20h16M12 25h11"
+            stroke={INK}
+            strokeOpacity={0.3}
+            strokeWidth={1}
+            strokeLinecap="round"
+          />
+          <path
+            d="M7 12h-3M7 17h-3M7 22h-3M7 27h-3"
+            stroke={INK}
+            strokeWidth={1.4}
+            strokeLinecap="round"
+          />
+          <path d="M26 30l7-9 2 1.5-7 9-2.6 1z" fill="#F2D894" {...LINE} />
+        </>
+      );
+    case "mug":
+      return (
+        <>
+          <path
+            d="M10 14h18v14a6 6 0 0 1-6 6h-6a6 6 0 0 1-6-6z"
+            fill="#FFFBF4"
+            {...LINE}
+          />
+          <path d="M28 18a4.5 4.5 0 0 1 0 9" fill="none" {...LINE} />
+          <path d="M14 18h10" stroke="#F2CFCC" strokeWidth={2.4} />
+          <path
+            d="M16 10c-1.6-2 1.6-3 0-5M22 10c-1.6-2 1.6-3 0-5"
+            fill="none"
+            stroke={INK}
+            strokeOpacity={0.35}
+            strokeWidth={1.2}
+            strokeLinecap="round"
+          />
+        </>
+      );
+  }
+}
+
+const COVERS = ["#F2CFCC", "#E3D3BA", "#D9E2CD"];
+
+/** Everyone in a session together, around one low round table, with their names underneath. */
 export function DeskScene({ seats }: { seats: Seat[] }) {
   const shown = seats.slice(0, MAX_SEATS);
   const layout = LAYOUTS[shown.length - 1] ?? LAYOUTS[0] ?? [];
   const { width, height } = deskSize(shown.length);
-  const pet = Math.round(width * (shown.length <= 2 ? 0.4 : 0.31));
+  const scene = height - strip(shown.length);
+  const pet = Math.round(width * (shown.length <= 2 ? 0.38 : 0.3));
+  const thing = Math.round(pet * 0.5);
+  const hand = Math.max(7, Math.round(pet * 0.15));
 
   const person = (seat: Seat, index: number) => {
     const spot = layout[index];
@@ -84,39 +197,44 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
       <div
         key={seat.key}
         className="desk__person"
-        data-front={spot.front || undefined}
         style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: pet }}
       >
-        <span
-          className="desk__cushion"
-          style={{ background: CUSHIONS[index % CUSHIONS.length] }}
-        />
+        {spot.front && <span className="desk__cushion" />}
         <span className="desk__pet">{seat.pet(pet)}</span>
-        <svg
-          className="desk__holding"
-          viewBox="0 0 40 40"
-          aria-hidden="true"
-          style={{ width: pet * 0.42, height: pet * 0.42 }}
-        >
-          <Sticker kind={BUSY[index % BUSY.length] ?? "study"} />
-        </svg>
-        {spot.front && <span className="desk__tag">{seat.name}</span>}
       </div>
     );
   };
 
-  // The far side's name tags lie on the table, so they're drawn after it.
-  const tag = (seat: Seat, index: number) => {
+  // Their things on the table, held between two small hands in the pet's own colour.
+  const holding = (seat: Seat, index: number) => {
     const spot = layout[index];
-    if (!spot || spot.front) return null;
+    if (!spot) return null;
+    const handStyle = {
+      width: hand,
+      height: hand * 0.8,
+      background: soft(seat.color),
+    };
+    // Hands hold the sides of what they're working on, overlapping its edges.
+    const reach = -hand * 0.45;
     return (
-      <span
+      <div
         key={seat.key}
-        className="desk__tag desk__tag--far"
-        style={{ left: `${spot.x}%`, top: `${spot.y - 3}%` }}
+        className="desk__holding"
+        style={{ left: `${spot.tx}%`, top: `${spot.ty}%` }}
       >
-        {seat.name}
-      </span>
+        <svg
+          viewBox="0 0 40 40"
+          aria-hidden="true"
+          style={{ width: thing, height: thing }}
+        >
+          <ThingArt
+            thing={spot.thing}
+            cover={COVERS[index % COVERS.length] ?? "#F2CFCC"}
+          />
+        </svg>
+        <span className="desk__hand" style={{ ...handStyle, left: reach }} />
+        <span className="desk__hand" style={{ ...handStyle, right: reach }} />
+      </div>
     );
   };
 
@@ -126,124 +244,91 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
       style={{ width, height }}
       aria-label={`At the table: ${shown.map((seat) => seat.name).join(", ")}`}
     >
-      {shown.map((seat, index) =>
-        layout[index]?.front ? null : person(seat, index),
-      )}
-      <svg className="desk__table" viewBox="0 0 200 120" aria-hidden="true">
-        <rect
-          x="40"
-          y="70"
-          width="12"
-          height="34"
-          rx="4"
-          fill="#D2A276"
-          stroke="#4A2614"
-          strokeWidth="2"
-        />
-        <rect
-          x="148"
-          y="70"
-          width="12"
-          height="34"
-          rx="4"
-          fill="#D2A276"
-          stroke="#4A2614"
-          strokeWidth="2"
-        />
-        <ellipse
-          cx="100"
-          cy="68"
-          rx="92"
-          ry="34"
-          fill="#D2A276"
-          stroke="#4A2614"
-          strokeWidth="2.2"
-        />
-        <ellipse
-          cx="100"
-          cy="62"
-          rx="92"
-          ry="34"
-          fill="#E8C091"
-          stroke="#4A2614"
-          strokeWidth="2.2"
-        />
-        <ellipse
-          cx="100"
-          cy="62"
-          rx="70"
-          ry="22"
-          fill="#EECDA3"
-          opacity="0.55"
-        />
-        {/* The middle of the table: papers, a book stack, a pencil cup and sticky notes. */}
-        <g stroke="#4A2614" strokeWidth="1.4" strokeLinejoin="round">
-          <path d="M58 52l24-6 6 14-24 6z" fill="#FFFDF7" />
-          <path d="M120 66l22 4-3 12-22-4z" fill="#FFFDF7" />
-          <rect x="86" y="54" width="30" height="8" rx="2" fill="#F2CFCC" />
-          <rect x="88" y="47" width="27" height="8" rx="2" fill="#E9DCC7" />
-          <rect x="90" y="41" width="22" height="7" rx="2" fill="#D9C3A2" />
-          <path d="M124 44h12l-1.5 14h-9z" fill="#F8DEE3" />
-          <path
-            d="M126 44l-2-9M130 44l1-11M133 44l3-8"
-            stroke="#4A2614"
-            strokeWidth="2.6"
+      <div className="desk__scene" style={{ height: scene }}>
+        {shown.map((seat, index) =>
+          layout[index]?.front ? null : person(seat, index),
+        )}
+        <svg className="desk__table" viewBox="0 0 200 120" aria-hidden="true">
+          <g stroke={INK} strokeWidth="2.2" strokeLinejoin="round">
+            <rect x="40" y="70" width="12" height="34" rx="4" fill="#D2A276" />
+            <rect x="148" y="70" width="12" height="34" rx="4" fill="#D2A276" />
+            <ellipse cx="100" cy="68" rx="92" ry="34" fill="#D2A276" />
+            <ellipse cx="100" cy="62" rx="92" ry="34" fill="#E8C091" />
+          </g>
+          <ellipse
+            cx="100"
+            cy="62"
+            rx="70"
+            ry="22"
+            fill="#EECDA3"
+            opacity="0.6"
+          />
+          {/* The middle: papers, a book stack, a pencil cup, a mug and a little plant. */}
+          <g stroke={INK} strokeWidth="1.3" strokeLinejoin="round">
+            <path d="M52 56l26-6 7 15-26 6z" fill="#FFFBF4" />
+            <path d="M118 68l25 4-3 13-25-4z" fill="#FFFBF4" />
+            <rect x="80" y="55" width="32" height="8" rx="2" fill="#F2CFCC" />
+            <rect x="82" y="48" width="29" height="8" rx="2" fill="#E3D3BA" />
+            <rect x="85" y="41" width="23" height="8" rx="2" fill="#D9E2CD" />
+            <path d="M121 43h12l-1.5 14h-9z" fill="#F2CFCC" />
+            <path
+              d="M138 50h14v10a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4z"
+              fill="#FFFBF4"
+            />
+            <path d="M152 53a3 3 0 0 1 0 6" fill="none" />
+            <rect
+              x="66"
+              y="69"
+              width="11"
+              height="9"
+              rx="1.5"
+              fill="#F6EAB6"
+              transform="rotate(-8 71 73)"
+            />
+            <path d="M101 66h12l-1.6 10h-8.8z" fill="#E6B59A" />
+          </g>
+          <g stroke={INK} strokeWidth="2.4" strokeLinecap="round">
+            <path d="M123 43l-2-9M127 43l1-11M130 43l3-8" />
+          </g>
+          <g stroke="#F2D894" strokeWidth="1.1" strokeLinecap="round">
+            <path d="M123 43l-2-9M127 43l1-11M130 43l3-8" />
+          </g>
+          <g
+            fill="#B9CFA8"
+            stroke={INK}
+            strokeWidth="1.1"
+            strokeLinejoin="round"
+          >
+            <path d="M107 66c-6-1-9-6-7-11 5 1 8 5 7 11z" />
+            <path d="M107 66c5-2 8-7 5-12-5 2-7 7-5 12z" />
+          </g>
+          <g
+            stroke={INK}
+            strokeOpacity="0.3"
+            strokeWidth="1"
             strokeLinecap="round"
-          />
-          <path
-            d="M126 44l-2-9M130 44l1-11M133 44l3-8"
-            stroke="#F2D894"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-          <rect
-            x="70"
-            y="68"
-            width="11"
-            height="9"
-            rx="1.5"
-            fill="#F3E6C4"
-            transform="rotate(-8 75 72)"
-          />
-          <rect
-            x="146"
-            y="54"
-            width="10"
-            height="8"
-            rx="1.5"
-            fill="#EFE6D6"
-            transform="rotate(10 151 58)"
-          />
-        </g>
-        <g
-          stroke="#4A2614"
-          strokeOpacity="0.35"
-          strokeWidth="1"
-          strokeLinecap="round"
-        >
-          <path d="M63 54l15-4M64 58l13-3.5M123 70l14 2.6M122 74l10 1.8" />
-        </g>
-      </svg>
-      {shown.map(tag)}
-      {shown.map((seat, index) =>
-        layout[index]?.front ? person(seat, index) : null,
-      )}
-      <svg className="desk__sparkles" viewBox="0 0 100 100" aria-hidden="true">
-        <path
-          d="M14 10l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z"
-          fill="#F2D894"
-        />
-        <path
-          d="M88 18l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"
-          fill="#F2D894"
-        />
-        <path
-          d="M62 4l3 4M68 2l1 5M74 4l-2 4"
-          stroke="#F2D894"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
+          >
+            <path d="M57 58l17-4M58 62l15-3.5M122 72l15 2.6M121 76l11 1.8" />
+          </g>
+        </svg>
+        {shown.map(holding)}
+        {shown.map((seat, index) =>
+          layout[index]?.front ? person(seat, index) : null,
+        )}
+      </div>
+      <div className="desk__names">
+        {shown.map((seat) => (
+          <span key={seat.key} className="desk__name">
+            <span
+              className="desk__avatar"
+              style={{ background: soft(seat.color) }}
+            >
+              {seat.pet(20)}
+            </span>
+            {seat.name}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

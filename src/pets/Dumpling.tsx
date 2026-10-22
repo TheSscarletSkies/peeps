@@ -22,6 +22,8 @@ interface Props {
   glasses?: boolean;
   /** Something the user dressed their peep in. */
   wear?: Wear | null;
+  /** Sitting at a table: its own arms, feet and props are left off, the table draws its hands. */
+  seated?: boolean;
   /** Extra classes for one-off motions such as a squish or hatching. */
   motion?: string;
 }
@@ -636,6 +638,7 @@ export function Dumpling({
   accessory,
   glasses = false,
   wear = null,
+  seated = false,
   motion,
 }: Props) {
   const look: Look = expression ?? mood;
@@ -681,8 +684,8 @@ export function Dumpling({
         </radialGradient>
       </defs>
       <ellipse cx="60" cy="88" rx="40" ry="6" fill={`url(#${id}shadow)`} />
-      <PropBehind mood={look} />
-      {!limbs.napping && (
+      {!seated && <PropBehind mood={look} />}
+      {!limbs.napping && !seated && (
         <g transform={stretch}>
           <Feet fill={skin} idle={Boolean(limbs.hidden)} />
         </g>
@@ -747,7 +750,7 @@ export function Dumpling({
               <Mouth mood={look} />
             </g>
           </g>
-          {!limbs.hidden && (
+          {!limbs.hidden && !seated && (
             <g transform={stretch}>
               {limbs.prop && <Held prop={limbs.prop} right={limbs.right} />}
               {/* A shade deeper than the body, so a hand reads even when it overlaps it. */}
@@ -767,7 +770,7 @@ export function Dumpling({
           )}
         </g>
       </g>
-      <PropInFront mood={look} />
+      {!seated && <PropInFront mood={look} />}
       <g transform={`translate(0 ${shape.fxOffset})`}>
         <Effects mood={look} />
       </g>
