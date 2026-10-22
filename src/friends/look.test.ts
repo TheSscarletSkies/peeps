@@ -18,6 +18,9 @@ describe("friends", () => {
     expect(presenceLine("focusing", "2026-10-21T09:18:00Z", now)).toBe(
       "Focusing · 18 min left",
     );
+    expect(presenceLine("focusing", "2026-10-21T09:18:00Z", now, "study")).toBe(
+      "Studying · 18 min left",
+    );
     expect(presenceLine("around", null, now)).toBe("Around");
     expect(presenceLine("away", null, now)).toBe("Away");
   });

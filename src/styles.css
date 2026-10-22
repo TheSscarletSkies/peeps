@@ -3142,3 +3142,119 @@ li[data-presence="focusing"] .friends__who {
   transform: scaleX(-1);
   transition: transform 0.25s ease-out;
 }
+
+/* Areas: the list grouped under Work, Study, Play and the user's own. */
+.area + .area {
+  margin-top: 12px;
+}
+
+.area__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  color: hsl(var(--tag, 260) 80% 82%);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.area__head::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--tag, 260) 70% 70%);
+}
+
+.area__head[data-other] {
+  color: var(--muted);
+}
+
+.area__head[data-other]::before {
+  background: var(--muted);
+}
+
+.area__head span {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.week {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.week th,
+.week td {
+  padding: 4px 2px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.week tbody th {
+  max-width: 110px;
+  overflow: hidden;
+  color: var(--text);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week__dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.week__dot[data-done] {
+  background: hsl(var(--tag, 20) 75% 72%);
+  box-shadow: 0 0 0 2px hsl(var(--tag, 20) 75% 72% / 0.25);
+}
+
+.week__streak {
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.areas__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: hsl(var(--tag, 260) 40% 22%);
+  color: hsl(var(--tag, 260) 80% 86%);
+}
+
+.area-chip button {
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+form.focus {
+  flex-wrap: wrap;
+}
+
+.focus__areas {
+  flex-basis: 100%;
+  width: max-content;
+  max-width: 100%;
+}

@@ -1,4 +1,5 @@
 import type { PetKind } from "../lib/types";
+import { doing } from "../tracker/areas";
 
 const COLORS = [
   "#FFD2BC",
@@ -25,17 +26,15 @@ export function presenceLine(
   presence: "focusing" | "around" | "away",
   focusUntil: string | null,
   now: number,
+  area: string | null = null,
 ): string {
   if (presence === "focusing" && focusUntil) {
     const minutes = Math.max(
       1,
       Math.round((Date.parse(focusUntil) - now) / 60_000),
     );
-    return `Focusing · ${minutes} min left`;
+    return `${doing(area)} · ${minutes} min left`;
   }
-  return presence === "focusing"
-    ? "Focusing"
-    : presence === "around"
-      ? "Around"
-      : "Away";
+  if (presence === "focusing") return doing(area);
+  return presence === "around" ? "Around" : "Away";
 }

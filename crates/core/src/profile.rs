@@ -25,6 +25,14 @@ pub fn template() -> String {
     )
 }
 
+fn shortened(text: &str) -> String {
+    if text.chars().count() <= MAX_CONTEXT_CHARS {
+        return text.to_owned();
+    }
+    let cut: String = text.chars().take(MAX_CONTEXT_CHARS).collect();
+    format!("{cut}\n…(more in the user's About me)")
+}
+
 pub fn read(config: &Path) -> String {
     std::fs::read_to_string(path(config)).unwrap_or_else(|_| template())
 }
@@ -71,6 +79,9 @@ pub fn remember(profile: &str, day: NaiveDate, fact: &str) -> String {
 
 /// What every conversation is told about the user. An empty profile asks the agent to get to
 /// know them first.
+/// Every message carries the profile, so a long one is cut to its start rather than paid for in full.
+const MAX_CONTEXT_CHARS: usize = 2000;
+
 pub fn context(profile: &str) -> String {
     if is_empty(profile) {
         "You don't know the user yet. Before long, get to know them: ask one or two short \
@@ -82,7 +93,7 @@ pub fn context(profile: &str) -> String {
         format!(
             "About the user, in their own words. Follow it, and save anything new and lasting they \
              tell you with the remember tool.\n<about_me>\n{}\n</about_me>",
-            profile.trim()
+            shortened(profile.trim())
         )
     }
 }

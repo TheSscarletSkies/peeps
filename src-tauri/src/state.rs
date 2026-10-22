@@ -128,6 +128,10 @@ pub struct AppSnapshot {
     pub one_thing: bool,
     /// None until the user picks a name and gets a code.
     pub friends: Option<crate::friends::FriendsView>,
+    /// The parts of life to-dos are grouped into, as tags.
+    pub areas: Vec<String>,
+    /// The last week of every repeating to-do, a dot per day.
+    pub habits: Vec<peeps_core::tracker::HabitWeek>,
     /// The roles a new teammate can start from.
     pub roles: Vec<peeps_core::teammates::Role>,
     pub mail: MailView,
@@ -576,6 +580,17 @@ impl App {
         };
         let config_error = self.config_error();
         let focus = self.focus().as_ref().and_then(|session| session.view(now));
+        let log = self
+            .todos()
+            .log_since(now - TimeDelta::days(8))
+            .unwrap_or_default();
+        let habits = peeps_core::tracker::habit_week(
+            &open,
+            &log,
+            &config.helper.areas,
+            Local::now().date_naive(),
+            *Local::now().offset(),
+        );
         let knows_you =
             !peeps_core::profile::is_empty(&peeps_core::profile::read(&paths::config_file()));
         let world = self.world();
@@ -641,6 +656,8 @@ impl App {
             focus,
             one_thing: self.one_thing(),
             friends: self.friends.view(now),
+            habits,
+            areas: config.helper.areas.clone(),
             mail: MailView {
                 accounts: config
                     .mail

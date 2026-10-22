@@ -37,6 +37,22 @@ fn run(app: &App, call: Call) -> Result<String> {
                 .map_err(|e| e.to_string())?;
             Ok(format!("Added to-do {}: {}", todo.id, todo.title))
         }
+        Call::EditTodo { id, input } => {
+            let changed = app.todos().edit(id, &input).map_err(|e| e.to_string())?;
+            Ok(if changed {
+                format!("Changed to-do {id}.")
+            } else {
+                format!("There is no open to-do {id}.")
+            })
+        }
+        Call::DeleteTodo { id } => {
+            let gone = app.todos().delete(id).map_err(|e| e.to_string())?;
+            Ok(if gone {
+                format!("Removed to-do {id}.")
+            } else {
+                format!("There is no to-do {id}.")
+            })
+        }
         Call::CompleteTodo { id } => {
             let done = app
                 .todos()

@@ -1,5 +1,13 @@
 import type { Snapshot } from "./types";
 
+function lastWeek(done: boolean[]): { date: string; done: boolean }[] {
+  return done.map((value, index) => {
+    const day = new Date();
+    day.setDate(day.getDate() - (done.length - 1 - index));
+    return { date: day.toISOString().slice(0, 10), done: value };
+  });
+}
+
 /** Shown when the interface runs in a plain browser, for development and screenshots. */
 export const demoSnapshot: Snapshot = {
   pets: [
@@ -73,7 +81,7 @@ export const demoSnapshot: Snapshot = {
       {
         id: 1,
         title: "Reply to Funderly sign-ups",
-        tags: ["funderly"],
+        tags: ["work", "funderly"],
         time: null,
         repeat: "never",
         remindMinutes: null,
@@ -139,7 +147,7 @@ export const demoSnapshot: Snapshot = {
       {
         id: 4,
         title: "Stretch",
-        tags: ["habit"],
+        tags: ["play", "habit"],
         due: "2026-10-19",
         time: null,
         repeat: "daily",
@@ -414,6 +422,30 @@ export const demoSnapshot: Snapshot = {
   knowsYou: false,
   focus: null,
   oneThing: false,
+  areas: ["work", "study", "play"],
+  habits: [
+    {
+      id: 4,
+      title: "Stretch",
+      area: "play",
+      days: lastWeek([true, true, false, true, true, true, true]),
+      streak: 6,
+    },
+    {
+      id: 5,
+      title: "Drink water",
+      area: null,
+      days: lastWeek([true, false, true, true, false, true, false]),
+      streak: 3,
+    },
+    {
+      id: 9,
+      title: "Read 20 pages",
+      area: "study",
+      days: lastWeek([false, true, true, false, true, true, false]),
+      streak: 0,
+    },
+  ],
   friends: {
     code: "7KQ2M-XH4PD",
     name: "Mariyam",
@@ -423,14 +455,22 @@ export const demoSnapshot: Snapshot = {
         name: "Sara",
         presence: "focusing",
         focusUntil: new Date(Date.now() + 18 * 60_000).toISOString(),
+        area: "study",
       },
       {
         code: "AL1Q7-M3NVW",
         name: "Ali",
         presence: "around",
         focusUntil: null,
+        area: null,
       },
-      { code: "Z0EEP-QW8RT", name: "Zoe", presence: "away", focusUntil: null },
+      {
+        code: "Z0EEP-QW8RT",
+        name: "Zoe",
+        presence: "away",
+        focusUntil: null,
+        area: null,
+      },
     ],
   },
   teammates: [

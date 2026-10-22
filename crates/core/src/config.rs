@@ -109,6 +109,8 @@ pub struct Helper {
     pub model: Option<String>,
     /// How hard the agent thinks: `low`, `medium` or `high`. Unset until the user picks.
     pub effort: Option<String>,
+    /// The parts of life to-dos are grouped into, as tags: `work`, `study`, `play` and any the user adds.
+    pub areas: Vec<String>,
 }
 
 impl Default for Helper {
@@ -131,6 +133,7 @@ impl Default for Helper {
             chat_timeout_seconds: 600,
             model: None,
             effort: None,
+            areas: ["work", "study", "play"].map(String::from).to_vec(),
         }
     }
 }

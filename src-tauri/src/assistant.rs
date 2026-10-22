@@ -6,7 +6,9 @@ use std::time::Duration;
 use chrono::{Local, TimeDelta, Utc};
 use peeps_core::chat::{self, Message, Speaker};
 use peeps_core::drafts::{self, Draft};
-use peeps_core::{briefs, paths, quick, teammates};
+use peeps_core::intent::{self, Intent};
+use peeps_core::todos::{Repeat, TodoInput};
+use peeps_core::{briefs, focus, paths, quick, teammates};
 
 use crate::state::App;
 
@@ -74,6 +76,11 @@ pub async fn send(app: Arc<App>, scope: String, text: String) -> Result<Message>
     if let Some(reply) = quick_reminder(&app, &scope, &text)? {
         return Ok(reply);
     }
+    if scope == chat::HELPER {
+        if let Some(reply) = local_intent(&app, &text)? {
+            return Ok(reply);
+        }
+    }
     if !app.start_chatting(&scope) {
         return Err("still answering another message; one moment".into());
     }
@@ -132,6 +139,109 @@ fn quick_reminder(app: &App, scope: &str, text: &str) -> Result<Option<Message>>
     Ok(Some(message))
 }
 
+/// Everyday list and focus commands, done here without the agent. Words that don't clearly match
+/// a to-do go on to the agent, which can ask.
+fn local_intent(app: &App, text: &str) -> Result<Option<Message>> {
+    let today = Local::now().date_naive();
+    let areas = app.config().helper.areas.clone();
+    let Some(said) = intent::parse(text, today, &areas) else {
+        return Ok(None);
+    };
+    let now = Utc::now();
+    let open = app.todos().open_items().map_err(|e| e.to_string())?;
+    let pick = |query: &str| match intent::find(&open, query) {
+        intent::Found::One(todo) => Ok(Some(todo.clone())),
+        intent::Found::None => Ok(None),
+        intent::Found::Several(several) => Err(intent::which_reply(&several)),
+    };
+    let reply: String = match said {
+        Intent::Left => intent::left_reply(&open, today),
+        Intent::Add { title, due } => {
+            let input = TodoInput {
+                title: title.clone(),
+                due,
+                time: None,
+                repeat: Repeat::Never,
+                remind_minutes: None,
+                until: None,
+            };
+            let added = app.todos().add(&input, now).map_err(|e| e.to_string())?;
+            match due {
+                Some(due) => format!("Added “{}” for {}.", added.title, due.format("%A")),
+                None => format!("Added “{}” to your list.", added.title),
+            }
+        }
+        Intent::Done { query } => match pick(&query) {
+            Ok(Some(todo)) => {
+                let fresh = app
+                    .todos()
+                    .complete_once(todo.id, now, today, crate::state::start_of_today())
+                    .map_err(|e| e.to_string())?;
+                if fresh {
+                    format!("Ticked off “{}”. Nice!", todo.title)
+                } else {
+                    format!("“{}” is already done today.", todo.title)
+                }
+            }
+            Ok(None) => return Ok(None),
+            Err(which) => which,
+        },
+        Intent::Delete { query } => match pick(&query) {
+            Ok(Some(todo)) => {
+                app.todos().delete(todo.id).map_err(|e| e.to_string())?;
+                format!("Removed “{}”.", todo.title)
+            }
+            Ok(None) => return Ok(None),
+            Err(which) => which,
+        },
+        Intent::Move { query, due } => match pick(&query) {
+            Ok(Some(todo)) => {
+                let tags: String = todo.tags.iter().map(|t| format!(" #{t}")).collect();
+                let input = TodoInput {
+                    title: format!("{}{tags}", todo.title),
+                    due: Some(due),
+                    time: todo.time,
+                    repeat: todo.repeat,
+                    remind_minutes: todo.remind_minutes,
+                    until: todo.until,
+                };
+                app.todos()
+                    .edit(todo.id, &input)
+                    .map_err(|e| e.to_string())?;
+                format!("Moved “{}” to {}.", todo.title, due.format("%A %-d %B"))
+            }
+            Ok(None) => return Ok(None),
+            Err(which) => which,
+        },
+        Intent::Focus { minutes, area } => {
+            let session = focus::Session::new(now, minutes, None).in_area(area.clone());
+            let minutes = session.focus_minutes;
+            *app.focus() = Some(session);
+            match area.as_deref() {
+                Some("study") => format!("Studying for {minutes} minutes. I'll call a break."),
+                Some("work") => format!("Working for {minutes} minutes. I'll call a break."),
+                _ => format!("Focusing for {minutes} minutes. I'll call a break."),
+            }
+        }
+        Intent::StopFocus => {
+            if app.focus().take().is_some() {
+                "Stopped. Nice work.".to_owned()
+            } else {
+                "There's no session going. Say “study for 25 minutes” to start one.".to_owned()
+            }
+        }
+    };
+    app.chat()
+        .add(chat::HELPER, Speaker::You, text, now)
+        .map_err(|e| e.to_string())?;
+    let message = app
+        .chat()
+        .add(chat::HELPER, Speaker::Helper, &reply, Utc::now())
+        .map_err(|e| e.to_string())?;
+    app.publish();
+    Ok(Some(message))
+}
+
 fn lowercase_first(text: &str) -> String {
     let mut chars = text.chars();
     match chars.next() {
@@ -147,10 +257,20 @@ async fn turn(app: &Arc<App>, scope: &str, text: &str) -> Result<String> {
     app.publish();
 
     let config = app.config();
-    let session = app
+    // The message just added is today's; what counts is the one before it.
+    let before = app
         .chat()
-        .session(scope)
-        .map_err(|error| error.to_string())?;
+        .recent(scope, 2)
+        .map_err(|error| error.to_string())?
+        .first()
+        .map(|message| message.at);
+    let session = chat::resume_today(
+        app.chat()
+            .session(scope)
+            .map_err(|error| error.to_string())?,
+        before,
+        crate::state::start_of_today(),
+    );
     let base = chat::with_agent(
         &config.helper.chat_command,
         // Effort is a setting of the larger models, so picking one keeps Claude's own default.
@@ -254,21 +374,25 @@ fn context(app: &App) -> String {
     let config = app.config();
     let now = Utc::now();
     let zone = *Local::now().offset();
+    // Only what's due by tomorrow; the agent can list everything with its tools when asked.
+    let soon = Local::now().date_naive() + chrono::Days::new(1);
     let todos: Vec<String> = app
         .todos()
         .open_items()
         .unwrap_or_default()
         .into_iter()
-        .take(20)
+        .filter(|todo| !todo.tags.iter().any(|tag| tag == "nudge"))
+        .filter(|todo| todo.due.is_some_and(|due| due <= soon))
+        .take(10)
         .map(|todo| match todo.due {
             Some(due) => format!("{} (due {due})", todo.title),
             None => todo.title,
         })
         .collect();
     let events: Vec<String> = app
-        .events(now, now + TimeDelta::days(2))
+        .events(now, now + TimeDelta::days(1))
         .into_iter()
-        .take(10)
+        .take(5)
         .map(|event| {
             let start = event.start.with_timezone(&zone);
             if event.all_day {

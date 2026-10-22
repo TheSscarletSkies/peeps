@@ -3,6 +3,8 @@ import { useCallback, useState, type ReactNode } from "react";
 import { FocusBar } from "../focus/FocusBar";
 import { FriendsPanel } from "../friends/FriendsPanel";
 import { StudyTable } from "../friends/StudyTable";
+import { AreasEditor } from "../tracker/AreasEditor";
+import { WeekCard } from "../tracker/WeekCard";
 import { useReactions } from "../friends/useReactions";
 import { Todos } from "../helper/HelperPanel";
 import { AboutMe } from "../helper/AboutMe";
@@ -183,6 +185,14 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                 </section>
                 <ClaudeStatus />
               </div>
+              <section className="card">
+                <h2>Your areas</h2>
+                <p className="setup__hint">
+                  Today groups your list by these. Tag a to-do with one, or tell{" "}
+                  {helper.name} “add gym on Thursday #play”.
+                </p>
+                <AreasEditor areas={snapshot.areas} />
+              </section>
               <section className="card about-me">
                 <h2>What {helper.name} knows about you</h2>
                 <p className="setup__hint">
@@ -254,16 +264,24 @@ function TodayPage({
         />
       </section>
 
-      <FocusBar focus={snapshot.focus} friends={snapshot.friends} />
+      <FocusBar
+        focus={snapshot.focus}
+        friends={snapshot.friends}
+        areas={snapshot.areas}
+      />
 
       <GettingStarted snapshot={snapshot} onGo={onGo} />
 
       <div className="home">
         <section className="card" aria-label="Your list">
           <h2>Today</h2>
-          <Todos helper={helper} onTyping={noop} />
+          <Todos helper={helper} areas={snapshot.areas} onTyping={noop} />
         </section>
         <aside className="home__side">
+          <div className="card">
+            <h2>This week</h2>
+            <WeekCard habits={snapshot.habits} />
+          </div>
           {helper.upcoming.length > 0 && (
             <div className="card">
               <h2>Coming up</h2>

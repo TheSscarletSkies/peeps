@@ -761,9 +761,13 @@ export function onNudge(handler: (nudge: Nudge) => void): Promise<() => void> {
   return Promise.resolve(() => window.clearTimeout(timer));
 }
 
-export function startFocus(minutes: number, task: string): Promise<void> {
+export function startFocus(
+  minutes: number,
+  task: string,
+  area: string | null = null,
+): Promise<void> {
   if (inApp())
-    return invoke("start_focus", { minutes, task: task || null }).then(
+    return invoke("start_focus", { minutes, task: task || null, area }).then(
       () => undefined,
     );
   const now = Date.now();
@@ -775,6 +779,7 @@ export function startFocus(minutes: number, task: string): Promise<void> {
       endsAt: new Date(now + minutes * 60_000).toISOString(),
       focusMinutes: minutes,
       task: task.trim() || null,
+      area,
     },
   }));
   return Promise.resolve();
@@ -825,6 +830,7 @@ export function addFriend(code: string): Promise<void> {
                 name: "A friend",
                 presence: "away",
                 focusUntil: null,
+                area: null,
               },
             ],
           },
@@ -875,4 +881,23 @@ export function onReaction(
         )
       : 0;
   return Promise.resolve(() => window.clearTimeout(timer));
+}
+
+export function setAreas(areas: string[]): Promise<void> {
+  if (inApp()) return invoke("set_areas", { areas }).then(() => undefined);
+  const clean = [
+    ...new Set(
+      areas
+        .map((area) =>
+          area
+            .trim()
+            .replace(/^#/, "")
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}_-]/gu, ""),
+        )
+        .filter(Boolean),
+    ),
+  ].slice(0, 8);
+  updatePreview((snapshot) => ({ ...snapshot, areas: clean }));
+  return Promise.resolve();
 }

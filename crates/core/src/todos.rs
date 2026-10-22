@@ -435,6 +435,15 @@ impl TodoStore {
         Ok(true)
     }
 
+    /// Every tick since `since`, as (to-do, when), for drawing a week of habits.
+    pub fn log_since(&self, since: DateTime<Utc>) -> rusqlite::Result<Vec<(i64, DateTime<Utc>)>> {
+        let mut query = self.db.prepare(
+            "SELECT todo_id, done_at FROM todo_log WHERE done_at >= ?1 ORDER BY done_at",
+        )?;
+        let rows = query.query_map(params![since], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        rows.collect()
+    }
+
     /// To-dos ticked off since `since`, such as the start of the user's day.
     pub fn done_ids_since(&self, since: DateTime<Utc>) -> rusqlite::Result<Vec<i64>> {
         let mut query = self

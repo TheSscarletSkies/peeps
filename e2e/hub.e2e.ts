@@ -146,3 +146,40 @@ test("UC26: friends studying sit at the table and can be joined", async ({
   const session = page.getByRole("region", { name: "Focus session" });
   await expect(session).toContainText("Focusing with Sara");
 });
+
+test("UC27: Today groups the list by area and shows a week of habits", async ({
+  page,
+}) => {
+  const list = page.getByRole("region", { name: "Your list" });
+  await expect(list.locator(".area__head")).toHaveText([
+    /^Work/,
+    /^Study/,
+    /^Play/,
+    /^Everything else/,
+  ]);
+  const week = page.getByRole("table", { name: "This week" });
+  await expect(week.getByRole("row", { name: /Stretch/ })).toContainText(
+    "6 in a row",
+  );
+  await expect(week.locator(".week__dot[data-done]").first()).toBeVisible();
+});
+
+test("UC27: areas can be added and removed in Settings", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  const areas = page.getByRole("list", { name: "Your areas" });
+  await expect(areas).toContainText("#work");
+  await page.getByLabel("New area").fill("Gym");
+  await page.getByLabel("New area").press("Enter");
+  await expect(areas).toContainText("#gym");
+  await areas.getByRole("button", { name: "Remove play" }).click();
+  await expect(areas).not.toContainText("#play");
+});
+
+test("UC23: a study session says so", async ({ page }) => {
+  const bar = page.getByRole("form", { name: "Focus" });
+  await bar.getByRole("radio", { name: "Study" }).click();
+  await bar.getByRole("button", { name: "Study", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Focus session" }),
+  ).toContainText("Studying ·");
+});

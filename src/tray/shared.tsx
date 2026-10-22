@@ -147,6 +147,7 @@ export function CardBody({
           focus={snapshot.focus}
           oneThing={snapshot.oneThing}
           friends={snapshot.friends}
+          areas={snapshot.areas}
           reaction={reminder?.reaction}
           knowsYou={snapshot.knowsYou}
           onTyping={noop}

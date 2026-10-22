@@ -10,6 +10,7 @@ const focus: Focus = {
   endsAt: new Date(START + 25 * 60_000).toISOString(),
   focusMinutes: 25,
   task: null,
+  area: null,
 };
 
 describe("focus clock", () => {

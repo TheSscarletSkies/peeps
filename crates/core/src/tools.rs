@@ -27,6 +27,13 @@ pub enum Call {
     CompleteTodo {
         id: i64,
     },
+    EditTodo {
+        id: i64,
+        input: TodoInput,
+    },
+    DeleteTodo {
+        id: i64,
+    },
     ScheduleDraft {
         kind: String,
         topic: String,
@@ -117,6 +124,32 @@ pub fn definitions() -> Vec<Definition> {
         Definition {
             name: "complete_todo",
             description: "Ticks a to-do off by id. Repeating ones move to their next date.",
+            input_schema: json!({
+                "type": "object",
+                "properties": { "id": { "type": "integer" } },
+                "required": ["id"]
+            }),
+        },
+        Definition {
+            name: "edit_todo",
+            description: "Changes a to-do by id: move it to another day, change its time, repeat, reminder, title or #tags (areas like #work, #study, #play are tags). Send every field as it should end up; read them first with list_todos.",
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer" },
+                    "title": { "type": "string", "description": "What to do, with its #tags." },
+                    "due": { "type": "string", "description": "YYYY-MM-DD." },
+                    "time": { "type": "string", "description": "HH:MM, 24-hour." },
+                    "repeat": { "type": "string", "enum": ["never", "daily", "weekdays", "weekly", "monthly", "hourly", "every2h", "every3h"] },
+                    "remindMinutes": { "type": "integer" },
+                    "until": { "type": "string", "description": "HH:MM." }
+                },
+                "required": ["id", "title"]
+            }),
+        },
+        Definition {
+            name: "delete_todo",
+            description: "Removes a to-do by id, for good. Only when the user asks to delete or cancel it.",
             input_schema: json!({
                 "type": "object",
                 "properties": { "id": { "type": "integer" } },
@@ -382,6 +415,27 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
         "complete_todo" => Call::CompleteTodo {
             id: serde_json::from_value::<Id>(args).map_err(bad)?.id,
         },
+        "delete_todo" => Call::DeleteTodo {
+            id: serde_json::from_value::<Id>(args).map_err(bad)?.id,
+        },
+        "edit_todo" => {
+            let id = serde_json::from_value::<Id>(args.clone()).map_err(bad)?.id;
+            let todo: TodoArgs = serde_json::from_value(args).map_err(bad)?;
+            if todo.title.trim().is_empty() {
+                return Err("a to-do needs a title".into());
+            }
+            Call::EditTodo {
+                id,
+                input: TodoInput {
+                    title: todo.title,
+                    due: todo.due,
+                    time: todo.time,
+                    repeat: todo.repeat,
+                    remind_minutes: todo.remind_minutes,
+                    until: todo.until,
+                },
+            }
+        }
         "schedule_draft" => {
             let draft: Draft = serde_json::from_value(args).map_err(bad)?;
             Call::ScheduleDraft {
@@ -491,6 +545,11 @@ mod tests {
                 json!({ "title": "Drink water", "repeat": "every2h", "time": "09:00", "until": "21:00", "remindMinutes": 0 }),
             ),
             ("complete_todo", json!({ "id": 3 })),
+            ("delete_todo", json!({ "id": 3 })),
+            (
+                "edit_todo",
+                json!({ "id": 3, "title": "Gym #play", "due": "2026-10-29", "repeat": "weekly" }),
+            ),
             (
                 "schedule_draft",
                 json!({ "kind": "linkedin", "topic": "Shipped", "repeat": "weekly", "start": "2026-10-26", "time": "09:00" }),

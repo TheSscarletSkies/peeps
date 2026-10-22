@@ -13,6 +13,8 @@ pub struct Session {
     pub break_minutes: i64,
     /// What it is for, if they said; the pet mentions it when time is up.
     pub task: Option<String>,
+    /// Study, work or another of the user's areas, shown to friends as "studying" or "working".
+    pub area: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -38,6 +40,7 @@ pub struct FocusView {
     pub ends_at: DateTime<Utc>,
     pub focus_minutes: i64,
     pub task: Option<String>,
+    pub area: Option<String>,
 }
 
 impl Session {
@@ -50,7 +53,13 @@ impl Session {
             focus_minutes: focus_minutes.clamp(1, 180),
             break_minutes,
             task,
+            area: None,
         }
+    }
+
+    pub fn in_area(mut self, area: Option<String>) -> Self {
+        self.area = area.filter(|a| !a.trim().is_empty());
+        self
     }
 
     fn focus_end(&self) -> DateTime<Utc> {
@@ -96,6 +105,7 @@ impl Session {
             ends_at,
             focus_minutes: self.focus_minutes,
             task: self.task.clone(),
+            area: self.area.clone(),
         })
     }
 

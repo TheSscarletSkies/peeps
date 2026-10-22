@@ -85,6 +85,7 @@ impl Friends {
                         name: friend.name.clone(),
                         presence: seen.presence(now),
                         focus_until: seen.focus_until.filter(|until| *until > now),
+                        area: seen.area,
                     }
                 })
                 .collect(),
@@ -218,12 +219,13 @@ pub async fn heartbeat(app: Arc<App>) {
             continue;
         };
         let now = Utc::now();
-        let focus_until = app
+        let focusing = app
             .focus()
             .as_ref()
             .and_then(|session| session.view(now))
-            .filter(|view| view.phase == peeps_core::focus::Phase::Focus)
-            .map(|view| view.ends_at);
+            .filter(|view| view.phase == peeps_core::focus::Phase::Focus);
+        let focus_until = focusing.as_ref().map(|view| view.ends_at);
+        let area = focusing.and_then(|view| view.area);
         // A new friend hears your name and focus at once, not at the next heartbeat.
         let generation = app.friends.generation.load(Ordering::Relaxed);
         let due = match last {
@@ -238,6 +240,7 @@ pub async fn heartbeat(app: Arc<App>) {
         let message = Message::Status {
             name: circle.name.clone(),
             focus_until,
+            area,
         };
         let topic = friends::status(&circle.code);
         let code = circle.code.clone();

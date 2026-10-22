@@ -2,18 +2,22 @@ import { useEffect, useState } from "react";
 
 import { startFocus, stopFocus } from "../lib/bridge";
 import type { Focus, Friends } from "../lib/types";
+import { areaLabel, doing } from "../tracker/areas";
 import { left, LENGTHS, progress } from "./clock";
 
 /** Start a focus session, or watch the one going: the pet works with you, then calls a break. */
 export function FocusBar({
   focus,
   friends,
+  areas = [],
 }: {
   focus: Focus | null;
   friends: Friends | null;
+  areas?: string[];
 }) {
   const [minutes, setMinutes] = useState(25);
   const [task, setTask] = useState("");
+  const [area, setArea] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now);
 
   const ticking =
@@ -48,6 +52,7 @@ export function FocusBar({
         <span className="focus__text">
           <strong role="timer">{left(focus, now)}</strong>
           <span>
+            {!resting && focus.area ? `${doing(focus.area)} · ` : ""}
             {resting
               ? "Break: stand up, stretch, look far away"
               : focus.task
@@ -77,7 +82,9 @@ export function FocusBar({
       {studying.map((friend) => (
         <div key={friend.code} className="focus focus--join">
           <span className="focus__text">
-            <strong>{friend.name} is studying</strong>
+            <strong>
+              {friend.name} is {doing(friend.area).toLowerCase()}
+            </strong>
             <span>
               {left(
                 {
@@ -86,6 +93,7 @@ export function FocusBar({
                   endsAt: friend.focusUntil ?? "",
                   focusMinutes: 0,
                   task: null,
+                  area: null,
                 },
                 now,
               )}{" "}
@@ -113,6 +121,9 @@ export function FocusBar({
       <FocusForm
         minutes={minutes}
         setMinutes={setMinutes}
+        areas={areas}
+        area={area}
+        setArea={setArea}
         task={task}
         setTask={setTask}
       />
@@ -123,11 +134,17 @@ export function FocusBar({
 function FocusForm({
   minutes,
   setMinutes,
+  areas,
+  area,
+  setArea,
   task,
   setTask,
 }: {
   minutes: number;
   setMinutes: (minutes: number) => void;
+  areas: string[];
+  area: string | null;
+  setArea: (area: string | null) => void;
   task: string;
   setTask: (task: string) => void;
 }) {
@@ -137,7 +154,7 @@ function FocusForm({
       aria-label="Focus"
       onSubmit={(event) => {
         event.preventDefault();
-        void startFocus(minutes, task).then(() => setTask(""));
+        void startFocus(minutes, task, area).then(() => setTask(""));
       }}
     >
       <label className="visually-hidden" htmlFor="focus-task">
@@ -164,8 +181,28 @@ function FocusForm({
         ))}
       </div>
       <button className="button button--primary" type="submit">
-        Focus
+        {area === "study" ? "Study" : area === "work" ? "Work" : "Focus"}
       </button>
+      {areas.length > 0 && (
+        <div
+          className="segmented focus__areas"
+          role="radiogroup"
+          aria-label="What kind of session"
+        >
+          {[null, ...areas.slice(0, 4)].map((option) => (
+            <button
+              key={option ?? "any"}
+              type="button"
+              role="radio"
+              aria-checked={area === option}
+              className={area === option ? "segmented__on" : undefined}
+              onClick={() => setArea(option)}
+            >
+              {option ? areaLabel(option) : "Any"}
+            </button>
+          ))}
+        </div>
+      )}
     </form>
   );
 }

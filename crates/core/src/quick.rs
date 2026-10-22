@@ -226,7 +226,7 @@ fn time(text: &str) -> Option<NaiveTime> {
     NaiveTime::from_hms_opt(hour, minute, 0)
 }
 
-fn weekday(word: &str) -> Option<Weekday> {
+pub(crate) fn weekday(word: &str) -> Option<Weekday> {
     Some(match word.trim_end_matches('s') {
         "monday" | "mon" => Weekday::Mon,
         "tuesday" | "tue" | "tues" => Weekday::Tue,
@@ -239,7 +239,7 @@ fn weekday(word: &str) -> Option<Weekday> {
     })
 }
 
-fn next_weekday(from: NaiveDate, weekday: Weekday) -> NaiveDate {
+pub(crate) fn next_weekday(from: NaiveDate, weekday: Weekday) -> NaiveDate {
     let ahead = (7 + weekday.num_days_from_monday() - from.weekday().num_days_from_monday()) % 7;
     from.checked_add_days(Days::new(u64::from(ahead)))
         .unwrap_or(from)

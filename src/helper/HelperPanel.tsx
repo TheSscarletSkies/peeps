@@ -17,6 +17,7 @@ import { FocusBar } from "../focus/FocusBar";
 import { FriendsPanel } from "../friends/FriendsPanel";
 import { moodWith } from "../focus/clock";
 import { Nudges } from "../nudges/Nudges";
+import { areaLabel, groupByArea } from "../tracker/areas";
 import type {
   DueState,
   Focus,
@@ -52,6 +53,7 @@ interface Props {
   focus: Focus | null;
   oneThing: boolean;
   friends: Friends | null;
+  areas: string[];
   /** A friend's reaction a moment ago, said under the pet. */
   reaction?: ReactionEvent | null;
   knowsYou?: boolean;
@@ -64,6 +66,7 @@ export function HelperPanel({
   focus,
   oneThing,
   friends,
+  areas,
   reaction,
   knowsYou,
   onTyping,
@@ -111,9 +114,13 @@ export function HelperPanel({
       {tab === "chat" && (
         <Chat helper={helper} knowsYou={knowsYou} onTyping={onTyping} />
       )}
-      {tab === "today" && <FocusBar focus={focus} friends={friends} />}
+      {tab === "today" && (
+        <FocusBar focus={focus} friends={friends} areas={areas} />
+      )}
       {tab === "today" && <Upcoming events={helper.upcoming} limit={3} />}
-      {tab === "today" && <Todos helper={helper} onTyping={onTyping} />}
+      {tab === "today" && (
+        <Todos helper={helper} areas={areas} onTyping={onTyping} />
+      )}
       {tab === "friends" && (
         <FriendsPanel friends={friends} helperName={helper.name} />
       )}
@@ -379,7 +386,7 @@ function TodoRow({
 }
 
 /** Each tag gets its own soft colour, the same everywhere. */
-function tagStyle(tag: string) {
+export function tagStyle(tag: string) {
   let hash = 0;
   for (const char of tag) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return { ["--tag" as string]: `${hash % 360}` };
@@ -387,9 +394,12 @@ function tagStyle(tag: string) {
 
 export function Todos({
   helper,
+  areas = [],
   onTyping,
 }: {
   helper: Helper;
+  /** Groups the list under each area, like Work, Study and Play. */
+  areas?: string[];
   onTyping: (typing: boolean) => void;
 }) {
   const [draft, setDraft] = useState<TodoDraft>(EMPTY);
@@ -398,7 +408,13 @@ export function Todos({
 
   // Hourly nudges would drown the list; they live on their own tab.
   const todos = helper.todos.filter((todo) => !todo.tags.includes("nudge"));
-  const tags = [...new Set(todos.flatMap((todo) => todo.tags))].sort();
+  // Areas lead the filter, in the user's order; other tags follow.
+  const tags = [
+    ...areas.filter((area) => todos.some((todo) => todo.tags.includes(area))),
+    ...[...new Set(todos.flatMap((todo) => todo.tags))]
+      .filter((name) => !areas.includes(name))
+      .sort(),
+  ];
   const shown = tag ? todos.filter((todo) => todo.tags.includes(tag)) : todos;
 
   const add = async () => {
@@ -438,6 +454,28 @@ export function Todos({
       )}
       {shown.length === 0 ? (
         <p className="setup__hint">Nothing on the list.</p>
+      ) : areas.length > 0 && tag === null ? (
+        groupByArea(shown, areas).map((group) => (
+          <section
+            key={group.area ?? "other"}
+            className="area"
+            aria-label={areaLabel(group.area)}
+          >
+            <h3
+              className="area__head"
+              style={group.area ? tagStyle(group.area) : undefined}
+              data-other={group.area ? undefined : true}
+            >
+              {areaLabel(group.area)}
+              <span>{group.todos.length}</span>
+            </h3>
+            <ul className="todos">
+              {group.todos.map((todo) => (
+                <TodoRow key={todo.id} todo={todo} onTyping={onTyping} />
+              ))}
+            </ul>
+          </section>
+        ))
       ) : (
         <ul className="todos">
           {shown.map((todo) => (

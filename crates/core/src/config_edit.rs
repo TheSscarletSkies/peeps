@@ -251,6 +251,24 @@ pub fn set_helper_agent(
     Ok(updated)
 }
 
+/// Saves the user's areas, as lower-case tag names in the order given.
+pub fn set_helper_areas(text: &str, areas: &[String]) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let helper = doc
+        .entry("helper")
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .ok_or(EditError::Shape)?;
+    let mut list = toml_edit::Array::new();
+    for area in crate::tracker::clean_areas(areas) {
+        list.push(area);
+    }
+    helper["areas"] = toml_edit::value(list);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// The keychain entry that holds a calendar's private link.
 pub fn calendar_secret(name: &str) -> String {
     format!("calendar-{}", slug(name))

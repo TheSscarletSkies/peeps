@@ -13,6 +13,7 @@ peeps is a desktop companion for Mac and Windows. It sits at the top of your scr
 ## What it does
 
 - **Today.** Your to-dos with `#tags`, dates and repeats, and what's coming up from your calendars. Tick one off and your peep gets a snack.
+- **Areas and habits.** Group your day into Work, Study, Play or your own areas, and see a week of dots for every habit.
 - **Chat.** Talk to your peep through your own Claude. It remembers what you tell it about you, and anything it wants to do, it asks first. “Remind me to call mum at 6” becomes a reminder.
 - **Nudges.** Stand up and stretch, drink water, rest your eyes: each one switch. Your own reminders sit beside them. When one is due, your peep waves and says it in a bubble, with Done and Later.
 - **Focus.** Pick 15, 25 or 50 minutes; your peep works alongside, then calls a break.

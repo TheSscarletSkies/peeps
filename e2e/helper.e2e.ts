@@ -64,7 +64,7 @@ test("UC17: a nudge is one switch away", async ({ page }) => {
   await expect(stretch).toHaveAttribute("aria-checked", "true");
   // Hourly nudges stay off the to-do list.
   await page.getByRole("tab", { name: "Today" }).click();
-  await expect(page.locator(".todos")).not.toContainText(
+  await expect(page.locator(".helper-tab").first()).not.toContainText(
     "Stand up and stretch",
   );
   await page.getByRole("tab", { name: "Nudges" }).click();
@@ -109,7 +109,7 @@ test("UC25: friends show what they're up to and can be sent a bonk", async ({
   await page.getByRole("tab", { name: "Friends" }).click();
   await expect(page.locator(".friends__code code")).toHaveText("7KQ2M-XH4PD");
   const friends = page.getByRole("list", { name: "Friends" });
-  await expect(friends).toContainText(/Sara\s*Focusing · \d+ min left/);
+  await expect(friends).toContainText(/Sara\s*Studying · \d+ min left/);
   await friends
     .getByRole("button", { name: "Bonk with a rolling pin to Sara" })
     .click();

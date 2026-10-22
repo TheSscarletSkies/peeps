@@ -134,7 +134,12 @@ export function FriendsPanel({
                 />
                 <span className="friends__who">
                   <strong>{friend.name}</strong>
-                  {presenceLine(friend.presence, friend.focusUntil, now)}
+                  {presenceLine(
+                    friend.presence,
+                    friend.focusUntil,
+                    now,
+                    friend.area,
+                  )}
                 </span>
                 <span className="friends__send">
                   {REACTIONS.map((reaction) => (

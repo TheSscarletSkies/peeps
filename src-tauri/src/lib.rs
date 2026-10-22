@@ -40,6 +40,7 @@ pub fn run() {
             commands::snapshot,
             commands::decide,
             commands::start_focus,
+            commands::set_areas,
             commands::stop_focus,
             commands::set_one_thing,
             commands::start_friends,

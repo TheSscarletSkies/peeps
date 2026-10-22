@@ -112,6 +112,16 @@ pub fn with_tools(base: &[String], hook: &str) -> Vec<String> {
     command
 }
 
+/// The conversation to carry on, if it was last used today. Starting fresh each day keeps every
+/// message from re-sending days of history.
+pub fn resume_today(
+    session: Option<String>,
+    last_message: Option<DateTime<Utc>>,
+    start_of_today: DateTime<Utc>,
+) -> Option<String> {
+    session.filter(|_| last_message.is_some_and(|at| at >= start_of_today))
+}
+
 /// The command for one turn: Claude Code resumes the conversation and gets the helper's context.
 pub fn command(base: &[String], session: Option<&str>, context: &str) -> Vec<String> {
     let mut command = base.to_vec();
@@ -346,6 +356,30 @@ mod tests {
         );
         assert_eq!(parse_reply("hello\n").unwrap().text, "hello");
         assert!(parse_reply(r#"{"result":"Credit balance is too low","is_error":true}"#).is_err());
+    }
+
+    #[test]
+    fn a_new_day_starts_a_new_conversation() {
+        let today = DateTime::from_timestamp(1_800_000_000, 0).unwrap();
+        let session = Some("abc".to_owned());
+        assert_eq!(
+            resume_today(
+                session.clone(),
+                Some(today + chrono::TimeDelta::hours(2)),
+                today
+            )
+            .as_deref(),
+            Some("abc")
+        );
+        assert_eq!(
+            resume_today(
+                session.clone(),
+                Some(today - chrono::TimeDelta::hours(2)),
+                today
+            ),
+            None
+        );
+        assert_eq!(resume_today(session, None, today), None);
     }
 
     #[test]

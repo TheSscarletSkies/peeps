@@ -60,6 +60,9 @@ pub enum Message {
     Status {
         name: String,
         focus_until: Option<DateTime<Utc>>,
+        /// "study" or "work" while focusing; older peeps leave it out.
+        #[serde(default)]
+        area: Option<String>,
     },
 }
 
@@ -110,6 +113,7 @@ pub struct FriendView {
     pub name: String,
     pub presence: Presence,
     pub focus_until: Option<DateTime<Utc>>,
+    pub area: Option<String>,
 }
 
 /// The last thing heard from a friend.
@@ -117,6 +121,7 @@ pub struct FriendView {
 pub struct Heard {
     pub at: Option<DateTime<Utc>>,
     pub focus_until: Option<DateTime<Utc>>,
+    pub area: Option<String>,
 }
 
 impl Heard {
@@ -362,7 +367,11 @@ impl Circle {
                     reaction,
                 })
             }
-            Message::Status { name, focus_until } => {
+            Message::Status {
+                name,
+                focus_until,
+                area,
+            } => {
                 // A status is only trusted on the channel of the friend it describes.
                 if key == self.code {
                     return None;
@@ -377,6 +386,7 @@ impl Circle {
                         Heard {
                             at: Some(incoming.at),
                             focus_until,
+                            area: area.map(|a| clean_name(&a)),
                         },
                     );
                 }
@@ -563,6 +573,7 @@ mod tests {
         let message = Message::Status {
             name: "Sara".into(),
             focus_until: None,
+            area: None,
         };
         post_to(&url, "peeps-x", "ABCDE-FGHJK", &message).unwrap();
         let request = relay.join().unwrap();
@@ -605,6 +616,7 @@ mod tests {
         let heard = Heard {
             at: Some(now - TimeDelta::minutes(2)),
             focus_until: Some(now + TimeDelta::minutes(10)),
+            area: None,
         };
         assert_eq!(heard.presence(now), Presence::Focusing);
         assert_eq!(

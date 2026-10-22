@@ -227,6 +227,10 @@ export interface Snapshot {
   oneThing: boolean;
   /** Null until the user picks a name and gets a code. */
   friends: Friends | null;
+  /** The parts of life to-dos are grouped into, as tags: work, study, play… */
+  areas: string[];
+  /** The last week of every repeating to-do. */
+  habits: HabitWeek[];
 }
 
 /** A starting point for a new teammate. */
@@ -378,6 +382,7 @@ export interface Focus {
   endsAt: string;
   focusMinutes: number;
   task: string | null;
+  area: string | null;
 }
 
 export type Reaction = "heart" | "poke" | "bonk" | "tea" | "study";
@@ -387,6 +392,7 @@ export interface FriendView {
   name: string;
   presence: "focusing" | "around" | "away";
   focusUntil: string | null;
+  area: string | null;
 }
 
 export interface Friends {
@@ -399,4 +405,13 @@ export interface ReactionEvent {
   from: string;
   reaction: Reaction;
   line: string;
+}
+
+export interface HabitWeek {
+  id: number;
+  title: string;
+  area: string | null;
+  /** The last seven days, oldest first, ending today. */
+  days: { date: string; done: boolean }[];
+  streak: number;
 }

@@ -136,6 +136,7 @@ impl Peep {
         let message = Message::Status {
             name: self.circle.name.clone(),
             focus_until: focus_minutes.map(|m| Utc::now() + TimeDelta::minutes(m)),
+            area: Some("study".into()),
         };
         let topic = friends::status(&self.circle.code);
         friends::post_to(relay, &topic, &self.circle.code, &message).unwrap();
@@ -216,6 +217,7 @@ fn two_friends_study_together() {
     let fake = Message::Status {
         name: "Mariyam".into(),
         focus_until: None,
+        area: None,
     };
     friends::post_to(&relay, &friends::inbox(&sara_code), &sara_code, &fake).unwrap();
     assert!(sara.check(&relay).is_empty());

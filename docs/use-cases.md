@@ -20,6 +20,20 @@ Tested by `e2e/hub.e2e.ts`, `e2e/notch.e2e.ts`.
 
 Tested by `e2e/helper.e2e.ts`, `e2e/nudge.e2e.ts`, `crates/core/src/todos.rs`, `crates/core/src/quick.rs`, `src/helper/todoForm.test.ts`.
 
+### UC27. Areas and a week of habits
+
+**When** they tag things #work, #study or #play (or areas they add in Settings, like #gym).
+**Then** Today groups the list under each area, and This week shows every habit with a dot for each of the last seven days and its streak. In Chat, everyday requests are done at once without asking Claude, so they cost nothing: "add gym on Thursday #play", "I did my reading", "gym done", "move gym to Friday", "delete the dentist", "what's left today?", "study for 50 minutes", "stop". Bigger changes ("move all my study to mornings") go to Claude, which can now edit and delete to-dos too.
+
+Tested by `e2e/hub.e2e.ts`, `src/tracker/areas.test.ts`, `crates/core/src/tracker.rs`, `crates/core/src/intent.rs`.
+
+### UC28. Chat that costs less
+
+**When** they chat every day.
+**Then** only peeps' own tools load (not every connector in Claude Code), Haiku answers until they pick another model, each message carries only what's due by tomorrow and a short About me, and a new conversation starts each day instead of re-sending days of history.
+
+Tested by `crates/core/src/chat.rs`, `crates/core/src/profile.rs`.
+
 ### UC17. Nudges like a friend would give
 
 **When** they open Nudges.
@@ -30,7 +44,7 @@ Tested by `e2e/helper.e2e.ts`, `e2e/hub.e2e.ts`, `src/nudges/presets.test.ts`.
 ### UC23. Focus for a while
 
 **When** they want 25 minutes on one thing.
-**Then** they type what it is (or not), pick 15, 25 or 50 minutes and press Focus. A ring counts down on Today and in the peep's card, and the peep works alongside with a pencil. When time is up it pops up for a break ("25 minutes on essay, nice. Stretch for 5."), and again when the break is over.
+**Then** they type what it is (or not), pick 15, 25 or 50 minutes, choose Study, Work or another area (or Any) and press Study, Work or Focus. Friends see "Studying · 18 min left". A ring counts down on Today and in the peep's card, and the peep works alongside with a pencil. When time is up it pops up for a break ("25 minutes on essay, nice. Stretch for 5."), and again when the break is over.
 
 Tested by `e2e/hub.e2e.ts`, `src/focus/clock.test.ts`, `crates/core/src/focus.rs`.
 

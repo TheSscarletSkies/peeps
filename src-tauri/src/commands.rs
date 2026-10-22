@@ -306,6 +306,16 @@ pub fn set_helper_agent(
     Ok(())
 }
 
+/// Saves the user's areas, such as work, study and play.
+#[tauri::command]
+pub fn set_areas(app: State<'_, Arc<App>>, areas: Vec<String>) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_helper_areas(&read_or_empty(&path)?, &areas).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 /// Starts a fresh conversation with the helper.
 #[tauri::command]
 pub fn new_chat(app: State<'_, Arc<App>>, scope: Option<String>) -> Result<()> {
@@ -860,8 +870,13 @@ pub fn install_claude() -> Result<()> {
 }
 
 #[tauri::command]
-pub fn start_focus(app: State<'_, Arc<App>>, minutes: i64, task: Option<String>) {
-    let session = peeps_core::focus::Session::new(chrono::Utc::now(), minutes, task);
+pub fn start_focus(
+    app: State<'_, Arc<App>>,
+    minutes: i64,
+    task: Option<String>,
+    area: Option<String>,
+) {
+    let session = peeps_core::focus::Session::new(chrono::Utc::now(), minutes, task).in_area(area);
     *app.focus() = Some(session);
     app.publish();
 }
