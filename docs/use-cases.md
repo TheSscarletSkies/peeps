@@ -117,7 +117,7 @@ Tested by `e2e/helper.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/frie
 ### UC26. Study together
 
 **When** Sara starts a focus session.
-**Then** on the desktop, once they're focusing too, their floating peep becomes a little wooden table: every peep in the session sits behind it with round glasses on, a laptop, a book or a cup of tea in front of them and a name tag on the table's edge. On Today, her peep pulls up a chair at their table, next to theirs, each with a little name tag; more friends make more seats. "Sara is studying, 18:00 left. Pull up a chair?" with Join starts their own session ending when hers does, so they break together. Saving someone a seat (the open book) invites them.
+**Then** on the desktop, once they're focusing too, their floating peep becomes a low round table with books, a pencil cup and sticky notes: everyone in the session sits around it on a coloured cushion, glasses on, holding a book or a laptop, each with a name tag. Up to six fit, the far side first. Each friend's peep keeps its own shape (bao, xiaolongbao, gyoza, mochi or onigiri), colour and accessory. On Today, the same table replaces their steamer, next to theirs, each with a little name tag; more friends make more seats. "Sara is studying, 18:00 left. Pull up a chair?" with Join starts their own session ending when hers does, so they break together. Saving someone a seat (the open book) invites them.
 
 Tested by `e2e/hub.e2e.ts`.
 

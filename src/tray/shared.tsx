@@ -106,6 +106,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
               heat={0}
               size={size}
               glasses
+              wear={look.wear}
             />
           ),
         };

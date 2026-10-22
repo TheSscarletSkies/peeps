@@ -24,7 +24,7 @@ import {
   type Resident,
 } from "./shared";
 import { useCloseOnLeave, useHeight } from "./useCard";
-import { DESK_HEIGHT, DeskScene, deskWidth } from "../friends/DeskScene";
+import { DeskScene, deskSize } from "../friends/DeskScene";
 import { giveFiles, useFileDrop } from "../life/drops";
 import { announceFed, onOpenChat, announcePat } from "../life/events";
 
@@ -88,8 +88,9 @@ export function FloatTray({
   );
   // Focusing with friends turns the pet into a little table everyone sits at.
   const together = snapshot.focus?.phase === "focus" && company.length > 0;
-  const tall = together ? Math.max(box, DESK_HEIGHT) : box;
-  const wide = together ? deskWidth(company.length + 1) : box;
+  const desk = deskSize(company.length + 1);
+  const tall = together ? Math.max(box, desk.height) : box;
+  const wide = together ? desk.width : box;
   const [openId, setOpenId] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const grab = useRef<{
