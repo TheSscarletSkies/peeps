@@ -169,11 +169,11 @@ body,
   transition: scale 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
 
-/* Every few seconds a resting pet does a little hop: crouch, spring up, squash on landing. */
+/* Now and then a resting pet does a small hop: a slight crouch, a lift, a soft landing. */
 .dumpling--chill .dumpling__body {
   animation:
     breathe 3.2s ease-in-out infinite,
-    idle-hop 8s ease-in-out var(--idle-delay, 0s) infinite;
+    idle-hop 14s ease-in-out var(--idle-delay, 0s) infinite;
 }
 
 .dumpling__shadow {
@@ -182,7 +182,7 @@ body,
 }
 
 .dumpling--chill .dumpling__shadow {
-  animation: shadow-hop 8s ease-in-out var(--idle-delay, 0s) infinite;
+  animation: shadow-hop 14s ease-in-out var(--idle-delay, 0s) infinite;
 }
 
 /* It perks up when the pointer comes near. */
@@ -1455,40 +1455,41 @@ body,
   }
 }
 
+/* The hop takes about 0.8s of each 14s loop. */
 @keyframes idle-hop {
   0%,
-  13%,
+  6%,
   100% {
     translate: 0 0;
     scale: 1 1;
   }
+  1.4% {
+    scale: 1.03 0.97;
+  }
   3% {
-    scale: 1.08 0.9;
+    translate: 0 -5%;
+    scale: 0.98 1.03;
   }
-  6.5% {
-    translate: 0 -14%;
-    scale: 0.94 1.08;
-  }
-  9.5% {
+  4.4% {
     translate: 0 0;
-    scale: 1.1 0.88;
+    scale: 1.04 0.96;
   }
-  11.5% {
-    scale: 0.97 1.03;
+  5.2% {
+    scale: 0.99 1.01;
   }
 }
 
 @keyframes shadow-hop {
   0%,
-  4%,
-  9.5%,
+  1.6%,
+  4.4%,
   100% {
     scale: 1;
     opacity: 1;
   }
-  6.5% {
-    scale: 0.75;
-    opacity: 0.6;
+  3% {
+    scale: 0.88;
+    opacity: 0.8;
   }
 }
 
