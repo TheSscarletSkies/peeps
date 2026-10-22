@@ -3,13 +3,45 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Run by hand: raises the version, tags it, and builds that tag.
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which part of the version goes up (0.2.0 → patch 0.2.1, minor 0.3.0, major 1.0.0)"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
 
 permissions:
   contents: write
 
 jobs:
+  version:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          version=$(node scripts/bump-version.mjs "$BUMP")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Version $version"
+          git tag "v$version"
+          git push origin HEAD:main "v$version"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: version
+    # Also runs for a pushed tag, when there is no version job to wait for.
+    if: ${{ !cancelled() && needs.version.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +57,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.version.outputs.tag || github.ref }}
       - name: Install Tauri system packages
         if: runner.os == 'Linux'
         run: |

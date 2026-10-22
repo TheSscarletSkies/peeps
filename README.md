@@ -87,7 +87,7 @@ npm run e2e            # each use case in docs/use-cases.md, in a real browser
 
 ## Releases and updates
 
-Pushing a `v*` tag builds every platform and publishes a GitHub release with `latest.json`, which installed copies read from `releases/latest/download/latest.json`. Releases are published straight away (not drafts or pre-releases), because `releases/latest` skips both.
+To release, run the Release workflow from the Actions tab and choose patch, minor or major. It raises the version in every file that carries it (`scripts/bump-version.mjs`), commits and tags it, then builds every platform and publishes a GitHub release with `latest.json`, which installed copies read from `releases/latest/download/latest.json`. Pushing a `v*` tag yourself builds that tag as it is. Releases are published straight away (not drafts or pre-releases), because `releases/latest` skips both.
 
 Update bundles must be signed, so the release workflow needs two repository secrets. Without `TAURI_SIGNING_PRIVATE_KEY` the build stops before uploading anything.
 
