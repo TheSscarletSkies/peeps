@@ -2929,14 +2929,14 @@ form.focus {
   display: flex;
 }
 
-.desk__cushion {
+/* A soft shadow on the floor, not a mat: one less shape and colour in the scene. */
+.desk__shadow {
   position: absolute;
-  bottom: -4%;
-  width: 116%;
-  height: 30%;
-  border: 1.4px solid #5a3522;
+  bottom: -5%;
+  width: 92%;
+  height: 16%;
   border-radius: 50%;
-  background: #efe1cb;
+  background: radial-gradient(closest-side, rgba(90, 53, 34, 0.2), transparent);
 }
 
 .desk__holding {

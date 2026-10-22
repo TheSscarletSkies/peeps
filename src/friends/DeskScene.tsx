@@ -215,7 +215,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
         data-arriving={arriving(seat.key) || undefined}
         style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: pet }}
       >
-        {spot.front && <span className="desk__cushion" />}
+        {spot.front && <span className="desk__shadow" />}
         <span className="desk__pet">{seat.pet(pet)}</span>
         <span className="desk__label">{seat.name}</span>
       </div>
