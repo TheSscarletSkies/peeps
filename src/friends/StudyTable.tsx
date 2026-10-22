@@ -42,7 +42,6 @@ export function StudyTable({
             {
               key: "you",
               name: you,
-              color: helper.color,
               pet: (size: number) => mine(size, true),
             },
             ...studying.map((friend) => {
@@ -50,7 +49,6 @@ export function StudyTable({
               return {
                 key: friend.code,
                 name: friend.name,
-                color: look.color,
                 pet: (size: number) => (
                   <Dumpling
                     seated

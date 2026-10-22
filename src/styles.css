@@ -2946,14 +2946,6 @@ form.focus {
   transform: translate(-50%, -50%);
 }
 
-.desk__hand {
-  position: absolute;
-  bottom: 18%;
-  border: 1.4px solid #5a3522;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
 /* A name bubble above the head: on hover, and by itself for a moment when someone sits down. */
 .desk__label {
   position: absolute;

@@ -218,13 +218,11 @@ export function FloatTray({
               {
                 key: HELPER,
                 name: snapshot.friends?.name || "You",
-                color: helper.color,
                 pet: (size: number) => helper.pet(size, true),
               },
               ...company.map((resident) => ({
                 key: resident.id,
                 name: resident.name,
-                color: resident.color,
                 pet: (size: number) => resident.pet(size, true),
               })),
             ]}

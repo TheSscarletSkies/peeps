@@ -59,7 +59,6 @@ export interface Resident {
   name: string;
   mood: Mood;
   urgent: boolean;
-  color: string;
   /** The pet at any size; seated at the study table it leaves its arms to the table. */
   pet: (size: number, seated?: boolean) => ReactNode;
 }
@@ -75,7 +74,6 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
       mood,
       // It interrupts for a permission or a reminder, never for its own to-dos.
       urgent: helper.mood === "needsYou" || waving,
-      color: helper.color,
       pet: (size: number, seated = false) => (
         <LivePet
           seated={seated}
@@ -101,7 +99,6 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           name: friend.name,
           mood: "working" as Mood,
           urgent: false,
-          color: look.color,
           pet: (size: number, seated = false) => (
             <Dumpling
               seated={seated}

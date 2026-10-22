@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { soft } from "../pets/tint";
-
 export interface Seat {
   key: string;
   name: string;
-  /** The pet's own colour, for its hands on the table. */
-  color: string;
-  /** The pet at this size, seated: no arms of its own, the table draws its hands. */
+  /** The pet at this size, seated: no arms, so it sits tucked in behind the table. */
   pet: (size: number) => ReactNode;
 }
 
@@ -208,7 +204,6 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
   const arriving = useArrivals(shown.map((seat) => seat.key));
   const pet = Math.round(width * (shown.length <= 2 ? 0.38 : 0.3));
   const thing = Math.round(pet * 0.5);
-  const hand = Math.max(7, Math.round(pet * 0.15));
 
   const person = (seat: Seat, index: number) => {
     const spot = layout[index];
@@ -227,17 +222,10 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
     );
   };
 
-  // Their things on the table, held between two small hands in the pet's own colour.
+  // What each of them is working on, on the table in front of them.
   const holding = (seat: Seat, index: number) => {
     const spot = layout[index];
     if (!spot) return null;
-    const handStyle = {
-      width: hand,
-      height: hand * 0.8,
-      background: soft(seat.color),
-    };
-    // Hands hold the sides of what they're working on, overlapping its edges.
-    const reach = -hand * 0.45;
     return (
       <div
         key={seat.key}
@@ -254,8 +242,6 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             cover={COVERS[index % COVERS.length] ?? "#F2CFCC"}
           />
         </svg>
-        <span className="desk__hand" style={{ ...handStyle, left: reach }} />
-        <span className="desk__hand" style={{ ...handStyle, right: reach }} />
       </div>
     );
   };
@@ -285,13 +271,10 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             fill="#EECDA3"
             opacity="0.6"
           />
-          {/* The middle: papers, a book stack, a pencil cup, a mug and a little plant. */}
+          {/* The middle: papers, a pencil cup, a mug and a little plant. */}
           <g stroke={INK} strokeWidth="1.3" strokeLinejoin="round">
             <path d="M52 56l26-6 7 15-26 6z" fill="#FFFBF4" />
             <path d="M118 68l25 4-3 13-25-4z" fill="#FFFBF4" />
-            <rect x="80" y="55" width="32" height="8" rx="2" fill="#F2CFCC" />
-            <rect x="82" y="48" width="29" height="8" rx="2" fill="#E3D3BA" />
-            <rect x="85" y="41" width="23" height="8" rx="2" fill="#D9E2CD" />
             <path d="M121 43h12l-1.5 14h-9z" fill="#F2CFCC" />
             <path
               d="M138 50h14v10a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4z"
