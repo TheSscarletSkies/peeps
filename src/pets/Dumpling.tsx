@@ -4,7 +4,7 @@ import type { Accessory } from "../life/season";
 import type { Mood, PetKind } from "../lib/types";
 import { limbsFor, type Hand, type Prop } from "./limbs";
 import shapes from "./shapes.json";
-import { edge, flushed, mix, vivid } from "./tint";
+import { edge, flushed, mix, soft } from "./tint";
 import { BASE, variantFor } from "./variant";
 
 interface Props {
@@ -161,9 +161,9 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
           className="dumpling__wear"
           transform={`translate(77 ${top + 8}) rotate(18)`}
         >
-          <path d="M0 0L-11-6.5q-3 6.5 0 13z" fill="#FF9FB5" {...OUTLINE} />
-          <path d="M0 0L11-6.5q3 6.5 0 13z" fill="#FF9FB5" {...OUTLINE} />
-          <circle r="3.4" fill="#FF7F9E" {...OUTLINE} />
+          <path d="M0 0L-11-6.5q-3 6.5 0 13z" fill="#F8C6D1" {...OUTLINE} />
+          <path d="M0 0L11-6.5q3 6.5 0 13z" fill="#F8C6D1" {...OUTLINE} />
+          <circle r="3.4" fill="#F2A9BA" {...OUTLINE} />
         </g>
       );
     case "beanie":
@@ -171,7 +171,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
         <g className="dumpling__wear">
           <path
             d={`M33 ${top + 16}Q33 ${top - 8} 60 ${top - 8}Q87 ${top - 8} 87 ${top + 16}z`}
-            fill="#9FD8C9"
+            fill="#CBE7DD"
             {...OUTLINE}
           />
           <path
@@ -187,7 +187,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="60"
             height="9"
             rx="4.5"
-            fill="#7FC7B5"
+            fill="#B3DACC"
             {...OUTLINE}
           />
           <circle cx="60" cy={top - 9} r="5" fill="#FFF8EF" {...OUTLINE} />
@@ -206,7 +206,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
           <path
             d={`M21 58Q21 ${top - 4} 60 ${top - 4}Q99 ${top - 4} 99 58`}
             fill="none"
-            stroke="#B9C2E6"
+            stroke="#D8DDF2"
             strokeWidth={3}
             strokeLinecap="round"
           />
@@ -216,7 +216,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="12"
             height="18"
             rx="6"
-            fill="#8E9BD6"
+            fill="#C3CBEC"
             {...OUTLINE}
           />
           <rect
@@ -225,7 +225,7 @@ function Dressed({ wear, top }: { wear: Wear; top: number }) {
             width="12"
             height="18"
             rx="6"
-            fill="#8E9BD6"
+            fill="#C3CBEC"
             {...OUTLINE}
           />
         </g>
@@ -239,7 +239,7 @@ function Glasses() {
     r: 7,
     fill: "none",
     stroke: "#4A2E22",
-    strokeWidth: 1.9,
+    strokeWidth: 1.3,
   };
   return (
     <g className="dumpling__glasses">
@@ -249,7 +249,7 @@ function Glasses() {
         d={`M${EL + 7} ${EY - 1}q${(ER - EL - 14) / 2} -3.4 ${ER - EL - 14} 0`}
         fill="none"
         stroke="#4A2E22"
-        strokeWidth={1.9}
+        strokeWidth={1.3}
         strokeLinecap="round"
       />
     </g>
@@ -646,11 +646,12 @@ export function Dumpling({
   const blush = (1 + heat * 0.7) * build.blush;
   // Stretch from the base of the pet so it always sits on the ground.
   const stretch = `translate(60 86) scale(${build.width} ${build.height * shape.tall}) translate(-60 -86)`;
-  // The outline is a warm brown nudged towards the pet's own colour, so a blue bun gets a navy edge.
-  const line = mix(edge(color), "#4A2614", 0.72);
+  // One warm brown outline for every pet, barely touched by its colour, so a table of peeps
+  // reads as one set rather than a rainbow of edges.
+  const line = mix(edge(color), "#5A3522", 0.88);
   const spread = 1 + build.eyeSpread / 30;
   const face = `${stretch} translate(60 ${shape.faceY}) scale(${spread} 1) translate(-60 0)`;
-  const skin = vivid(flushed(color, heat));
+  const skin = soft(flushed(color, heat));
   const limbs = limbsFor(look, kind);
 
   return (
@@ -699,7 +700,7 @@ export function Dumpling({
             {shape.decor && (
               <path
                 d={shape.decor}
-                fill="#2F4A3A"
+                fill="#6E8670"
                 clipPath={`url(#${id}clip)`}
               />
             )}

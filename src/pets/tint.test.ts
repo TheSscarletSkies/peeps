@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { edge, flushed, mix, vivid } from "./tint";
+import { flushed, mix, soft } from "./tint";
 
 describe("mix", () => {
   it("returns the ends of the range", () => {
@@ -30,20 +30,9 @@ describe("flushed", () => {
   });
 });
 
-describe("vivid", () => {
-  it("adds colour to a pastel without leaving its hue", () => {
-    const mint = vivid("#DDF5E7");
-    expect(mint).not.toBe("#DDF5E7");
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(mint.slice(i, i + 2), 16));
-    expect(g).toBeGreaterThan(r ?? 0);
-    expect(g).toBeGreaterThan(b ?? 0);
-    expect(vivid("#808080")).toBe("#808080");
-  });
-
-  it("gives a darker edge in the same family", () => {
-    const peach = edge("#FFD9C4");
-    const [r, , b] = [1, 3, 5].map((i) => parseInt(peach.slice(i, i + 2), 16));
-    expect(r).toBeGreaterThan(b ?? 0);
-    expect(r).toBeLessThan(200);
+describe("soft", () => {
+  it("lightens a pet's colour toward bun cream", () => {
+    expect(soft("#FFC9D6")).not.toBe("#FFC9D6");
+    expect(soft("#FFF7EC")).toBe("#fff7ec");
   });
 });

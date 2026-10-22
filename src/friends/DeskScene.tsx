@@ -53,12 +53,12 @@ const LAYOUTS: Spot[][] = [
 
 export const MAX_SEATS = LAYOUTS.length;
 const CUSHIONS = [
-  "#B9D7A4",
-  "#F6B8C4",
-  "#F7D88F",
-  "#A9C8EE",
-  "#D5C2F2",
-  "#F5C3A0",
+  "#D9E8CD",
+  "#F8D6DC",
+  "#F6E7BD",
+  "#CFDFF2",
+  "#E5DBF4",
+  "#F6DDCB",
 ];
 /** What each person is busy with: a book held up, a laptop, a notebook. */
 const BUSY: StickerKind[] = [
@@ -142,7 +142,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           width="12"
           height="34"
           rx="4"
-          fill="#B97E4C"
+          fill="#D2A276"
           stroke="#4A2614"
           strokeWidth="2"
         />
@@ -152,7 +152,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           width="12"
           height="34"
           rx="4"
-          fill="#B97E4C"
+          fill="#D2A276"
           stroke="#4A2614"
           strokeWidth="2"
         />
@@ -161,7 +161,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           cy="68"
           rx="92"
           ry="34"
-          fill="#B97E4C"
+          fill="#D2A276"
           stroke="#4A2614"
           strokeWidth="2.2"
         />
@@ -170,7 +170,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           cy="62"
           rx="92"
           ry="34"
-          fill="#D9A26A"
+          fill="#E8C091"
           stroke="#4A2614"
           strokeWidth="2.2"
         />
@@ -179,17 +179,17 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           cy="62"
           rx="70"
           ry="22"
-          fill="#E2B07C"
+          fill="#EECDA3"
           opacity="0.55"
         />
         {/* The middle of the table: papers, a book stack, a pencil cup and sticky notes. */}
         <g stroke="#4A2614" strokeWidth="1.4" strokeLinejoin="round">
           <path d="M58 52l24-6 6 14-24 6z" fill="#FFFDF7" />
           <path d="M120 66l22 4-3 12-22-4z" fill="#FFFDF7" />
-          <rect x="86" y="54" width="30" height="8" rx="2" fill="#E99AA6" />
-          <rect x="88" y="47" width="27" height="8" rx="2" fill="#7FA3D6" />
-          <rect x="90" y="41" width="22" height="7" rx="2" fill="#9CC48A" />
-          <path d="M124 44h12l-1.5 14h-9z" fill="#F9C9D2" />
+          <rect x="86" y="54" width="30" height="8" rx="2" fill="#F1C7CB" />
+          <rect x="88" y="47" width="27" height="8" rx="2" fill="#BED1EA" />
+          <rect x="90" y="41" width="22" height="7" rx="2" fill="#CCDFBF" />
+          <path d="M124 44h12l-1.5 14h-9z" fill="#F8DEE3" />
           <path
             d="M126 44l-2-9M130 44l1-11M133 44l3-8"
             stroke="#4A2614"
@@ -198,7 +198,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
           />
           <path
             d="M126 44l-2-9M130 44l1-11M133 44l3-8"
-            stroke="#F7D06A"
+            stroke="#F2D894"
             strokeWidth="1.2"
             strokeLinecap="round"
           />
@@ -208,7 +208,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             width="11"
             height="9"
             rx="1.5"
-            fill="#F7E37A"
+            fill="#F6EAB6"
             transform="rotate(-8 75 72)"
           />
           <rect
@@ -217,7 +217,7 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
             width="10"
             height="8"
             rx="1.5"
-            fill="#A9D8F0"
+            fill="#D0E7F3"
             transform="rotate(10 151 58)"
           />
         </g>
@@ -237,15 +237,15 @@ export function DeskScene({ seats }: { seats: Seat[] }) {
       <svg className="desk__sparkles" viewBox="0 0 100 100" aria-hidden="true">
         <path
           d="M14 10l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z"
-          fill="#F7D06A"
+          fill="#F2D894"
         />
         <path
           d="M88 18l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"
-          fill="#F7D06A"
+          fill="#F2D894"
         />
         <path
           d="M62 4l3 4M68 2l1 5M74 4l-2 4"
-          stroke="#F7D06A"
+          stroke="#F2D894"
           strokeWidth="1.6"
           strokeLinecap="round"
         />

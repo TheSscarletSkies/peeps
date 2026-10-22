@@ -67,24 +67,13 @@ function fromHsl([h, s, l]: [number, number, number]): string {
   );
 }
 
-/**
- * A pastel made a touch richer for drawing: more colour and a little less white, so pets read
- * as soft but vivid on light pages and dark ones. Greys stay grey.
- */
-export function vivid(color: string): string {
-  const [h, s, l] = toHsl(channels(color));
-  if (s < 0.05) return color;
-  // Near-white colours like cream stay soft; stronger pastels get a little more life.
-  const light = l > 0.9;
-  return fromHsl([
-    h,
-    Math.min(1, light ? s : s * 1.25 + 0.05),
-    Math.max(0, l - (light ? 0.01 : 0.04)),
-  ]);
-}
-
 /** The pet's own colour, much darker, for a soft edge that isn't a black line. */
 export function edge(color: string): string {
   const [h, s] = toHsl(channels(color));
   return fromHsl([h, Math.min(1, s * 0.6 + 0.2), 0.42]);
+}
+
+/** A pet's colour, lightened toward bun cream, so a table of peeps stays soft rather than loud. */
+export function soft(color: string): string {
+  return mix(color, "#FFF7EC", 0.4);
 }
