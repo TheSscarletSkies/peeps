@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use peeps_core::friends::{
-    self, Circle, FriendView, Heard, Incoming, Message, Reaction, HEARTBEAT,
+    self, Circle, FriendView, Heard, Incoming, Message, Reaction, Received, HEARTBEAT,
 };
 use peeps_core::paths;
 use serde::Serialize;
@@ -143,68 +143,46 @@ fn send(topic: &str, code: &str, message: &Message) -> Result<(), String> {
 }
 
 fn handle(app: &App, incoming: &Incoming) {
-    let Some(circle) = app.friends.circle() else {
+    let Some(mut circle) = app.friends.circle() else {
         return;
     };
-    let Some(code) = circle.code_for(&incoming.topic).map(str::to_owned) else {
+    let before = circle.clone();
+    let received = {
+        let mut heard = lock(&app.friends.heard);
+        circle.receive(&mut heard, incoming, Utc::now())
+    };
+    let Some(received) = received else {
         return;
     };
-    let Some(message) = friends::open(&code, &incoming.text) else {
-        return;
-    };
-    match message {
-        Message::Hello { code, name } => {
-            let mut circle = circle;
-            let before = circle.clone();
-            if circle.befriend(&code, &name) {
-                app.notify("A new friend", &format!("{name} added you on peeps."));
-            }
-            if circle != before {
-                let _ = app.friends.save(circle);
-            }
+    if circle != before {
+        let _ = app.friends.save(circle);
+    }
+    match received {
+        Received::NewFriend { name } => {
+            app.notify("A new friend", &format!("{name} added you on peeps."));
         }
-        Message::React {
-            code,
-            name,
+        Received::Reaction {
+            from,
             reaction,
+            line,
         } => {
-            // Only friends can poke you, and only in the moment.
-            let known = circle.friends.iter().any(|friend| friend.code == code);
-            if !known || !friends::fresh(incoming.at, Utc::now()) {
-                return;
-            }
-            let line = reaction.line(&name);
-            app.notify(&name, &line);
+            app.notify(&from, &line);
             app.emit(
                 REACTION_EVENT,
                 ReactionPayload {
-                    from: name,
+                    from,
                     reaction,
                     line,
                 },
             );
         }
-        Message::Status { name, focus_until } => {
-            lock(&app.friends.heard).insert(
-                code.clone(),
-                Heard {
-                    at: Some(incoming.at),
-                    focus_until,
-                },
-            );
-            let mut circle = circle;
-            circle.befriend(&code, &name);
-            if app.friends.circle().as_ref() != Some(&circle) {
-                let _ = app.friends.save(circle);
-            }
-        }
+        Received::Updated => {}
     }
     app.publish();
 }
 
 /// Streams every channel in one long request; reconnects when the friend list changes or the line drops.
 pub fn listen(app: Arc<App>) {
-    let mut since: Option<DateTime<Utc>> = None;
     let mut seen: HashSet<String> = HashSet::new();
     loop {
         let generation = app.friends.generation.load(Ordering::Relaxed);
@@ -212,10 +190,9 @@ pub fn listen(app: Arc<App>) {
             std::thread::sleep(Duration::from_secs(5));
             continue;
         };
-        let url = friends::stream_url(&circle.topics(), since);
+        let url = friends::stream_url(&friends::relay(), &circle.topics());
         let streamed = friends::stream(&url, |line| {
             if let Some(incoming) = friends::parse_line(line) {
-                since = Some(incoming.at);
                 if seen.insert(incoming.id.clone()) {
                     handle(&app, &incoming);
                 }
@@ -234,7 +211,7 @@ pub fn listen(app: Arc<App>) {
 /// Tells friends whether you are focusing: at once when it changes, and every few minutes to say you're here.
 pub async fn heartbeat(app: Arc<App>) {
     let mut interval = tokio::time::interval(Duration::from_secs(10));
-    let mut last: Option<(DateTime<Utc>, Option<DateTime<Utc>>)> = None;
+    let mut last: Option<(DateTime<Utc>, Option<DateTime<Utc>>, u64)> = None;
     loop {
         interval.tick().await;
         let Some(circle) = app.friends.circle() else {
@@ -247,9 +224,13 @@ pub async fn heartbeat(app: Arc<App>) {
             .and_then(|session| session.view(now))
             .filter(|view| view.phase == peeps_core::focus::Phase::Focus)
             .map(|view| view.ends_at);
+        // A new friend hears your name and focus at once, not at the next heartbeat.
+        let generation = app.friends.generation.load(Ordering::Relaxed);
         let due = match last {
             None => true,
-            Some((at, until)) => until != focus_until || now - at >= HEARTBEAT,
+            Some((at, until, seen)) => {
+                until != focus_until || seen != generation || now - at >= HEARTBEAT
+            }
         };
         if !due {
             continue;
@@ -262,7 +243,7 @@ pub async fn heartbeat(app: Arc<App>) {
         let code = circle.code.clone();
         let sent = tokio::task::spawn_blocking(move || send(&topic, &code, &message)).await;
         if matches!(sent, Ok(Ok(()))) {
-            last = Some((now, focus_until));
+            last = Some((now, focus_until, generation));
         }
     }
 }

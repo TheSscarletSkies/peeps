@@ -241,9 +241,18 @@ pub fn parse_line(line: &str) -> Option<Incoming> {
 }
 
 /// The address to stream every channel from, picking up just after `since`.
-pub fn stream_url(topics: &[String], since: Option<DateTime<Utc>>) -> String {
-    let since = since.map_or_else(|| "15m".to_owned(), |at| at.timestamp().to_string());
-    format!("{RELAY}/{}/json?since={since}", topics.join(","))
+/// Every reconnect asks for the last quarter hour: a new friend's status from before you started
+/// listening still arrives, and anything already handled is skipped by its id.
+pub fn stream_url(relay: &str, topics: &[String]) -> String {
+    format!("{relay}/{}/json?since=15m", topics.join(","))
+}
+
+/// ntfy.sh, unless `PEEPS_RELAY` points at your own relay.
+pub fn relay() -> String {
+    std::env::var("PEEPS_RELAY")
+        .ok()
+        .filter(|url| url.starts_with("http"))
+        .unwrap_or_else(|| RELAY.to_owned())
 }
 
 /// A reaction is a moment; one that arrives long after it was sent, say after a laptop slept, is skipped.
@@ -260,10 +269,10 @@ fn agent(read_timeout: std::time::Duration) -> ureq::Agent {
 
 /// Seals a message with `code` and posts it to a channel.
 pub fn post(topic: &str, code: &str, message: &Message) -> Result<(), String> {
-    post_to(RELAY, topic, code, message)
+    post_to(&relay(), topic, code, message)
 }
 
-fn post_to(relay: &str, topic: &str, code: &str, message: &Message) -> Result<(), String> {
+pub fn post_to(relay: &str, topic: &str, code: &str, message: &Message) -> Result<(), String> {
     agent(std::time::Duration::from_secs(10))
         .post(&format!("{relay}/{topic}"))
         .send_string(&seal(code, message))
@@ -288,7 +297,79 @@ pub fn stream(url: &str, mut keep_going: impl FnMut(&str) -> bool) -> Result<(),
     Ok(())
 }
 
+/// What a message meant, for the app to act on.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Received {
+    /// Someone added your code; they are now a friend too.
+    NewFriend { name: String },
+    Reaction {
+        from: String,
+        reaction: Reaction,
+        line: String,
+    },
+    /// A friend's name or focus changed what the screen shows.
+    Updated,
+}
+
 impl Circle {
+    /// Opens one message from the relay and applies it. None for noise, strangers and stale pokes.
+    pub fn receive(
+        &mut self,
+        heard: &mut std::collections::HashMap<String, Heard>,
+        incoming: &Incoming,
+        now: DateTime<Utc>,
+    ) -> Option<Received> {
+        let key = self.code_for(&incoming.topic)?.to_owned();
+        match open(&key, &incoming.text)? {
+            Message::Hello { code, name } => {
+                if key != self.code {
+                    return None;
+                }
+                let before = self.clone();
+                let new = self.befriend(&code, &name);
+                if new {
+                    Some(Received::NewFriend { name })
+                } else {
+                    (*self != before).then_some(Received::Updated)
+                }
+            }
+            Message::React {
+                code,
+                name,
+                reaction,
+            } => {
+                // Only friends can poke you, and only in the moment.
+                let known = self.friends.iter().any(|friend| friend.code == code);
+                (key == self.code && known && fresh(incoming.at, now)).then(|| Received::Reaction {
+                    line: reaction.line(&name),
+                    from: name,
+                    reaction,
+                })
+            }
+            Message::Status { name, focus_until } => {
+                // A status is only trusted on the channel of the friend it describes.
+                if key == self.code {
+                    return None;
+                }
+                let newer = heard
+                    .get(&key)
+                    .and_then(|seen| seen.at)
+                    .is_none_or(|at| at <= incoming.at);
+                if newer {
+                    heard.insert(
+                        key.clone(),
+                        Heard {
+                            at: Some(incoming.at),
+                            focus_until,
+                        },
+                    );
+                }
+                self.befriend(&key, &name);
+                Some(Received::Updated)
+            }
+        }
+    }
+
     pub fn new(name: &str) -> Self {
         Self {
             code: new_code(),
@@ -408,7 +489,7 @@ mod tests {
         assert_eq!(got.topic, "peeps-ab");
         assert_eq!(got.text, "c2VhbGVk");
         assert_eq!(parse_line("garbage"), None);
-        let url = stream_url(&["a".into(), "b".into()], None);
+        let url = stream_url(RELAY, &["a".into(), "b".into()]);
         assert_eq!(url, "https://ntfy.sh/a,b/json?since=15m");
         let now = got.at;
         assert!(fresh(now, now + TimeDelta::seconds(30)));
