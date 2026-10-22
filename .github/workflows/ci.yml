@@ -9,6 +9,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Checks only read the code; a pull request from a fork can't use the token to change anything.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

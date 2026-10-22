@@ -77,6 +77,22 @@ pub struct Circle {
     pub code: String,
     pub name: String,
     pub friends: Vec<Friend>,
+    /// Codes removed on purpose; a hello from one of them no longer adds it back.
+    #[serde(default)]
+    pub blocked: Vec<String>,
+}
+
+const MAX_FRIENDS: usize = 50;
+const MAX_NAME: usize = 32;
+
+/// A name from someone else's computer: no control characters, short enough for a name tag.
+pub fn clean_name(name: &str) -> String {
+    name.chars()
+        .filter(|c| !c.is_control())
+        .take(MAX_NAME)
+        .collect::<String>()
+        .trim()
+        .to_owned()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -375,18 +391,24 @@ impl Circle {
             code: new_code(),
             name: name.to_owned(),
             friends: Vec::new(),
+            blocked: Vec::new(),
         }
     }
 
     /// Adds a friend once; a later hello only updates their name.
     pub fn befriend(&mut self, code: &str, name: &str) -> bool {
-        if code == self.code {
+        let name = clean_name(name);
+        let name = name.as_str();
+        if code == self.code || normalize(code).as_deref() != Some(code) {
             return false;
         }
         if let Some(friend) = self.friends.iter_mut().find(|f| f.code == code) {
             if !name.is_empty() {
                 friend.name = name.to_owned();
             }
+            return false;
+        }
+        if self.blocked.iter().any(|b| b == code) || self.friends.len() >= MAX_FRIENDS {
             return false;
         }
         self.friends.push(Friend {
@@ -398,6 +420,15 @@ impl Circle {
 
     pub fn unfriend(&mut self, code: &str) {
         self.friends.retain(|f| f.code != code);
+        if !self.blocked.iter().any(|b| b == code) {
+            self.blocked.push(code.to_owned());
+        }
+    }
+
+    /// Adding a code by hand always works, even one removed before.
+    pub fn add_by_hand(&mut self, code: &str) -> bool {
+        self.blocked.retain(|b| b != code);
+        self.befriend(code, "")
     }
 
     /// Every channel to listen on: your inbox and each friend's status.
@@ -548,6 +579,23 @@ mod tests {
         .unwrap();
         relay.join().unwrap();
         assert_eq!(lines, ["{\"event\":\"open\"}", "line two"]);
+    }
+
+    #[test]
+    fn removed_friends_stay_removed_and_names_stay_tidy() {
+        let mut circle = Circle::new("Me");
+        assert!(circle.befriend(
+            "ZYXWV-UTSRQ",
+            "Sara\u{7}\nwith a very very very long name indeed"
+        ));
+        assert_eq!(circle.friends[0].name, "Sarawith a very very very long n");
+        circle.unfriend("ZYXWV-UTSRQ");
+        assert!(
+            !circle.befriend("ZYXWV-UTSRQ", "Sara"),
+            "a hello can't re-add a removed code"
+        );
+        assert!(circle.add_by_hand("ZYXWV-UTSRQ"));
+        assert!(!circle.befriend("not a code", "x"));
     }
 
     #[test]

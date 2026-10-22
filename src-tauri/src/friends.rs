@@ -112,7 +112,7 @@ impl Friends {
         if code == circle.code {
             return Err("That's your own code. Send it to a friend instead.".into());
         }
-        circle.befriend(&code, "");
+        circle.add_by_hand(&code);
         let hello = Message::Hello {
             code: circle.code.clone(),
             name: circle.name.clone(),
