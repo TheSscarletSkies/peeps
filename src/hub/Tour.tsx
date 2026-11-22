@@ -27,7 +27,7 @@ export const STEPS: TourStep[] = [
     target: "chat",
     page: "chat",
     title: "Chat",
-    text: "“What's on today?” or “remind me to call mum at 6”. I use your own Claude and remember what you tell me about you.",
+    text: "“What's on today?” or “remind me to call mum at 6”. I use your own Claude or ChatGPT, picked in Settings, and remember what you tell me about you.",
   },
   {
     target: "nudges",

@@ -62,6 +62,7 @@ pub fn run() {
             commands::read_profile,
             commands::install_claude,
             commands::sign_in_claude,
+            commands::set_chat_agent,
             commands::check_claude,
             commands::write_profile,
             commands::set_sync_folder,

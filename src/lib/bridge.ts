@@ -70,18 +70,30 @@ export interface HooksStatus {
   installed: boolean;
   settingsPath: string;
   command: string;
-  /** Where Claude Code was found; null when peeps can't see it on this computer. */
+  /** Where chat's service was found; null when peeps can't see it on this computer. */
   agent: string | null;
-  /** What to paste in a terminal to install Claude Code, if the button can't open one. */
+  /** Which service chat talks through. */
+  chat: ChatAgent;
+  /** What to paste in a terminal to install it, if the button can't open one. */
   installCommand: string;
 }
+
+/** Claude through Claude Code, or ChatGPT through Codex; "other" is a command set by hand. */
+export type ChatAgent = "claude" | "codex" | "other";
+
+const INSTALL: Record<ChatAgent, string> = {
+  claude: "curl -fsSL https://claude.ai/install.sh | bash",
+  codex: "npm install -g @openai/codex",
+  other: "",
+};
 
 const demoHooks: HooksStatus = {
   installed: false,
   settingsPath: "~/.claude/settings.json",
   command: "peeps-hook",
   agent: "/usr/local/bin/claude",
-  installCommand: "curl -fsSL https://claude.ai/install.sh | bash",
+  chat: "claude",
+  installCommand: INSTALL.claude,
 };
 
 /** The preview shows a computer without Claude Code with `?claude=missing`. */
@@ -89,7 +101,19 @@ export function hooksStatus(): Promise<HooksStatus> {
   if (inApp()) return invoke<HooksStatus>("hooks_status");
   const missing =
     new URLSearchParams(window.location.search).get("claude") === "missing";
-  return Promise.resolve(missing ? { ...demoHooks, agent: null } : demoHooks);
+  return Promise.resolve(
+    missing ? { ...demoHooks, agent: null } : { ...demoHooks },
+  );
+}
+
+/** Switches chat between Claude and ChatGPT. */
+export function setChatAgent(agent: ChatAgent): Promise<void> {
+  if (inApp()) return invoke("set_chat_agent", { agent }).then(() => undefined);
+  demoHooks.chat = agent;
+  demoHooks.installCommand = INSTALL[agent];
+  demoHooks.agent =
+    agent === "codex" ? "/opt/homebrew/bin/codex" : "/usr/local/bin/claude";
+  return Promise.resolve();
 }
 
 export function installHooks(): Promise<HooksStatus> {

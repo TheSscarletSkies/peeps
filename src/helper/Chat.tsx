@@ -39,7 +39,7 @@ export function Chat({
       starters={knowsYou ? STARTERS : [GET_TO_KNOW, ...STARTERS.slice(0, 2)]}
       intro={
         knowsYou
-          ? "Ask anything. I use your own Claude, with your connectors, and check with you before doing anything that leaves your computer."
+          ? `Ask anything. I use your own ${helper.service === "codex" ? "ChatGPT" : "Claude"}, and check with you before doing anything that leaves your computer.`
           : "Hi! I don't know you yet. Tap “Get to know me” and I'll ask a few quick questions, or just ask me anything."
       }
       agent={helper}
@@ -234,7 +234,8 @@ export function Conversation({
         </div>
       )}
 
-      {picking ? (
+      {/* Haiku, Sonnet and Opus are Claude's; ChatGPT keeps its own default. */}
+      {agent.service !== "claude" ? null : picking ? (
         <AgentPicker helper={agent} onDone={() => setPicking(false)} />
       ) : (
         <button

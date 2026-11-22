@@ -121,6 +121,13 @@ Tested by `e2e/helper.e2e.ts`, `src/friends/look.test.ts`, `crates/core/src/frie
 
 Tested by `e2e/hub.e2e.ts`.
 
+### UC31. ChatGPT instead of Claude
+
+**When** they have ChatGPT, or no paid Claude plan.
+**Then** Settings lets them pick Claude or ChatGPT for chat. ChatGPT goes through OpenAI's Codex, signed in with their ChatGPT account, free ones included within its usage limit. Install, Check again and Sign in again work the same for both, and errors say what to do. Claude's model picker only shows for Claude.
+
+Tested by `e2e/hub.e2e.ts`, `crates/core/src/chat.rs`, `crates/core/src/install.rs`, `crates/core/src/config_edit.rs`.
+
 ### UC30. Their own look
 
 **When** they want their peep to be recognisably theirs.

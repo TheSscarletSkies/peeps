@@ -204,11 +204,15 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     let base = chat::with_agent(
         &config.helper.chat_command,
         // Effort is a setting of the larger models, so picking one keeps Claude's own default.
-        config.helper.model.as_deref().or(config
+        config
             .helper
-            .effort
-            .is_none()
-            .then_some(chat::QUICK_MODEL)),
+            .model
+            .as_deref()
+            .or(if config.helper.effort.is_none() {
+                chat::quick_model(&config.helper.chat_command)
+            } else {
+                None
+            }),
         config.helper.effort.as_deref(),
     );
     // Without the hook binary the helper can still talk, just not act.
@@ -224,7 +228,7 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
 
     let ask = |session: Option<String>| {
         let command = chat::command(&base, session.as_deref(), &context);
-        let prompt = text.to_owned();
+        let prompt = chat::prompt(&base, &context, text);
         let dir = dir.clone();
         async move {
             tauri::async_runtime::spawn_blocking(move || {
@@ -254,10 +258,12 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     Ok(reply.text)
 }
 
-/// Sends Claude one tiny message the way chat does, so Settings says Connected only when it answers.
+/// Sends chat's service one tiny message the way chat does, so Settings says Connected only when it
+/// answers.
 pub async fn check(app: &Arc<App>) -> Result<()> {
     let config = app.config();
-    let base = chat::with_agent(&config.helper.chat_command, Some(chat::QUICK_MODEL), None);
+    let quick = chat::quick_model(&config.helper.chat_command);
+    let base = chat::with_agent(&config.helper.chat_command, quick, None);
     let base = match crate::commands::hook_command() {
         Ok(hook) => chat::with_tools(&base, &hook),
         Err(_) => base,

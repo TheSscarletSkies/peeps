@@ -133,7 +133,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
           {page === "chat" && (
             <Section
               title={`Chat with ${helper.name}`}
-              lead="Talks to your own Claude and remembers what you tell it about you. Drop a file on it and it reads it."
+              lead="Talks to your own Claude or ChatGPT and remembers what you tell it about you. Drop a file on it and it reads it."
             >
               <div className="card ask">
                 <Chat

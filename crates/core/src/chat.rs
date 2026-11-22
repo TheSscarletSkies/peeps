@@ -37,9 +37,123 @@ struct ClaudeResult {
     is_error: bool,
 }
 
-/// Reads Claude Code's `--output-format json` result, or plain text from any other agent.
+/// Which agent chat talks through, told apart by the program in the command.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Agent {
+    /// Claude Code, on a Claude account.
+    #[default]
+    Claude,
+    /// OpenAI's Codex, on a ChatGPT account, free ones included.
+    Codex,
+    /// Any other command the user set up by hand.
+    Other,
+}
+
+pub fn agent(base: &[String]) -> Agent {
+    let stem = base
+        .first()
+        .and_then(|program| Path::new(program).file_stem())
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("");
+    match stem {
+        "claude" => Agent::Claude,
+        "codex" => Agent::Codex,
+        _ => Agent::Other,
+    }
+}
+
+/// The command chat starts from for each agent. Codex reads the prompt from stdin (`-`), prints
+/// JSON events, and may only read files: peeps' own tools are how it changes anything.
+pub fn default_command(agent: Agent) -> Vec<String> {
+    let words: &[&str] = match agent {
+        Agent::Codex => &[
+            "codex",
+            "exec",
+            "--json",
+            "--skip-git-repo-check",
+            "--sandbox",
+            "read-only",
+            "-",
+        ],
+        Agent::Claude | Agent::Other => &["claude", "-p", "--output-format", "json"],
+    };
+    words.iter().map(|word| (*word).to_owned()).collect()
+}
+
+/// The model chat uses until the user picks one: Claude's quick one; Codex keeps its own default.
+pub fn quick_model(base: &[String]) -> Option<&'static str> {
+    (agent(base) == Agent::Claude).then_some(QUICK_MODEL)
+}
+
+/// Codex has no system prompt to add to, so the helper's context goes in front of the message.
+pub fn prompt(base: &[String], context: &str, text: &str) -> String {
+    if agent(base) == Agent::Codex && !context.is_empty() {
+        format!("{context}\n\n---\n\n{text}")
+    } else {
+        text.to_owned()
+    }
+}
+
+/// Codex's `--json` output: one event per line. The thread id resumes the conversation, and the
+/// last agent message is the reply.
+fn parse_codex(stdout: &str) -> Option<Result<Reply, String>> {
+    let mut seen = false;
+    let mut session = None;
+    let mut text = None;
+    let mut failed = None;
+    for line in stdout.lines() {
+        let Ok(event) = serde_json::from_str::<serde_json::Value>(line.trim()) else {
+            continue;
+        };
+        let Some(kind) = event.get("type").and_then(|kind| kind.as_str()) else {
+            continue;
+        };
+        // Claude Code's single result is also typed ("result"); only Codex's events count here.
+        if !(kind.starts_with("thread.")
+            || kind.starts_with("turn.")
+            || kind.starts_with("item.")
+            || kind == "error")
+        {
+            continue;
+        }
+        seen = true;
+        match kind {
+            "thread.started" => {
+                session = event["thread_id"].as_str().map(str::to_owned);
+            }
+            "item.completed" if event["item"]["type"] == "agent_message" => {
+                text = event["item"]["text"].as_str().map(str::to_owned);
+            }
+            "turn.failed" | "error" => {
+                failed = event["error"]["message"]
+                    .as_str()
+                    .or_else(|| event["message"].as_str())
+                    .map(str::to_owned);
+            }
+            _ => {}
+        }
+    }
+    if !seen {
+        return None;
+    }
+    Some(match (text, failed) {
+        (Some(text), _) => Ok(Reply {
+            text: text.trim().to_owned(),
+            session,
+        }),
+        (None, Some(error)) => Err(error),
+        (None, None) => Err("the agent returned nothing".to_owned()),
+    })
+}
+
+/// Reads Claude Code's `--output-format json` result, Codex's JSON events, or plain text from any
+/// other agent.
 pub fn parse_reply(stdout: &str) -> Result<Reply, String> {
     let trimmed = stdout.trim();
+    if let Some(reply) = parse_codex(trimmed) {
+        return reply;
+    }
     match serde_json::from_str::<ClaudeResult>(trimmed) {
         Ok(result) if result.is_error => Err(result
             .result
@@ -59,29 +173,37 @@ pub fn parse_reply(stdout: &str) -> Result<Reply, String> {
     }
 }
 
-fn is_claude(base: &[String]) -> bool {
-    base.first().is_some_and(|program| {
-        Path::new(program)
-            .file_stem()
-            .is_some_and(|stem| stem == "claude")
-    })
-}
-
 /// Adds the chosen model and effort right after the program, so a trailing `{prompt}` stays last.
 /// Other agents have their own flags and are left as configured.
 pub fn with_agent(base: &[String], model: Option<&str>, effort: Option<&str>) -> Vec<String> {
     let mut command = base.to_vec();
-    if !is_claude(base) {
-        return command;
-    }
     let mut flags = Vec::new();
-    if let Some(model) = model {
-        flags.extend(["--model".to_owned(), model.to_owned()]);
+    match agent(base) {
+        Agent::Claude => {
+            if let Some(model) = model {
+                flags.extend(["--model".to_owned(), model.to_owned()]);
+            }
+            if let Some(effort) = effort {
+                flags.extend(["--effort".to_owned(), effort.to_owned()]);
+            }
+            command.splice(1..1, flags);
+        }
+        // Codex's options go after `exec` and before the prompt.
+        Agent::Codex => {
+            if let Some(model) = model {
+                flags.extend(["-m".to_owned(), model.to_owned()]);
+            }
+            if let Some(effort) = effort {
+                flags.extend([
+                    "-c".to_owned(),
+                    format!("model_reasoning_effort={effort:?}"),
+                ]);
+            }
+            let at = command.len().min(2);
+            command.splice(at..at, flags);
+        }
+        Agent::Other => {}
     }
-    if let Some(effort) = effort {
-        flags.extend(["--effort".to_owned(), effort.to_owned()]);
-    }
-    command.splice(1..1, flags);
     command
 }
 
@@ -93,22 +215,37 @@ pub const QUICK_MODEL: &str = "haiku";
 /// connector the user has set up in Claude Code made each reply wait for all of them.
 pub fn with_tools(base: &[String], hook: &str) -> Vec<String> {
     let mut command = base.to_vec();
-    if !is_claude(base) {
-        return command;
+    match agent(base) {
+        Agent::Claude => {
+            let config = serde_json::json!({
+                "mcpServers": { "peeps": { "command": hook, "args": ["mcp"] } }
+            });
+            command.splice(
+                1..1,
+                [
+                    "--mcp-config".to_owned(),
+                    config.to_string(),
+                    "--strict-mcp-config".to_owned(),
+                    "--allowedTools".to_owned(),
+                    "mcp__peeps".to_owned(),
+                ],
+            );
+        }
+        // Codex takes config overrides as TOML values; a JSON string is a valid TOML string.
+        Agent::Codex => {
+            let at = command.len().min(2);
+            command.splice(
+                at..at,
+                [
+                    "-c".to_owned(),
+                    format!("mcp_servers.peeps.command={}", serde_json::json!(hook)),
+                    "-c".to_owned(),
+                    "mcp_servers.peeps.args=[\"mcp\"]".to_owned(),
+                ],
+            );
+        }
+        Agent::Other => {}
     }
-    let config = serde_json::json!({
-        "mcpServers": { "peeps": { "command": hook, "args": ["mcp"] } }
-    });
-    command.splice(
-        1..1,
-        [
-            "--mcp-config".to_owned(),
-            config.to_string(),
-            "--strict-mcp-config".to_owned(),
-            "--allowedTools".to_owned(),
-            "mcp__peeps".to_owned(),
-        ],
-    );
     command
 }
 
@@ -122,18 +259,32 @@ pub fn resume_today(
     session.filter(|_| last_message.is_some_and(|at| at >= start_of_today))
 }
 
-/// The command for one turn: Claude Code resumes the conversation and gets the helper's context.
+/// The command for one turn: the agent resumes the conversation, and Claude Code also gets the
+/// helper's context (Codex gets it in the prompt, see [`prompt`]).
 pub fn command(base: &[String], session: Option<&str>, context: &str) -> Vec<String> {
     let mut command = base.to_vec();
-    if is_claude(base) {
-        if let Some(session) = session {
-            command.push("--resume".to_owned());
-            command.push(session.to_owned());
+    match agent(base) {
+        Agent::Claude => {
+            if let Some(session) = session {
+                command.push("--resume".to_owned());
+                command.push(session.to_owned());
+            }
+            if !context.is_empty() {
+                command.push("--append-system-prompt".to_owned());
+                command.push(context.to_owned());
+            }
         }
-        if !context.is_empty() {
-            command.push("--append-system-prompt".to_owned());
-            command.push(context.to_owned());
+        // `codex exec [options] resume <id> -`: the subcommand goes after every option.
+        Agent::Codex => {
+            if let Some(session) = session {
+                let at = command
+                    .iter()
+                    .rposition(|word| word == "-")
+                    .unwrap_or(command.len());
+                command.splice(at..at, ["resume".to_owned(), session.to_owned()]);
+            }
         }
+        Agent::Other => {}
     }
     command
 }
@@ -353,7 +504,7 @@ mod tests {
             &turn[4..],
             &args(&["--resume", "abc", "--append-system-prompt", "ctx"])[..]
         );
-        let other = args(&["codex", "exec"]);
+        let other = args(&["ollama", "run"]);
         assert_eq!(command(&other, Some("abc"), "ctx"), other);
     }
 
@@ -365,7 +516,7 @@ mod tests {
             args(&["claude", "--model", "opus", "--effort", "high", "-p", "{prompt}"])
         );
         assert_eq!(with_agent(&plain, None, None), plain);
-        let other = args(&["codex", "exec"]);
+        let other = args(&["ollama", "run"]);
         assert_eq!(with_agent(&other, Some("opus"), None), other);
     }
 
@@ -381,7 +532,7 @@ mod tests {
             &args(&["--strict-mcp-config", "--allowedTools", "mcp__peeps"])[..]
         );
         assert_eq!(&with[6..], &chat[1..]);
-        assert_eq!(with_tools(&args(&["codex"]), "/x"), args(&["codex"]));
+        assert_eq!(with_tools(&args(&["ollama"]), "/x"), args(&["ollama"]));
     }
 
     #[test]
@@ -443,5 +594,73 @@ mod tests {
         // Each product keeps its own conversation.
         assert_eq!(store.recent("lantern", 10).unwrap()[0].text, "pricing?");
         assert_eq!(store.session("lantern").unwrap().as_deref(), Some("f"));
+    }
+
+    fn codex() -> Vec<String> {
+        default_command(Agent::Codex)
+    }
+
+    #[test]
+    fn tells_agents_apart() {
+        assert_eq!(agent(&default_command(Agent::Claude)), Agent::Claude);
+        assert_eq!(agent(&codex()), Agent::Codex);
+        assert_eq!(agent(&["/opt/homebrew/bin/codex".to_owned()]), Agent::Codex);
+        assert_eq!(agent(&["ollama".to_owned()]), Agent::Other);
+        assert_eq!(quick_model(&codex()), None);
+        assert_eq!(
+            quick_model(&default_command(Agent::Claude)),
+            Some(QUICK_MODEL)
+        );
+    }
+
+    #[test]
+    fn builds_a_codex_turn_with_options_before_the_prompt() {
+        let base = with_tools(
+            &with_agent(&codex(), Some("gpt-5"), Some("low")),
+            "/x/peeps-hook",
+        );
+        let turn = command(&base, Some("t-1"), "today: gym");
+        assert_eq!(&turn[..2], ["codex", "exec"]);
+        assert_eq!(turn.last().map(String::as_str), Some("-"));
+        let resume = turn.iter().position(|word| word == "resume").unwrap();
+        assert_eq!(turn[resume + 1], "t-1");
+        for option in ["-m", "--json", "-c"] {
+            let at = turn.iter().position(|word| word == option).unwrap();
+            assert!(at < resume, "{option} must come before resume");
+        }
+        assert!(turn.contains(&"mcp_servers.peeps.command=\"/x/peeps-hook\"".to_owned()));
+        assert!(turn.contains(&"model_reasoning_effort=\"low\"".to_owned()));
+        assert!(!turn.iter().any(|word| word.contains("today: gym")));
+        assert_eq!(prompt(&base, "today: gym", "hi"), "today: gym\n\n---\n\nhi");
+        assert_eq!(
+            prompt(&default_command(Agent::Claude), "today: gym", "hi"),
+            "hi"
+        );
+    }
+
+    #[test]
+    fn reads_codex_events() {
+        let events = [
+            r#"{"type":"thread.started","thread_id":"t-9"}"#,
+            r#"{"type":"turn.started"}"#,
+            r#"{"type":"item.completed","item":{"id":"1","type":"reasoning","text":"thinking"}}"#,
+            r#"{"type":"item.completed","item":{"id":"2","type":"agent_message","text":"Gym is at 6."}}"#,
+            r#"{"type":"turn.completed","usage":{"input_tokens":10}}"#,
+        ]
+        .join("\n");
+        assert_eq!(
+            parse_reply(&events).unwrap(),
+            Reply {
+                text: "Gym is at 6.".into(),
+                session: Some("t-9".into()),
+            }
+        );
+        let failed =
+            r#"{"type":"turn.failed","error":{"message":"Please log in with codex login"}}"#;
+        assert_eq!(
+            parse_reply(failed).unwrap_err(),
+            "Please log in with codex login"
+        );
+        assert_eq!(parse_reply("plain words").unwrap().text, "plain words");
     }
 }

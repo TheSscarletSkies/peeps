@@ -137,6 +137,8 @@ export interface Helper {
   /** The model and effort the user picked; null means the agent's own default. */
   model: string | null;
   effort: string | null;
+  /** Which service chat talks through. */
+  service: "claude" | "codex" | "other";
 }
 
 export interface ChatMessage {

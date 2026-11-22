@@ -35,6 +35,8 @@ pub struct HelperView {
     /// The model and effort the user picked, if any.
     pub model: Option<String>,
     pub effort: Option<String>,
+    /// Which service chat talks through: Claude or ChatGPT.
+    pub service: crate::chat::Agent,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -150,6 +152,7 @@ pub fn view(inputs: HelperInputs<'_>) -> HelperView {
         permission: inputs.permission,
         model: inputs.config.model.clone(),
         effort: inputs.config.effort.clone(),
+        service: crate::chat::agent(&inputs.config.chat_command),
     }
 }
 

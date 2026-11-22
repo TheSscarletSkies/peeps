@@ -82,13 +82,26 @@ test("UC16: devices can share a sync folder without an account", async ({
 test("UC14: without Claude Code, one click installs it", async ({ page }) => {
   await page.goto("/?view=home&claude=missing");
   await page.getByRole("button", { name: "Settings" }).click();
-  await expect(page.getByText(/Chat needs Claude Code/)).toBeVisible();
+  await expect(page.getByText(/One click installs Claude Code/)).toBeVisible();
   await page.getByRole("button", { name: "Install Claude Code" }).click();
   await expect(page.getByText(/A window opened/)).toBeVisible();
   await page.getByText("Or paste this into a terminal yourself").click();
   await expect(page.locator(".install__command code")).toHaveText(
     "curl -fsSL https://claude.ai/install.sh | bash",
   );
+});
+
+test("UC31: chat can use ChatGPT instead, free accounts included", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  const service = page.getByRole("radiogroup", { name: "Chat with" });
+  await expect(service.getByRole("radio", { name: "Claude" })).toBeChecked();
+  await expect(page.getByText(/Pick ChatGPT/)).toBeVisible();
+  await service.getByRole("radio", { name: "ChatGPT" }).click();
+  await expect(service.getByRole("radio", { name: "ChatGPT" })).toBeChecked();
+  await expect(page.getByText(/Free accounts work/)).toBeVisible();
+  await expect(page.getByText("Connected")).toBeVisible();
 });
 
 test("UC29: the preview has no app to update, so Settings offers none", async ({

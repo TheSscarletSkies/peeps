@@ -202,6 +202,27 @@ pub fn set_helper_areas(text: &str, areas: &[String]) -> Result<String, EditErro
     Ok(updated)
 }
 
+/// Switches chat to Claude or ChatGPT. Model and effort are each service's own names, so they
+/// are cleared and the new one starts on its default.
+pub fn set_helper_chat(text: &str, agent: crate::chat::Agent) -> Result<String, EditError> {
+    let mut doc: DocumentMut = text.parse()?;
+    let helper = doc
+        .entry("helper")
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .ok_or(EditError::Shape)?;
+    let mut command = Array::new();
+    for word in crate::chat::default_command(agent) {
+        command.push(word);
+    }
+    helper["chat_command"] = value(command);
+    helper.remove("model");
+    helper.remove("effort");
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// Saves what the user's peep wears.
 pub fn set_helper_wear(text: &str, wear: Wear) -> Result<String, EditError> {
     let mut doc: DocumentMut = text.parse()?;
@@ -331,6 +352,23 @@ mod tests {
         assert_eq!(product.paths, ["~/code/shop"]);
         assert_eq!(product.pet.kind, PetKind::Gyoza);
         assert_eq!(product.pet.color, "#FFD66B");
+    }
+
+    #[test]
+    fn switches_chat_between_claude_and_chatgpt() {
+        use crate::chat::{agent, Agent};
+        let text = "[helper]\nname = \"Bun\"\nmodel = \"opus\"\neffort = \"high\"\n";
+        let codex = set_helper_chat(text, Agent::Codex).unwrap();
+        let config = Config::parse(&codex).unwrap();
+        assert_eq!(agent(&config.helper.chat_command), Agent::Codex);
+        assert_eq!(config.helper.model, None);
+        assert_eq!(config.helper.effort, None);
+        assert_eq!(config.helper.name, "Bun");
+        let back = set_helper_chat(&codex, Agent::Claude).unwrap();
+        assert_eq!(
+            agent(&Config::parse(&back).unwrap().helper.chat_command),
+            Agent::Claude
+        );
     }
 
     #[test]

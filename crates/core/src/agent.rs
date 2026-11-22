@@ -121,15 +121,15 @@ pub fn explain(error: &str) -> String {
     let lower = error.to_lowercase();
     let has = |words: &[&str]| words.iter().any(|word| lower.contains(word));
     if has(&["isn't installed", "can't see where it is"]) {
-        "peeps can't find Claude Code on this computer. Install it from Settings.".into()
+        "peeps can't find it on this computer. Install it from Settings.".into()
     } else if has(&[
         "env: node",
         "node: no such file",
         "node: not found",
         "'node' is not recognized",
     ]) {
-        "Claude Code needs Node.js, and peeps can't find it. Reinstalling Claude Code from \
-         Settings fixes this, since the installer doesn't need Node."
+        "It needs Node.js, and peeps can't find it. Install Node.js from nodejs.org, or for \
+         Claude reinstall it from Settings, since its installer doesn't need Node."
             .into()
     } else if has(&[
         "/login",
@@ -141,19 +141,17 @@ pub fn explain(error: &str) -> String {
         "oauth",
         "401",
     ]) {
-        "Claude Code isn't signed in. Press Sign in again in Settings.".into()
+        "You're not signed in. Press Sign in again in Settings.".into()
     } else if has(&["unknown option", "unknown argument", "unexpected argument"]) {
-        "Your Claude Code is too old for peeps. Open a terminal and run `claude update`, or \
-         reinstall it from Settings."
-            .into()
+        "It is too old for peeps. Reinstall it from Settings to update it.".into()
     } else if has(&["usage limit", "rate limit", "credit balance", "quota"]) {
-        "Your Claude account has hit its usage limit for now. Try again later.".into()
+        "Your account has hit its usage limit for now. Try again later.".into()
     } else if has(&["no conversation found"]) {
-        "Claude couldn't find yesterday's conversation. Press New chat and ask again.".into()
+        "It couldn't find the earlier conversation. Press New chat and ask again.".into()
     } else if has(&["took longer than"]) {
-        "Claude took too long to answer. Try again in a moment.".into()
+        "It took too long to answer. Try again in a moment.".into()
     } else {
-        format!("Claude Code stopped with an error: {error}")
+        format!("It stopped with an error: {error}")
     }
 }
 
@@ -173,6 +171,10 @@ fn failure(stderr: &str, stdout: &str, status: &str) -> String {
                 }
             }
         }
+    }
+    // Codex reports a failed turn as one of its JSON events.
+    if let Err(why) = crate::chat::parse_reply(stdout) {
+        return tail(&why, 400);
     }
     if stdout.is_empty() {
         status.to_owned()
@@ -271,7 +273,7 @@ mod tests {
     fn explains_common_failures_plainly() {
         assert!(
             explain("the agent stopped with an error: Invalid API key · Please run /login")
-                .contains("isn't signed in")
+                .contains("not signed in")
         );
         assert!(explain("env: node: No such file or directory").contains("Node.js"));
         assert!(explain("error: unknown option '--strict-mcp-config'").contains("too old"));
@@ -279,7 +281,7 @@ mod tests {
         assert!(explain(
             "could not run `claude`: it isn't installed, or peeps can't see where it is"
         )
-        .contains("can't find Claude Code"));
+        .contains("can't find it"));
         assert!(explain("something odd").ends_with("something odd"));
     }
 

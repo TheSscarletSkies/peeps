@@ -227,12 +227,17 @@ pub struct HooksStatus {
     command: String,
     /// Where the helper's agent was found, or None when peeps can't see it.
     agent: Option<PathBuf>,
-    /// What to paste in a terminal to install Claude Code here, if the button can't.
+    /// Which service chat talks through: Claude or ChatGPT.
+    chat: peeps_core::chat::Agent,
+    /// What to paste in a terminal to install it here, if the button can't.
     install_command: &'static str,
 }
 
-/// Claude Code is hooked up and its program can be found, so pets and chats both work.
+/// Chat's service can be found and, for Claude Code, is hooked up, so pets and chats both work.
 pub(crate) fn claude_ready() -> bool {
+    if chat_agent() != peeps_core::chat::Agent::Claude {
+        return hook_agent().is_some();
+    }
     let installed = match (hook_command(), read_settings()) {
         (Ok(command), Ok(settings)) => hooks_install::is_installed(&settings, &command),
         _ => false,
@@ -247,6 +252,23 @@ fn hook_agent() -> Option<PathBuf> {
     peeps_core::programs::find(&program)
 }
 
+/// Which service chat talks through, Claude or ChatGPT, from the saved command.
+fn chat_agent() -> peeps_core::chat::Agent {
+    let config = Config::parse(&std::fs::read_to_string(paths::config_file()).unwrap_or_default())
+        .unwrap_or_default();
+    peeps_core::chat::agent(&config.helper.chat_command)
+}
+
+/// Switches chat between Claude and ChatGPT.
+#[tauri::command]
+pub fn set_chat_agent(app: State<'_, Arc<App>>, agent: peeps_core::chat::Agent) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_helper_chat(&read_or_empty(&path)?, agent).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    Ok(())
+}
+
 #[tauri::command]
 pub fn hooks_status() -> Result<HooksStatus> {
     let command = hook_command()?;
@@ -256,7 +278,11 @@ pub fn hooks_status() -> Result<HooksStatus> {
         settings_path: paths::claude_settings_file(),
         command,
         agent: hook_agent(),
-        install_command: peeps_core::install::command(peeps_core::install::Os::current()),
+        chat: chat_agent(),
+        install_command: peeps_core::install::command(
+            peeps_core::install::Os::current(),
+            chat_agent(),
+        ),
     })
 }
 
@@ -436,22 +462,25 @@ pub fn write_profile(app: State<'_, Arc<App>>, text: String) -> Result<()> {
     Ok(())
 }
 
-/// Opens a terminal that installs Claude Code with Anthropic's installer and then starts it, so
-/// the person signs in there. Nothing runs hidden: they see every step.
+/// Opens a terminal that installs chat's service (Claude Code or ChatGPT's Codex) and then signs
+/// in, so the person sees every step and signs in there.
 #[tauri::command]
 pub fn install_claude() -> Result<()> {
     use peeps_core::install::{self, Os};
     let os = Os::current();
-    open_terminal(os, &install::script(os))
+    open_terminal(os, &install::script(os, chat_agent()))
 }
 
-/// Opens a terminal running Claude Code, so the person can sign in again with /login.
+/// Opens a terminal to sign in to chat's service again.
 #[tauri::command]
 pub fn sign_in_claude() -> Result<()> {
     use peeps_core::install::{self, Os};
-    let claude = hook_agent().ok_or("peeps can't find Claude Code; install it first")?;
+    let program = hook_agent().ok_or("peeps can't find it; install it first")?;
     let os = Os::current();
-    open_terminal(os, &install::sign_in_script(os, &claude.to_string_lossy()))
+    open_terminal(
+        os,
+        &install::sign_in_script(os, chat_agent(), &program.to_string_lossy()),
+    )
 }
 
 /// Sends Claude a tiny message the way chat does; the error says what to do in plain words.
