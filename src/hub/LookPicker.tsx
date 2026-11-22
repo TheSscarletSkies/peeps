@@ -33,14 +33,7 @@ export function LookPicker({ wear }: { wear: PeepWear }) {
               );
             }}
           >
-            <Dumpling
-              kind="bao"
-              color="#FFF3E3"
-              mood="chill"
-              heat={0}
-              size={64}
-              wear={worn(look.wear)}
-            />
+            <Dumpling mood="chill" heat={0} size={64} wear={worn(look.wear)} />
             <span>{look.label}</span>
           </button>
         ))}

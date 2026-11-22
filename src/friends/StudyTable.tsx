@@ -24,8 +24,6 @@ export function StudyTable({
   const mine = (size: number) => (
     <LivePet
       dropId="helper"
-      kind={helper.kind}
-      color={helper.color}
       mood={moodWith(helper.mood, focus)}
       heat={0}
       size={size}

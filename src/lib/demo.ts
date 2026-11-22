@@ -34,8 +34,8 @@ export const demoSnapshot: Snapshot = {
       liveSessions: 1,
     },
     {
-      id: "enigma-archives",
-      name: "Enigma Archives",
+      id: "moth-notes",
+      name: "Moth Notes",
       kind: "gyoza",
       color: "#E8DDFB",
       mood: "hungry",
@@ -52,8 +52,8 @@ export const demoSnapshot: Snapshot = {
       liveSessions: 0,
     },
     {
-      id: "kaiveni-hiya",
-      name: "Kaiveni Hiya",
+      id: "paper-kite",
+      name: "Paper Kite",
       kind: "wonton",
       color: "#FFE6D5",
       mood: "sweating",
@@ -67,7 +67,7 @@ export const demoSnapshot: Snapshot = {
   notes: [],
   tips: [
     {
-      productId: "kaiveni-hiya",
+      productId: "paper-kite",
       text: "CLAUDE.md is about 9k tokens and loads every session. Trimming it saves tokens on every run.",
     },
   ],
@@ -165,8 +165,8 @@ export const demoSnapshot: Snapshot = {
     week: {
       products: [
         { productId: "lantern", tokens: 412000, activeMinutes: 640 },
-        { productId: "kaiveni-hiya", tokens: 268000, activeMinutes: 395 },
-        { productId: "enigma-archives", tokens: 54000, activeMinutes: 85 },
+        { productId: "paper-kite", tokens: 268000, activeMinutes: 395 },
+        { productId: "moth-notes", tokens: 54000, activeMinutes: 85 },
       ],
       busiestDay: "Wednesday",
     },

@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import type { Helper } from "../lib/types";
 import { Dumpling } from "../pets/Dumpling";
 
 export interface TourStep {
@@ -78,11 +77,9 @@ const BUBBLE = 300;
 
 /** A step-by-step walk through the window, one tooltip at a time. */
 export function Tour({
-  helper,
   onPage,
   onClose,
 }: {
-  helper: Helper;
   onPage: (page: string) => void;
   onClose: () => void;
 }) {
@@ -178,8 +175,6 @@ export function Tour({
       >
         <div className="tour__head">
           <Dumpling
-            kind={helper.kind}
-            color={helper.color}
             mood="chill"
             expression={index === 0 || last ? "love" : undefined}
             heat={0}

@@ -54,13 +54,7 @@ export function AgentPicker({
   return (
     <section className="agent-picker" aria-label="Choose a model">
       <header className="agent-picker__head">
-        <Dumpling
-          kind={helper.kind}
-          color={helper.color}
-          mood="chill"
-          heat={0}
-          size={28}
-        />
+        <Dumpling mood="chill" heat={0} size={28} />
         <div>
           <p className="agent-picker__title">Which Claude should I use?</p>
           <p className="agent-picker__sub">

@@ -73,9 +73,7 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
 
   return (
     <div className="hub" data-theme={theme}>
-      {touring && (
-        <Tour helper={helper} onPage={goTo} onClose={() => setTouring(false)} />
-      )}
+      {touring && <Tour onPage={goTo} onClose={() => setTouring(false)} />}
       <aside className="hub__side">
         <div className="hub__brand">
           <img className="hub__logo" src={logo} alt="" width={34} height={34} />

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Sticker } from "../friends/ReactionArt";
 import { setTodoDone } from "../lib/bridge";
-import type { Helper, Nudge } from "../lib/types";
+import type { Nudge } from "../lib/types";
 import { GET_TO_KNOW } from "../helper/Chat";
 import { announceAsk, announceFed } from "../life/events";
 import { LivePet } from "../life/LivePet";
@@ -11,13 +11,11 @@ import { LATER, stickerFor, withoutEmoji } from "./nudgeArt";
 /** The helper waving with a reminder in a speech bubble: done, put off for a while, or closed. */
 export function NudgeCard({
   nudge,
-  helper,
   onDone,
   onLater,
   onClose,
 }: {
   nudge: Nudge;
-  helper: Helper;
   onDone: () => void;
   onLater: (minutes: number) => void;
   onClose: () => void;
@@ -37,15 +35,7 @@ export function NudgeCard({
 
   return (
     <section className="nudge" aria-label="Reminder" role="alert">
-      <LivePet
-        dropId="helper"
-        kind={helper.kind}
-        color={helper.color}
-        mood="chill"
-        heat={0}
-        size={64}
-        waving
-      />
+      <LivePet dropId="helper" mood="chill" heat={0} size={64} waving />
       <div className="nudge__bubble">
         <button
           className="nudge__close"

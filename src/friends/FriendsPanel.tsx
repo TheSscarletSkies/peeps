@@ -119,9 +119,7 @@ export function FriendsPanel({
             return (
               <li key={friend.code} data-presence={friend.presence}>
                 <Dumpling
-                  kind={look.kind}
                   seed={friend.code}
-                  color={look.color}
                   mood={
                     friend.presence === "focusing"
                       ? "working"

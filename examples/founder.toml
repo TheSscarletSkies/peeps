@@ -24,9 +24,9 @@ headers = { apikey = "{secret:lantern-supabase}", Authorization = "Bearer {secre
 
 # A story series posted to TikTok. Hungry when nothing went out for three days.
 [[product]]
-id = "enigma-archives"
-name = "Enigma Archives"
-paths = ["~/code/enigma-archives"]
+id = "moth-notes"
+name = "Moth Notes"
+paths = ["~/code/moth-notes"]
 pet = { kind = "gyoza", color = "#E8DDFB" }
 
 [[product.check]]
@@ -36,13 +36,13 @@ message = "No new episode in {count} days"
 every_minutes = 120
 kind = "script"
 command = "~/.peeps/checks/days-since-last-post.py"
-args = ["~/code/enigma-archives/posts.log", "3"]
+args = ["~/code/moth-notes/posts.log", "3"]
 
 # A product before launch. The litter box fills up when launch tasks go overdue.
 [[product]]
-id = "kaiveni-hiya"
-name = "Kaiveni Hiya"
-paths = ["~/code/kaiveni-hiya"]
+id = "paper-kite"
+name = "Paper Kite"
+paths = ["~/code/paper-kite"]
 pet = { kind = "wonton", color = "#FFE6D5" }
 
 [[product.check]]
@@ -52,7 +52,7 @@ message = "{count} launch tasks overdue"
 every_minutes = 60
 kind = "script"
 command = "~/.peeps/checks/overdue-tasks.py"
-args = ["~/code/kaiveni-hiya/LAUNCH.md"]
+args = ["~/code/paper-kite/LAUNCH.md"]
 
 # The helper pet: to-dos and chat. Chat runs your own agent, so it uses your existing subscription.
 [helper]

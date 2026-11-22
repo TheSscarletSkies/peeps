@@ -441,8 +441,8 @@ mod tests {
 
     #[test]
     fn slugs() {
-        assert_eq!(slug("Enigma Archives"), "enigma-archives");
-        assert_eq!(slug("  Kaiveni   Hiya!! "), "kaiveni-hiya");
+        assert_eq!(slug("Moth Notes"), "moth-notes");
+        assert_eq!(slug("  Paper   Kite!! "), "paper-kite");
         assert_eq!(slug("☕"), "product");
     }
 

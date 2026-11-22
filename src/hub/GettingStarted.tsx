@@ -48,14 +48,7 @@ export function GettingStarted({
       data-open={open || undefined}
     >
       <header className="started__head">
-        <Dumpling
-          kind={snapshot.helper.kind}
-          color={snapshot.helper.color}
-          mood="chill"
-          expression="love"
-          heat={0}
-          size={40}
-        />
+        <Dumpling mood="chill" expression="love" heat={0} size={40} />
         <div className="started__summary">
           <h2>
             Set up · {done} of {steps.length}

@@ -75,8 +75,6 @@ export function HelperPanel({
       <header className="panel__head panel__head--pet">
         <LivePet
           dropId="helper"
-          kind={helper.kind}
-          color={helper.color}
           mood={moodWith(helper.mood, focus)}
           heat={0}
           size={52}

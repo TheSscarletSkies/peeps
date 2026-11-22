@@ -8,8 +8,8 @@ describe("variantFor", () => {
   });
 
   it("gives different products different builds", () => {
-    const builds = ["lantern", "enigma-archives", "kaiveni-hiya", "shop"].map(
-      (id) => JSON.stringify(variantFor(id)),
+    const builds = ["lantern", "moth-notes", "paper-kite", "shop"].map((id) =>
+      JSON.stringify(variantFor(id)),
     );
     expect(new Set(builds).size).toBe(builds.length);
   });

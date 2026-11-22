@@ -1,15 +1,12 @@
 import { useId } from "react";
 
 import type { Accessory } from "../life/season";
-import type { Mood, PetKind } from "../lib/types";
+import type { Mood } from "../lib/types";
 import { BUN, BunBody, BunGlasses, Dough, Worn, type BunWear } from "./Bun";
 import { limbsFor, type Hand, type Prop } from "./limbs";
 import { BASE, variantFor } from "./variant";
 
 interface Props {
-  /** Kept for callers; every peep is now the same cream bun. */
-  kind: PetKind;
-  color: string;
   mood: Mood;
   heat: number;
   size?: number;

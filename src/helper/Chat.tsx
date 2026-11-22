@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { decide, newChat, sendChat } from "../lib/bridge";
 import { RichText } from "../lib/RichText";
-import type { ChatMessage, Helper, Permission, PetKind } from "../lib/types";
+import type { ChatMessage, Helper, Permission } from "../lib/types";
 import { Attachments } from "../life/Attachments";
 import { EAT_PROMPT, useGivenFiles, withFiles } from "../life/drops";
 import { onAsk, takeAsk } from "../life/events";
@@ -31,7 +31,6 @@ export function Chat({
   return (
     <Conversation
       name={helper.name}
-      kind={helper.kind}
       color={helper.color}
       messages={helper.chat}
       chatting={helper.chatting}
@@ -50,7 +49,6 @@ export function Chat({
 
 interface ConversationProps {
   name: string;
-  kind: PetKind;
   color: string;
   seed?: string;
   messages: ChatMessage[];
@@ -69,7 +67,6 @@ const SCOPE = "helper";
 
 export function Conversation({
   name,
-  kind,
   color,
   seed,
   messages: saved,
@@ -176,14 +173,7 @@ export function Conversation({
               data-from={message.from}
             >
               {message.from === "helper" && (
-                <Dumpling
-                  seed={seed}
-                  kind={kind}
-                  color={color}
-                  mood="chill"
-                  heat={0}
-                  size={26}
-                />
+                <Dumpling seed={seed} mood="chill" heat={0} size={26} />
               )}
               <p>
                 {message.from === "you" ? (
@@ -196,14 +186,7 @@ export function Conversation({
           ))}
           {thinking && (
             <li className="chat__message" data-from="helper">
-              <Dumpling
-                seed={seed}
-                kind={kind}
-                color={color}
-                mood="working"
-                heat={0}
-                size={26}
-              />
+              <Dumpling seed={seed} mood="working" heat={0} size={26} />
               <p className="chat__dots" aria-label="Thinking">
                 <span />
                 <span />

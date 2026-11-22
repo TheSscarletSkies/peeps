@@ -81,8 +81,6 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
         <LivePet
           dropId={HELPER}
           waving={waving}
-          kind={helper.kind}
-          color={helper.color}
           mood={mood}
           glasses={snapshot.focus?.phase === "focus"}
           wear={worn(snapshot.wear)}
@@ -105,9 +103,7 @@ export function residentsOf(snapshot: Snapshot, waving = false): Resident[] {
           wear: look.wear,
           pet: (size: number) => (
             <Dumpling
-              kind={look.kind}
               seed={friend.code}
-              color={look.color}
               mood="working"
               heat={0}
               size={size}
@@ -138,7 +134,6 @@ export function CardBody({
     return (
       <NudgeCard
         nudge={reminder.nudge}
-        helper={snapshot.helper}
         onDone={reminder.dismiss}
         onLater={reminder.later}
         onClose={reminder.dismiss}

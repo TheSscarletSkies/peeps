@@ -38,6 +38,6 @@ describe("notch prefs", () => {
     };
     expect(shown("lantern", false, prefs)).toBe(false);
     expect(shown("lantern", true, prefs)).toBe(true);
-    expect(shown("enigma", false, prefs)).toBe(true);
+    expect(shown("moth", false, prefs)).toBe(true);
   });
 });

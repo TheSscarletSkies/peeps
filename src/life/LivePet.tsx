@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ReactionArt } from "../friends/ReactionArt";
-import type { Mood, PetKind, Reaction } from "../lib/types";
+import type { Mood, Reaction } from "../lib/types";
 import type { BunWear } from "../pets/Bun";
 import { Dumpling, type Expression } from "../pets/Dumpling";
 import { useDropHover } from "./drops";
@@ -19,8 +19,6 @@ const HUG_MS = 900;
 
 interface Props {
   id?: string;
-  kind: PetKind;
-  color: string;
   mood: Mood;
   heat: number;
   size?: number;
@@ -49,8 +47,6 @@ function accessoryForToday(): Accessory | null {
 /** A pet that reacts: a pat gets a heart, a poke spree makes it dizzy, a note makes it happy. */
 export function LivePet({
   id,
-  kind,
-  color,
   mood,
   heat,
   size,
@@ -226,8 +222,6 @@ export function LivePet({
       )}
       <Dumpling
         seed={id}
-        kind={kind}
-        color={color}
         mood={grumpy ? "steaming" : mood}
         heat={heat}
         size={size}
