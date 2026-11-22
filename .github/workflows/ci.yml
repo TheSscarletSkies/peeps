@@ -78,7 +78,8 @@ jobs:
           fi
 
   web:
-    runs-on: ubuntu-latest
+    # The browser tests need a Linux Playwright supports; ubuntu-latest moved past it.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
