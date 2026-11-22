@@ -15,11 +15,11 @@ export interface Area {
 
 export const BOX = 100;
 
-/** The floating pet is bigger than the notch ones; large stays well short of taking over the desk. */
+/** The floating pet is bigger than the notch ones; large is a proper desk companion. */
 export const FLOAT_PET: Record<PetSize, number> = {
-  small: 56,
-  medium: 80,
-  large: 104,
+  small: 72,
+  medium: 104,
+  large: 144,
 };
 
 /** Room around the pet for its hands, bubble and shadow. */

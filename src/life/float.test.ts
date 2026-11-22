@@ -38,7 +38,7 @@ describe("floating pet", () => {
   it("keeps a bigger pet on screen too", () => {
     const box = boxFor("large");
     expect(box).toBeGreaterThan(BOX);
-    expect(boxFor("small")).toBeLessThan(BOX);
+    expect(boxFor("small")).toBeLessThan(boxFor("medium"));
     const spot = clampSpot({ x: 5000, y: 5000 }, SCREEN, box);
     expect(spot.x + box).toBeLessThanOrEqual(1440);
     expect(spot.y + box).toBeLessThanOrEqual(860);
