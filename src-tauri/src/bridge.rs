@@ -18,7 +18,14 @@ pub async fn serve(app: Arc<App>) -> io::Result<()> {
         .name(ipc::socket_name()?)
         .create_tokio()?;
     loop {
-        let connection = listener.accept().await?;
+        // One bad connection shouldn't take the listener down with it.
+        let connection = match listener.accept().await {
+            Ok(connection) => connection,
+            Err(error) => {
+                eprintln!("peeps: hook connection refused: {error}");
+                continue;
+            }
+        };
         let app = app.clone();
         tokio::spawn(async move {
             if let Err(error) = handle(connection, &app).await {

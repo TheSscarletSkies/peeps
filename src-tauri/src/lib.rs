@@ -102,9 +102,14 @@ pub fn run() {
             }
 
             let bridge_app = app.clone();
+            // The peep's tools and the pets' hooks reach the app through this; if it can't start
+            // (a socket left by another copy of peeps, say), keep trying rather than stay deaf.
             tauri::async_runtime::spawn(async move {
-                if let Err(error) = bridge::serve(bridge_app).await {
-                    eprintln!("peeps: agent bridge stopped: {error}");
+                loop {
+                    if let Err(error) = bridge::serve(bridge_app.clone()).await {
+                        eprintln!("peeps: agent bridge stopped: {error}");
+                    }
+                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 }
             });
             tauri::async_runtime::spawn(remind::run(app.clone()));

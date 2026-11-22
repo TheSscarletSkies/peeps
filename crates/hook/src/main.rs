@@ -92,6 +92,17 @@ fn call_app(name: &str, args: Value) -> Result<String, String> {
             error: Some(error), ..
         }) => Err(error),
         Ok(response) => Ok(response.text.unwrap_or_default()),
-        Err(_) => Err("peeps isn't running. Ask the user to open it.".into()),
+        // Only a missing or refused socket means the app is closed; anything else is a fault to report.
+        Err(error)
+            if matches!(
+                error.kind(),
+                io::ErrorKind::NotFound | io::ErrorKind::ConnectionRefused
+            ) =>
+        {
+            Err("peeps isn't running. Ask the user to open it.".into())
+        }
+        Err(error) => Err(format!(
+            "peeps is running but its tools didn't answer ({error}). Ask the user to quit peeps and open it again."
+        )),
     }
 }
