@@ -6,10 +6,11 @@ export interface Lane {
 
 export type PetSize = "small" | "medium" | "large";
 
+/** Small fits inside the menu bar; medium and large hang a little below it, so they read clearly. */
 export const PET_SIZES: Record<PetSize, number> = {
-  small: 22,
-  medium: 26,
-  large: 34,
+  small: 26,
+  medium: 36,
+  large: 48,
 };
 
 export interface Layout {
