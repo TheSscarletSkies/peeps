@@ -1,41 +1,112 @@
 <div align="center">
 
-<img src="design/icon.svg" width="96" alt="">
+<img src="design/icon.png" width="120" alt="">
 
 # peeps
 
 **A little dumpling that keeps you on top of your day.**
 
+For Mac and Windows · free · no account
+
+[**Download**](../../releases/latest) · [What it does](#what-it-does) · [Install](#install) · [Privacy](#privacy)
+
+<br>
+
+<img src="docs/images/today.png" width="820" alt="The peeps window: a greeting, two dumplings studying at a wooden table, a focus timer and today's to-dos">
+
 </div>
 
-peeps is a desktop companion for Mac and Windows. It sits at the top of your screen, or anywhere you drop it, and helps you through the day like a friend would: what's on today, a nudge to stretch or drink water, and a pat when you need one.
+<br>
+
+peeps lives on your desktop as a small cream bun. It knows what's on today, nudges you to stretch and drink water, sits with you while you focus, and studies with your friends at a little wooden table. Pat it, feed it, pick it up: it squishes back.
+
+<p align="center">
+  <img src="docs/images/moods.png" width="820" alt="The bun resting, focusing in glasses, waving because it needs you, in love after a pat, celebrating, dizzy, hungry and napping in its steamer">
+</p>
 
 ## What it does
 
-- **Today.** Your to-dos with `#tags`, dates and repeats, and what's coming up from your calendars. Tick one off and your peep gets a snack.
-- **Areas and habits.** Group your day into Work, Study, Play or your own areas, and see a week of dots for every habit.
-- **Chat.** Talk to your peep through your own Claude. It remembers what you tell it about you, and anything it wants to do, it asks first. “Remind me to call mum at 6” becomes a reminder.
-- **Nudges.** Stand up and stretch, drink water, rest your eyes: each one switch. Your own reminders sit beside them. When one is due, your peep waves and says it in a bubble, with Done and Later.
-- **Focus.** Pick 15, 25 or 50 minutes; your peep works alongside, then calls a break.
-- **One thing at a time.** Optional: when you keep hopping between apps, your peep suggests what to do first. It only sees app names, on your computer.
-- **Friends.** Swap codes with friends to see when they're focusing and send a steamy heart, a chopstick poke, a rolling-pin bonk or a tea break. It goes through the free ntfy.sh relay, sealed so the relay can't read it.
-- **Play.** Click your peep for a pat; click it a lot and it gets dizzy. Double-click or right-click it, or use the little bubble, to talk. Drop a file on it and it joins your next message.
-- **Small, medium or large.** Make it the size you like, at the top of the screen or floating anywhere.
-- **Calendars.** Paste the private iCal link from Google, Outlook or iCloud and peeps reminds you before classes and calls. Links live in your keychain.
-- **Every computer, no account.** Choose a folder in iCloud Drive, OneDrive, Dropbox or Google Drive and your Mac and PC stay in step.
-- **Light or dark, quiet or not.** Theme and an optional boop live in the sidebar.
-- **Updates itself, when you say so.** peeps checks for a new version when it starts and every 6 hours. When one is out, Settings shows it with a Restart to update button; nothing installs until you press it.
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🗓️ Your day, in one place
+
+To-dos with `#tags`, dates and repeats, grouped into **Work**, **Study**, **Play** or your own areas, plus what's coming up from your calendars. A week of dots for every habit. Tick something off and your peep gets a snack.
+
+### 💬 Chat with your peep
+
+Talk to it through your own Claude. "Remind me to call mum at 6" becomes a reminder, and "move gym to Thursday" moves it. It remembers what you tell it about you, and asks before doing anything.
+
+### 🔔 Gentle nudges
+
+Stretch, drink water, rest your eyes, each with its own switch. When one is due, your peep waves and says so in a bubble, with **Done** and **Later**.
+
+</td>
+<td width="50%" valign="top">
+
+<img src="docs/images/desktop.png" width="100%" alt="The floating peep on the desktop with its chat card open">
+
+</td>
+</tr>
+</table>
+
+### 📚 Study together
+
+Swap codes with friends. When you're both focusing, your peep turns into a low wooden table and everyone sits around it with their laptops and books, glasses on. Hover a bun to see who it is. Send a steamy heart, a chopstick poke, a rolling-pin bonk or a tea break. Messages are sealed, so the relay that carries them can't read them.
+
+<p align="center">
+  <img src="docs/images/study-table.png" width="820" alt="Three and then five cream buns studying around a wooden table with laptops, tea and a plate of dumplings">
+</p>
+
+### 🎀 Make it yours
+
+Give your peep a sprout, a bow, headphones or a beanie, and your friends see the same look at their table. Make it small, medium or large, and keep it at the top of the screen or floating anywhere.
+
+<p align="center">
+  <img src="docs/images/look.png" width="620" alt="Settings: the bun shown in a sprout, a bow, headphones, a beanie and nothing">
+</p>
+
+### And also
+
+- **Focus sessions:** 15, 25 or 50 minutes; your peep works alongside, then calls a break.
+- **One thing at a time:** optional; if you keep hopping between apps, it suggests what to do first. It only sees app names, on your computer.
+- **Play:** click for a pat, click a lot and it gets dizzy, drag it around and it dangles, drop a file on it and it joins your next message.
+- **Every computer, no account:** pick a folder in iCloud Drive, OneDrive, Dropbox or Google Drive and your Mac and PC stay in step.
+- **Light or dark,** with an optional boop sound.
 
 ## Install
 
-Download the latest build from [Releases](../../releases): `.dmg` for macOS (Apple silicon or Intel), `.msi` or `.exe` for Windows, `.AppImage` or `.deb` for Linux.
+### 1. Download one file
 
-Builds are not code-signed yet, so the first launch needs one extra step:
+Open the [latest release](../../releases/latest) and download the one for your computer:
 
-- **macOS:** right-click peeps in Applications, choose **Open**, then **Open** again.
-- **Windows:** on the SmartScreen prompt, click **More info**, then **Run anyway**.
+| Your computer                            | Download                |
+| ---------------------------------------- | ----------------------- |
+| **Mac with Apple chip** (M1, M2, M3, M4) | `peeps_…_aarch64.dmg`   |
+| **Mac with Intel chip**                  | `peeps_…_x64.dmg`       |
+| **Windows**                              | `peeps_…_x64-setup.exe` |
+| Linux                                    | `.AppImage` or `.deb`   |
 
-On first launch peeps opens its window with a short tour. Say hi in Chat so it gets to know you, then switch on a nudge or two. Chat needs Claude Code, which comes with a Claude account; if it isn't installed, Settings installs it in one click.
+Not sure which Mac you have? Apple menu → **About This Mac**. "Chip: Apple M…" means Apple chip.
+
+You can ignore the other files: `.app.tar.gz` and `latest.json` are what peeps downloads when it updates itself.
+
+### 2. Open it the first time
+
+peeps isn't code-signed yet, so your computer asks once:
+
+- **Mac:** open the `.dmg`, drag **peeps** into **Applications**, then in Applications **right-click** peeps → **Open** → **Open**.
+  If it says peeps "is damaged" or "can't be opened", go to System Settings → Privacy & Security, scroll down and click **Open Anyway**.
+- **Windows:** run the installer. On the blue "Windows protected your PC" box, click **More info** → **Run anyway**.
+
+### 3. Say hi
+
+peeps opens with a short tour. Say hi in **Chat** so it gets to know you, then switch on a nudge or two. Chat uses Claude Code, which comes with a Claude account; if it isn't installed, **Settings** installs it in one click.
+
+### Updates
+
+You only install by hand once. peeps checks for a new version when it starts and every few hours; when one is out, **Settings** shows **Restart to update**. Nothing downloads or restarts until you press it.
 
 ### Build from source
 
@@ -85,17 +156,14 @@ npm test
 npm run e2e            # each use case in docs/use-cases.md, in a real browser
 ```
 
-## Releases and updates
+## Releasing (for maintainers)
 
-To release, run the Release workflow from the Actions tab and choose patch, minor or major. It raises the version in every file that carries it (`scripts/bump-version.mjs`), commits and tags it, then builds every platform and publishes a GitHub release with `latest.json`, which installed copies read from `releases/latest/download/latest.json`. Pushing a `v*` tag yourself builds that tag as it is. Releases are published straight away (not drafts or pre-releases), because `releases/latest` skips both.
+1. **Once:** add the signing key as a repository secret. Settings → Secrets and variables → Actions → New repository secret, named `TAURI_SIGNING_PRIVATE_KEY`, holding the one long line inside the private key file. The `.key` file is plain text: open it with TextEdit or Notepad, not by double-clicking (a Mac hands `.key` files to Keynote). The key has no password, so `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` stays unset.
+2. **Each release:** Actions → **Release** → **Run workflow**, choose **patch**, **minor** or **major**, and press Run.
 
-Update bundles must be signed, so the release workflow needs two repository secrets. Without `TAURI_SIGNING_PRIVATE_KEY` the build stops before uploading anything.
+The workflow raises the version in every file that carries it (`scripts/bump-version.mjs`), commits and tags it, builds every platform and publishes the release with `latest.json`, which installed copies read from `releases/latest/download/latest.json`. If a run fails after the version step, use **Re-run failed jobs** to keep the same version. Pushing a `v*` tag yourself builds that tag as it is.
 
-1. Make a key pair once: `npm run tauri signer generate -- -w ~/.tauri/peeps.key`.
-2. Put the private key in the `TAURI_SIGNING_PRIVATE_KEY` secret and its password in `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-3. Put the public key in `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, in place of `REPLACE_WITH_UPDATER_PUBLIC_KEY`.
-
-Keep the private key safe: copies already installed only accept updates signed with it.
+Keep the private key safe: installed copies only accept updates signed with it. A new pair comes from `npm run tauri signer generate -- -w ~/.tauri/peeps.key`, with the public half in `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`.
 
 ## Roadmap
 
