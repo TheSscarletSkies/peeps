@@ -6,9 +6,13 @@ describe("friends", () => {
   it("gives each friend the same look every time", () => {
     expect(friendLook("S4RAH-B9K2T")).toEqual(friendLook("S4RAH-B9K2T"));
     const looks = new Set(
-      ["S4RAH-B9K2T", "AL1Q7-M3NVW", "Z0EEP-QW8RT", "7KQ2M-XH4PD"].map(
-        (code) => friendLook(code).color,
-      ),
+      [
+        "S4RAH-B9K2T",
+        "AL1Q7-M3NVW",
+        "Z0EEP-QW8RT",
+        "7KQ2M-XH4PD",
+        "B4OBA-O1234",
+      ].map((code) => friendLook(code).wear),
     );
     expect(looks.size).toBeGreaterThan(1);
   });
