@@ -176,8 +176,8 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
               title="Settings"
               lead={`How big ${helper.name} is, where it lives, and what it can see.`}
             >
-              <UpdateCard update={snapshot.update} />
-              <div className="reminders">
+              <div className="settings">
+                <UpdateCard update={snapshot.update} />
                 <section className="card">
                   <Roster
                     size={prefs.size}
@@ -187,32 +187,32 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                   />
                 </section>
                 <ClaudeStatus />
+                <section className="card">
+                  <h2>Your peep's look</h2>
+                  <p className="setup__hint">
+                    Your friends see the same look when you study together.
+                  </p>
+                  <LookPicker wear={snapshot.wear} />
+                </section>
+                <section className="card">
+                  <h2>Your areas</h2>
+                  <p className="setup__hint">
+                    Today groups your list by these. Tag a to-do with one, or
+                    tell {helper.name} “add gym on Thursday #play”.
+                  </p>
+                  <AreasEditor areas={snapshot.areas} />
+                </section>
+                <section className="card about-me">
+                  <h2>What {helper.name} knows about you</h2>
+                  <p className="setup__hint">
+                    Filled in as you chat. Change anything here.
+                  </p>
+                  <AboutMe />
+                </section>
+                <RemindersPage snapshot={snapshot} />
+                <h2 className="section__sub">Your computers</h2>
+                <DevicesPage snapshot={snapshot} />
               </div>
-              <section className="card">
-                <h2>Your peep's look</h2>
-                <p className="setup__hint">
-                  Your friends see the same look when you study together.
-                </p>
-                <LookPicker wear={snapshot.wear} />
-              </section>
-              <section className="card">
-                <h2>Your areas</h2>
-                <p className="setup__hint">
-                  Today groups your list by these. Tag a to-do with one, or tell{" "}
-                  {helper.name} “add gym on Thursday #play”.
-                </p>
-                <AreasEditor areas={snapshot.areas} />
-              </section>
-              <section className="card about-me">
-                <h2>What {helper.name} knows about you</h2>
-                <p className="setup__hint">
-                  Filled in as you chat. Change anything here.
-                </p>
-                <AboutMe />
-              </section>
-              <RemindersPage snapshot={snapshot} />
-              <h2 className="section__sub">Your computers</h2>
-              <DevicesPage snapshot={snapshot} />
             </Section>
           )}
         </Boundary>

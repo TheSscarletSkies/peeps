@@ -117,6 +117,45 @@ pub fn run_in(
     Ok(reply.to_owned())
 }
 
+/// What went wrong, in words someone who has never opened a terminal can act on.
+pub fn explain(error: &str) -> String {
+    let lower = error.to_lowercase();
+    let has = |words: &[&str]| words.iter().any(|word| lower.contains(word));
+    if has(&["isn't installed", "can't see where it is"]) {
+        "peeps can't find Claude Code on this computer. Install it from Settings.".into()
+    } else if has(&[
+        "env: node",
+        "node: no such file",
+        "node: not found",
+        "'node' is not recognized",
+    ]) {
+        "Claude Code needs Node.js, and peeps can't find it. Reinstalling Claude Code from \
+         Settings fixes this, since the installer doesn't need Node."
+            .into()
+    } else if has(&[
+        "/login",
+        "log in",
+        "login",
+        "not logged in",
+        "invalid api key",
+        "authentication",
+        "oauth",
+        "401",
+    ]) {
+        "Claude Code isn't signed in. Press Sign in again in Settings.".into()
+    } else if has(&["unknown option", "unknown argument", "unexpected argument"]) {
+        "Your Claude Code is too old for peeps. Open a terminal and run `claude update`, or \
+         reinstall it from Settings."
+            .into()
+    } else if has(&["usage limit", "rate limit", "credit balance", "quota"]) {
+        "Your Claude account has hit its usage limit for now. Try again later.".into()
+    } else if has(&["took longer than"]) {
+        "Claude took too long to answer. Try again in a moment.".into()
+    } else {
+        format!("Claude Code stopped with an error: {error}")
+    }
+}
+
 fn drain<R: Read + Send + 'static>(pipe: Option<R>) -> thread::JoinHandle<String> {
     thread::spawn(move || {
         let mut text = String::new();
@@ -201,5 +240,21 @@ mod tests {
     fn tail_respects_character_boundaries() {
         assert_eq!(tail("héllo", 4), "llo");
         assert_eq!(tail("short", 100), "short");
+    }
+
+    #[test]
+    fn explains_common_failures_plainly() {
+        assert!(
+            explain("the agent stopped with an error: Invalid API key · Please run /login")
+                .contains("isn't signed in")
+        );
+        assert!(explain("env: node: No such file or directory").contains("Node.js"));
+        assert!(explain("error: unknown option '--strict-mcp-config'").contains("too old"));
+        assert!(explain("the agent took longer than 90 s").contains("too long"));
+        assert!(explain(
+            "could not run `claude`: it isn't installed, or peeps can't see where it is"
+        )
+        .contains("can't find Claude Code"));
+        assert!(explain("something odd").ends_with("something odd"));
     }
 }

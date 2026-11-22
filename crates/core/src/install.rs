@@ -44,6 +44,19 @@ pub fn script(os: Os) -> String {
     }
 }
 
+/// What the terminal runs to sign in again: Claude Code itself, found where peeps found it, with
+/// a line saying what to type. The path is single-quoted, so the AppleScript keeps its quotes.
+pub fn sign_in_script(os: Os, claude: &str) -> String {
+    match os {
+        Os::Windows => format!(
+            "Write-Host 'Type /login and press Enter to sign in, then go back to peeps.'; & '{claude}'"
+        ),
+        Os::Mac | Os::Linux => format!(
+            "echo 'Type /login and press Return to sign in, then go back to peeps.' && '{claude}'"
+        ),
+    }
+}
+
 /// AppleScript that opens Terminal on the script. It holds no double quotes, so it can sit
 /// inside one AppleScript string as is.
 pub fn mac_terminal(script: &str) -> String {
@@ -53,6 +66,16 @@ pub fn mac_terminal(script: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn signing_in_again_starts_the_claude_peeps_found() {
+        let mac = sign_in_script(Os::Mac, "/Users/m/.local/bin/claude");
+        assert!(mac.ends_with("&& '/Users/m/.local/bin/claude'"));
+        assert!(!mac.contains('"'));
+        let windows = sign_in_script(Os::Windows, "C:\\Users\\m\\claude.exe");
+        assert!(windows.contains("/login"));
+        assert!(windows.ends_with("& 'C:\\Users\\m\\claude.exe'"));
+    }
 
     #[test]
     fn each_platform_installs_then_signs_in() {

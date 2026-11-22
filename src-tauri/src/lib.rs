@@ -61,6 +61,8 @@ pub fn run() {
             commands::set_helper_agent,
             commands::read_profile,
             commands::install_claude,
+            commands::sign_in_claude,
+            commands::check_claude,
             commands::write_profile,
             commands::set_sync_folder,
             commands::add_product_path,

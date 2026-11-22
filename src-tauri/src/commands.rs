@@ -442,7 +442,27 @@ pub fn write_profile(app: State<'_, Arc<App>>, text: String) -> Result<()> {
 pub fn install_claude() -> Result<()> {
     use peeps_core::install::{self, Os};
     let os = Os::current();
-    let script = install::script(os);
+    open_terminal(os, &install::script(os))
+}
+
+/// Opens a terminal running Claude Code, so the person can sign in again with /login.
+#[tauri::command]
+pub fn sign_in_claude() -> Result<()> {
+    use peeps_core::install::{self, Os};
+    let claude = hook_agent().ok_or("peeps can't find Claude Code; install it first")?;
+    let os = Os::current();
+    open_terminal(os, &install::sign_in_script(os, &claude.to_string_lossy()))
+}
+
+/// Sends Claude a tiny message the way chat does; the error says what to do in plain words.
+#[tauri::command]
+pub async fn check_claude(app: State<'_, Arc<App>>) -> Result<()> {
+    crate::assistant::check(&app).await
+}
+
+/// A terminal window the person can see, running the script.
+fn open_terminal(os: peeps_core::install::Os, script: &str) -> Result<()> {
+    use peeps_core::install::{self, Os};
     let mut command = match os {
         Os::Windows => {
             let mut command = std::process::Command::new("powershell");
@@ -452,7 +472,7 @@ pub fn install_claude() -> Result<()> {
                 "-ExecutionPolicy",
                 "Bypass",
                 "-Command",
-                &script,
+                script,
             ]);
             #[cfg(windows)]
             {
@@ -465,7 +485,7 @@ pub fn install_claude() -> Result<()> {
         }
         Os::Mac => {
             let mut command = std::process::Command::new("osascript");
-            command.args(["-e", &install::mac_terminal(&script)]);
+            command.args(["-e", &install::mac_terminal(script)]);
             command
         }
         Os::Linux => {

@@ -688,6 +688,36 @@
   gap: 16px;
 }
 
+/* Settings is one column of cards with the same gap everywhere, nested groups included. */
+.settings {
+  display: grid;
+  gap: 16px;
+}
+
+.settings > .section__sub {
+  margin: 12px 0 -4px;
+}
+
+.settings .card h2 {
+  margin: 0 0 8px;
+}
+
+.claude .setup__row {
+  align-items: center;
+}
+
+.claude__off {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bad, #d9735b);
+}
+
+.claude__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .reminders .card {
   display: flex;
   flex-direction: column;

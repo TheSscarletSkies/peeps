@@ -105,6 +105,20 @@ export function installClaude(): Promise<void> {
     : Promise.resolve();
 }
 
+/** Sends Claude one tiny message the way chat does; rejects with what to do in plain words. */
+export function checkClaude(): Promise<void> {
+  return inApp()
+    ? invoke("check_claude").then(() => undefined)
+    : new Promise((resolve) => window.setTimeout(resolve, 600));
+}
+
+/** Opens a terminal running Claude Code, to sign in again with /login. */
+export function signInClaude(): Promise<void> {
+  return inApp()
+    ? invoke("sign_in_claude").then(() => undefined)
+    : Promise.resolve();
+}
+
 export function uninstallHooks(): Promise<HooksStatus> {
   return inApp()
     ? invoke<HooksStatus>("uninstall_hooks")

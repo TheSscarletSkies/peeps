@@ -33,11 +33,7 @@ pub async fn send(app: Arc<App>, text: String) -> Result<Message> {
     let reply = match outcome {
         Ok(reply) => reply,
         // Failures show up in the conversation, where the user is already looking.
-        Err(error) if error.contains("can't see where it is") => "I can't find Claude Code on \
-            this computer. Install it from claude.com/claude-code (or open a terminal and run \
-            `claude` once to finish setting it up), then ask me again."
-            .to_owned(),
-        Err(error) => format!("I couldn't reach your agent: {error}"),
+        Err(error) => format!("I couldn't reach Claude. {}", agent::explain(&error)),
     };
     let message = app
         .chat()
@@ -243,6 +239,29 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     }
     Ok(reply.text)
 }
+
+/// Sends Claude one tiny message the way chat does, so Settings says Connected only when it answers.
+pub async fn check(app: &Arc<App>) -> Result<()> {
+    let config = app.config();
+    let base = chat::with_agent(&config.helper.chat_command, Some(chat::QUICK_MODEL), None);
+    let base = match crate::commands::hook_command() {
+        Ok(hook) => chat::with_tools(&base, &hook),
+        Err(_) => base,
+    };
+    let command = chat::command(&base, None, "");
+    let dir = paths::assistant_dir();
+    std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    let answered = tauri::async_runtime::spawn_blocking(move || {
+        agent::run_in(&command, "Reply with just: ok", CHECK_TIMEOUT, Some(&dir))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+    .and_then(|stdout| chat::parse_reply(&stdout).map(|_| ()));
+    answered.map_err(|error| agent::explain(&error))
+}
+
+const CHECK_TIMEOUT: Duration = Duration::from_secs(90);
 
 /// Today's to-dos, events and products, so the agent can answer "what's on today?".
 fn context(app: &App) -> String {
