@@ -213,6 +213,15 @@ test("UC30: you pick your peep's look, and the table shows it", async ({
   await expect(table.locator(".dumpling__wear")).toHaveCount(0);
 });
 
+test("UC30: you can rename your peep", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Your peep's name").fill("Bao");
+  await page.getByRole("button", { name: "Rename" }).click();
+  await expect(page.locator(".section__head p").first()).toContainText(
+    "How big Bao is",
+  );
+});
+
 test("UC23: a study session says so", async ({ page }) => {
   const bar = page.getByRole("form", { name: "Focus" });
   await bar.getByRole("radio", { name: "Study" }).click();

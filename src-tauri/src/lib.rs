@@ -43,6 +43,7 @@ pub fn run() {
             commands::start_focus,
             commands::set_areas,
             commands::set_wear,
+            commands::set_helper_name,
             commands::stop_focus,
             commands::set_one_thing,
             commands::start_friends,

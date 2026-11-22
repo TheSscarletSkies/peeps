@@ -1044,12 +1044,26 @@ body,
   cursor: grabbing;
 }
 
-.roamer--held .dumpling,
-.float__pet[data-carried="held"] .dumpling {
+.roamer--held .dumpling {
   translate: 0 -3px;
   scale: 1.12;
   transform-origin: 50% 0;
   animation: dangle 0.7s ease-in-out infinite alternate;
+}
+
+/* The floating pet's window is only a little bigger than the pet, so held it swings in place. */
+.float__pet[data-carried="held"] .dumpling {
+  transform-origin: 50% 20%;
+  animation: dangle-small 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes dangle-small {
+  from {
+    rotate: -3deg;
+  }
+  to {
+    rotate: 3deg;
+  }
 }
 
 .roamer--landing .dumpling,

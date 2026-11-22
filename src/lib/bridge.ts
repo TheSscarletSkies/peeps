@@ -562,6 +562,18 @@ export function setAreas(areas: string[]): Promise<void> {
   return Promise.resolve();
 }
 
+/** Renames the peep. */
+export function setHelperName(name: string): Promise<void> {
+  if (inApp()) return invoke("set_helper_name", { name }).then(() => undefined);
+  const clean = name.trim().slice(0, 24);
+  if (!clean) return Promise.reject("give your peep a name");
+  updatePreview((snapshot) => ({
+    ...snapshot,
+    helper: { ...snapshot.helper, name: clean },
+  }));
+  return Promise.resolve();
+}
+
 /** Saves what your peep wears; friends see it with your next status. */
 export function setWear(wear: PeepWear): Promise<void> {
   if (inApp()) return invoke("set_wear", { wear }).then(() => undefined);

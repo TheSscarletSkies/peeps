@@ -87,6 +87,16 @@ fn run(app: &App, call: Call) -> Result<String> {
             peeps_core::profile::write(&config_file, &updated).map_err(|e| e.to_string())?;
             Ok("Saved to the user's About me page.".into())
         }
+        Call::Rename { name } => {
+            let path = paths::config_file();
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let updated = peeps_core::config_edit::set_helper_name(&text, &name)
+                .map_err(|e| e.to_string())?;
+            crate::commands::write_atomic(&path, &updated)?;
+            app.reload_config();
+            app.publish();
+            Ok(format!("Renamed to {name}."))
+        }
     }
 }
 

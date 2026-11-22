@@ -186,11 +186,12 @@ export function Hub({ snapshot }: { snapshot: Snapshot }) {
                 </section>
                 <ClaudeStatus />
                 <section className="card">
-                  <h2>Your peep's look</h2>
+                  <h2>Your peep</h2>
                   <p className="setup__hint">
-                    Your friends see the same look when you study together.
+                    Its name, and the look your friends see when you study
+                    together. You can also tell it “call yourself Bao” in chat.
                   </p>
-                  <LookPicker wear={snapshot.wear} />
+                  <LookPicker wear={snapshot.wear} name={helper.name} />
                 </section>
                 <section className="card">
                   <h2>Your areas</h2>

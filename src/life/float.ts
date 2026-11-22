@@ -24,7 +24,8 @@ export const FLOAT_PET: Record<PetSize, number> = {
 
 /** Room around the pet for its hands, bubble and shadow. */
 export function boxFor(size: PetSize): number {
-  return FLOAT_PET[size] + 20;
+  // Enough that a pat's squish, a drop's bounce and the hands stay inside the window.
+  return FLOAT_PET[size] + 36;
 }
 
 export const PANEL = 380;

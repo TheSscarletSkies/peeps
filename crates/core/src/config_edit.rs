@@ -22,6 +22,8 @@ pub enum EditError {
     Shape,
     #[error("give the product a name")]
     EmptyName,
+    #[error("give your peep a name")]
+    EmptyPeepName,
     #[error("choose the product's folder")]
     EmptyPath,
     #[error("no product with id `{0}`")]
@@ -223,6 +225,36 @@ pub fn set_helper_chat(text: &str, agent: crate::chat::Agent) -> Result<String, 
     Ok(updated)
 }
 
+/// The longest name the peep can have; any more and it wouldn't fit on a name tag.
+const MAX_PEEP_NAME: usize = 24;
+
+/// A name for the peep: trimmed, no control characters, short enough for a tag. None when empty.
+pub fn clean_peep_name(name: &str) -> Option<String> {
+    let clean: String = name
+        .chars()
+        .filter(|c| !c.is_control())
+        .take(MAX_PEEP_NAME)
+        .collect::<String>()
+        .trim()
+        .to_owned();
+    (!clean.is_empty()).then_some(clean)
+}
+
+/// Saves what the user calls their peep.
+pub fn set_helper_name(text: &str, name: &str) -> Result<String, EditError> {
+    let name = clean_peep_name(name).ok_or(EditError::EmptyPeepName)?;
+    let mut doc: DocumentMut = text.parse()?;
+    let helper = doc
+        .entry("helper")
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .ok_or(EditError::Shape)?;
+    helper["name"] = value(name);
+    let updated = doc.to_string();
+    Config::parse(&updated)?;
+    Ok(updated)
+}
+
 /// Saves what the user's peep wears.
 pub fn set_helper_wear(text: &str, wear: Wear) -> Result<String, EditError> {
     let mut doc: DocumentMut = text.parse()?;
@@ -368,6 +400,19 @@ mod tests {
         assert_eq!(
             agent(&Config::parse(&back).unwrap().helper.chat_command),
             Agent::Claude
+        );
+    }
+
+    #[test]
+    fn renames_the_peep_tidily() {
+        let text = "[helper]\nwear = \"bow\" # cute\n";
+        let updated = set_helper_name(text, "  Bao\n bun  ").unwrap();
+        assert!(updated.contains("wear = \"bow\" # cute"));
+        assert_eq!(Config::parse(&updated).unwrap().helper.name, "Bao bun");
+        assert!(set_helper_name(text, "   ").is_err());
+        assert_eq!(
+            clean_peep_name(&"x".repeat(40)).map(|name| name.len()),
+            Some(24)
         );
     }
 

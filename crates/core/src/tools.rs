@@ -41,6 +41,9 @@ pub enum Call {
     Remember {
         fact: String,
     },
+    Rename {
+        name: String,
+    },
 }
 
 fn product_arg() -> Value {
@@ -124,6 +127,15 @@ pub fn definitions() -> Vec<Definition> {
             }),
         },
         Definition {
+            name: "rename_peep",
+            description: "Renames the user's peep, which is you: use it when the user gives you a name or asks you to go by another one. The name shows everywhere in peeps.",
+            input_schema: json!({
+                "type": "object",
+                "properties": { "name": { "type": "string", "description": "The new name, as the user wrote it." } },
+                "required": ["name"]
+            }),
+        },
+        Definition {
             name: "remember",
             description: "Saves something lasting about the user to their About me page, such as their name, what they're building, a preference or a standing instruction. Every conversation in peeps reads that page.",
             input_schema: json!({
@@ -133,6 +145,11 @@ pub fn definitions() -> Vec<Definition> {
             }),
         },
     ]
+}
+
+#[derive(Deserialize)]
+struct NewName {
+    name: String,
 }
 
 #[derive(Deserialize)]
@@ -175,6 +192,13 @@ pub fn parse(name: &str, args: Value) -> Result<Call, String> {
     let bad = |error: serde_json::Error| format!("bad arguments for {name}: {error}");
     Ok(match name {
         "peeps_overview" => Call::Overview,
+        "rename_peep" => {
+            let name = crate::config_edit::clean_peep_name(
+                &serde_json::from_value::<NewName>(args).map_err(bad)?.name,
+            )
+            .ok_or("the name is empty")?;
+            Call::Rename { name }
+        }
         "list_todos" => Call::ListTodos,
         "add_todo" => {
             let todo: TodoArgs = serde_json::from_value(args).map_err(bad)?;
@@ -257,6 +281,7 @@ mod tests {
                 json!({ "product": "lantern", "text": "Use annual pricing" }),
             ),
             ("remember", json!({ "fact": "Prefers short replies" })),
+            ("rename_peep", json!({ "name": "Bao" })),
         ];
         let names: Vec<_> = definitions().iter().map(|d| d.name).collect();
         assert_eq!(names.len(), examples.len());
@@ -264,6 +289,15 @@ mod tests {
             assert!(names.contains(&name), "{name} is not listed");
             assert!(parse(name, args).is_ok(), "{name} did not parse");
         }
+    }
+
+    #[test]
+    fn renames_the_peep_with_a_tidy_name() {
+        assert_eq!(
+            parse("rename_peep", json!({ "name": "  Bao " })).unwrap(),
+            Call::Rename { name: "Bao".into() }
+        );
+        assert!(parse("rename_peep", json!({ "name": " " })).is_err());
     }
 
     #[test]

@@ -259,6 +259,17 @@ fn chat_agent() -> peeps_core::chat::Agent {
     peeps_core::chat::agent(&config.helper.chat_command)
 }
 
+/// Renames the peep.
+#[tauri::command]
+pub fn set_helper_name(app: State<'_, Arc<App>>, name: String) -> Result<()> {
+    let path = paths::config_file();
+    let updated = config_edit::set_helper_name(&read_or_empty(&path)?, &name).map_err(message)?;
+    write_atomic(&path, &updated)?;
+    app.reload_config();
+    app.publish();
+    Ok(())
+}
+
 /// Switches chat between Claude and ChatGPT.
 #[tauri::command]
 pub fn set_chat_agent(app: State<'_, Arc<App>>, agent: peeps_core::chat::Agent) -> Result<()> {
@@ -440,7 +451,7 @@ pub fn save_image(name: String, data: Vec<u8>) -> Result<String> {
 }
 
 /// Writes through a temporary file so a crash never leaves a half-written file behind.
-fn write_atomic(path: &Path, body: &str) -> Result<()> {
+pub(crate) fn write_atomic(path: &Path, body: &str) -> Result<()> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(message)?;
     }
