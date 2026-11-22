@@ -103,12 +103,11 @@ pub fn run_in(
     let stderr = stderr.join().unwrap_or_default();
 
     if !status.success() {
-        let detail = stderr.trim();
-        return Err(AgentError::Failed(if detail.is_empty() {
-            status.to_string()
-        } else {
-            tail(detail, 400)
-        }));
+        return Err(AgentError::Failed(failure(
+            &stderr,
+            &stdout,
+            &status.to_string(),
+        )));
     }
     let reply = stdout.trim();
     if reply.is_empty() {
@@ -149,10 +148,36 @@ pub fn explain(error: &str) -> String {
             .into()
     } else if has(&["usage limit", "rate limit", "credit balance", "quota"]) {
         "Your Claude account has hit its usage limit for now. Try again later.".into()
+    } else if has(&["no conversation found"]) {
+        "Claude couldn't find yesterday's conversation. Press New chat and ask again.".into()
     } else if has(&["took longer than"]) {
         "Claude took too long to answer. Try again in a moment.".into()
     } else {
         format!("Claude Code stopped with an error: {error}")
+    }
+}
+
+/// Why an agent stopped. Claude Code in JSON mode reports its error on stdout, as the result of
+/// the reply, and leaves stderr empty, so stdout is read when stderr says nothing.
+fn failure(stderr: &str, stdout: &str, status: &str) -> String {
+    let stderr = stderr.trim();
+    if !stderr.is_empty() {
+        return tail(stderr, 400);
+    }
+    let stdout = stdout.trim();
+    if let Ok(serde_json::Value::Object(reply)) = serde_json::from_str(stdout) {
+        for key in ["result", "error", "message"] {
+            if let Some(text) = reply.get(key).and_then(|value| value.as_str()) {
+                if !text.trim().is_empty() {
+                    return tail(text.trim(), 400);
+                }
+            }
+        }
+    }
+    if stdout.is_empty() {
+        status.to_owned()
+    } else {
+        tail(stdout, 400)
     }
 }
 
@@ -256,5 +281,18 @@ mod tests {
         )
         .contains("can't find Claude Code"));
         assert!(explain("something odd").ends_with("something odd"));
+    }
+
+    #[test]
+    fn reads_why_from_stdout_when_stderr_is_silent() {
+        let json =
+            r#"{"type":"result","is_error":true,"result":"Invalid API key · Please run /login"}"#;
+        assert_eq!(
+            failure("", json, "exit status: 1"),
+            "Invalid API key · Please run /login"
+        );
+        assert_eq!(failure("boom", json, "exit status: 1"), "boom");
+        assert_eq!(failure("", "plain words", "exit status: 1"), "plain words");
+        assert_eq!(failure(" ", "", "exit status: 1"), "exit status: 1");
     }
 }

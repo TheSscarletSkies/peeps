@@ -218,18 +218,32 @@ async fn turn(app: &Arc<App>, text: &str) -> Result<String> {
     };
     let about = peeps_core::profile::context(&peeps_core::profile::read(&paths::config_file()));
     let context = format!("{about}\n\n{}", context(app));
-    let command = chat::command(&base, session.as_deref(), &context);
     let timeout = Duration::from_secs(config.helper.chat_timeout_seconds);
     let dir = paths::assistant_dir();
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
 
-    let prompt = text.to_owned();
-    let stdout = tauri::async_runtime::spawn_blocking(move || {
-        agent::run_in(&command, &prompt, timeout, Some(&dir))
-    })
-    .await
-    .map_err(|error| error.to_string())?
-    .map_err(|error| error.to_string())?;
+    let ask = |session: Option<String>| {
+        let command = chat::command(&base, session.as_deref(), &context);
+        let prompt = text.to_owned();
+        let dir = dir.clone();
+        async move {
+            tauri::async_runtime::spawn_blocking(move || {
+                agent::run_in(&command, &prompt, timeout, Some(&dir))
+            })
+            .await
+            .map_err(|error| error.to_string())?
+            .map_err(|error| error.to_string())
+        }
+    };
+    let stdout = match ask(session.clone()).await {
+        // Claude Code forgets conversations (a reinstall, another computer); start a new one.
+        Err(error)
+            if session.is_some() && error.to_lowercase().contains("no conversation found") =>
+        {
+            ask(None).await?
+        }
+        outcome => outcome?,
+    };
 
     let reply = chat::parse_reply(&stdout)?;
     if let Some(session) = &reply.session {
