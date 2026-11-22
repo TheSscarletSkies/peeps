@@ -6,7 +6,7 @@ describe("tag colours", () => {
   it("keeps familiar areas recognisable and every tag in the family", () => {
     expect(pastelFor("work")).toBe("sky");
     expect(pastelFor("Study")).toBe("sage");
-    expect(pastelFor("funderly")).toBe(pastelFor("funderly"));
+    expect(pastelFor("lantern")).toBe(pastelFor("lantern"));
     for (const tag of ["gym", "bills", "side-project", "x"])
       expect(PASTELS).toContain(pastelFor(tag));
   });

@@ -599,12 +599,12 @@ command = ["claude", "-p", "{prompt}"]
 voices = { linkedin = "" }
 
 [paypal]
-product = "funderly"
+product = "lantern"
 
 [[product]]
-id = "funderly"
-name = "Funderly"
-paths = ["~/code/funderly"]
+id = "lantern"
+name = "Lantern"
+paths = ["~/code/lantern"]
 youtube_channel = "UCabcdefghijklmnopqrstuv"
 
 [[product.teammate]]
@@ -613,7 +613,7 @@ name = "Sana"
 role = "sales"
 
 [[mail]]
-address = "hello@funderly.app"
+address = "hello@lantern.example"
 provider = "gmail"
 "#;
 
@@ -656,7 +656,7 @@ provider = "gmail"
             .expect("the snapshot never came back; a lock is held twice");
 
         assert_eq!(snapshot.config_error, None);
-        assert_eq!(snapshot.snapshot.pets[0].id, "funderly");
+        assert_eq!(snapshot.snapshot.pets[0].id, "lantern");
         assert_eq!(snapshot.helper.todos.len(), 1);
         assert_eq!(snapshot.helper.chat.len(), 1);
         assert_eq!(

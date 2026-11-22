@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test("UC1: only the companion lives in the notch", async ({ page }) => {
   await expect(page.getByRole("button", { name: /^Helper/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Funderly/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Lantern/ })).toHaveCount(0);
 });
 
 test("UC6: the companion can be resized", async ({ page }) => {

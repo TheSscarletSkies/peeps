@@ -4,11 +4,11 @@ import { variantFor } from "./variant";
 
 describe("variantFor", () => {
   it("gives the same pet the same build every time", () => {
-    expect(variantFor("funderly")).toEqual(variantFor("funderly"));
+    expect(variantFor("lantern")).toEqual(variantFor("lantern"));
   });
 
   it("gives different products different builds", () => {
-    const builds = ["funderly", "enigma-archives", "kaiveni-hiya", "shop"].map(
+    const builds = ["lantern", "enigma-archives", "kaiveni-hiya", "shop"].map(
       (id) => JSON.stringify(variantFor(id)),
     );
     expect(new Set(builds).size).toBe(builds.length);

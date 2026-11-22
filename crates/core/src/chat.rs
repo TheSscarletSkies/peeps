@@ -406,7 +406,7 @@ mod tests {
             "Tuesday 20 October",
             &["Pay rent (due today)".into()],
             &[],
-            &["Funderly".into()],
+            &["Lantern".into()],
         );
         assert!(text.contains("You are Bao"));
         assert!(text.contains("- Pay rent (due today)"));
@@ -424,9 +424,7 @@ mod tests {
                 .unwrap();
         }
         store.add(HELPER, Speaker::Helper, "hello", now).unwrap();
-        store
-            .add("funderly", Speaker::You, "pricing?", now)
-            .unwrap();
+        store.add("lantern", Speaker::You, "pricing?", now).unwrap();
         let recent = store.recent(HELPER, 3).unwrap();
         assert_eq!(
             recent.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
@@ -437,13 +435,13 @@ mod tests {
         assert_eq!(store.session(HELPER).unwrap(), None);
         store.set_session(HELPER, "one").unwrap();
         store.set_session(HELPER, "two").unwrap();
-        store.set_session("funderly", "f").unwrap();
+        store.set_session("lantern", "f").unwrap();
         assert_eq!(store.session(HELPER).unwrap().as_deref(), Some("two"));
         store.clear(HELPER).unwrap();
         assert!(store.recent(HELPER, 10).unwrap().is_empty());
         assert_eq!(store.session(HELPER).unwrap(), None);
         // Each product keeps its own conversation.
-        assert_eq!(store.recent("funderly", 10).unwrap()[0].text, "pricing?");
-        assert_eq!(store.session("funderly").unwrap().as_deref(), Some("f"));
+        assert_eq!(store.recent("lantern", 10).unwrap()[0].text, "pricing?");
+        assert_eq!(store.session("lantern").unwrap().as_deref(), Some("f"));
     }
 }

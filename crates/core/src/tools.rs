@@ -254,7 +254,7 @@ mod tests {
             ),
             (
                 "leave_note",
-                json!({ "product": "funderly", "text": "Use annual pricing" }),
+                json!({ "product": "lantern", "text": "Use annual pricing" }),
             ),
             ("remember", json!({ "fact": "Prefers short replies" })),
         ];

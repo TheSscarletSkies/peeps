@@ -476,14 +476,14 @@ mod tests {
     #[test]
     fn a_product_can_have_a_folder_on_each_computer() {
         let new = NewProduct {
-            name: "Funderly".into(),
-            path: "/Users/m/code/funderly".into(),
+            name: "Lantern".into(),
+            path: "/Users/m/code/lantern".into(),
             kind: PetKind::Bao,
             color: String::new(),
         };
         let (text, id) = add_product("", &new).unwrap();
-        let text = add_path(&text, &id, "C:\\Users\\m\\code\\funderly").unwrap();
-        let again = add_path(&text, &id, "C:\\Users\\m\\code\\funderly").unwrap();
+        let text = add_path(&text, &id, "C:\\Users\\m\\code\\lantern").unwrap();
+        let again = add_path(&text, &id, "C:\\Users\\m\\code\\lantern").unwrap();
         let product = &Config::parse(&again).unwrap().products[0];
         assert_eq!(product.paths.len(), 2);
         assert!(matches!(

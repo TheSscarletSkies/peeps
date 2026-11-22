@@ -24,20 +24,20 @@ describe("notch prefs", () => {
   it("hides and shows a pet", () => {
     const hidden = toggleHidden(
       { hidden: [], size: "small", place: "auto" },
-      "funderly",
+      "lantern",
     );
-    expect(hidden.hidden).toEqual(["funderly"]);
-    expect(toggleHidden(hidden, "funderly").hidden).toEqual([]);
+    expect(hidden.hidden).toEqual(["lantern"]);
+    expect(toggleHidden(hidden, "lantern").hidden).toEqual([]);
   });
 
   it("brings a hidden pet out when it needs you", () => {
     const prefs = {
-      hidden: ["funderly"],
+      hidden: ["lantern"],
       size: "medium" as const,
       place: "auto" as const,
     };
-    expect(shown("funderly", false, prefs)).toBe(false);
-    expect(shown("funderly", true, prefs)).toBe(true);
+    expect(shown("lantern", false, prefs)).toBe(false);
+    expect(shown("lantern", true, prefs)).toBe(true);
     expect(shown("enigma", false, prefs)).toBe(true);
   });
 });

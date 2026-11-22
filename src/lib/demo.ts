@@ -12,8 +12,8 @@ function lastWeek(done: boolean[]): { date: string; done: boolean }[] {
 export const demoSnapshot: Snapshot = {
   pets: [
     {
-      id: "funderly",
-      name: "Funderly",
+      id: "lantern",
+      name: "Lantern",
       kind: "bao",
       color: "#FFF3E3",
       mood: "needsYou",
@@ -80,8 +80,8 @@ export const demoSnapshot: Snapshot = {
     todos: [
       {
         id: 1,
-        title: "Reply to Funderly sign-ups",
-        tags: ["work", "funderly"],
+        title: "Reply to Lantern sign-ups",
+        tags: ["work", "lantern"],
         time: null,
         repeat: "never",
         remindMinutes: null,
@@ -164,7 +164,7 @@ export const demoSnapshot: Snapshot = {
     done: [],
     week: {
       products: [
-        { productId: "funderly", tokens: 412000, activeMinutes: 640 },
+        { productId: "lantern", tokens: 412000, activeMinutes: 640 },
         { productId: "kaiveni-hiya", tokens: 268000, activeMinutes: 395 },
         { productId: "enigma-archives", tokens: 54000, activeMinutes: 85 },
       ],
@@ -181,7 +181,7 @@ export const demoSnapshot: Snapshot = {
       {
         id: 2,
         from: "helper",
-        text: "Marketing class at 6 pm in Room 4, and Funderly has 7 sign-ups waiting on a reply. Want me to put that on your list?",
+        text: "Marketing class at 6 pm in Room 4, and Lantern has 7 sign-ups waiting on a reply. Want me to put that on your list?",
         at: "2026-10-20T07:58:20Z",
       },
     ],

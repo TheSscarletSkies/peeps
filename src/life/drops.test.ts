@@ -17,9 +17,9 @@ describe("file drops", () => {
   });
 
   it("keeps dropped files until the card picks them up, once", () => {
-    giveFiles("funderly", ["/a.pdf"]);
-    giveFiles("funderly", ["/b.pdf"]);
-    expect(takeFiles("funderly")).toEqual(["/a.pdf", "/b.pdf"]);
-    expect(takeFiles("funderly")).toEqual([]);
+    giveFiles("lantern", ["/a.pdf"]);
+    giveFiles("lantern", ["/b.pdf"]);
+    expect(takeFiles("lantern")).toEqual(["/a.pdf", "/b.pdf"]);
+    expect(takeFiles("lantern")).toEqual([]);
   });
 });
